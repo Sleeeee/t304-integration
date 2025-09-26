@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - CHOKIDAR_USEPOLLING=true #si jamais il y a de nouveaux fichiers
+    stdin_open: true
+    tty: true
