@@ -1,0 +1,21 @@
+services:
+  db:
+    image: postgres:18.0-alpine
+    env_file:
+      - .env.db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+
+volumes:
+  postgres_data:
+    name: "postgres_data"
