@@ -1,7 +1,9 @@
 import os
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import SQLModel, create_engine, Session
 from sqlalchemy import text
+from schema import * 
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 engine = create_engine(DATABASE_URL)
@@ -12,7 +14,26 @@ def get_session():
         yield session
 
 
+def create_db_and_tables():
+    SQLModel.metadata.create_all(engine)
+
+
 app = FastAPI()
+
+#Configuration CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+#Permet de créer les tables au démarrage de l'application
+@app.on_event("startup")
+def on_startup():
+    create_db_and_tables()
+    print("Tables créées")
 
 
 @app.get("/")
