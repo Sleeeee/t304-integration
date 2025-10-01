@@ -8,6 +8,15 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql
 
+  backend:
+    build: ./backend
+    env_file:
+      - .env.backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+
   frontend:
     build: ./frontend
     ports:
