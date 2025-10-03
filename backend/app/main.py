@@ -5,6 +5,9 @@ from sqlmodel import SQLModel, create_engine, Session
 from sqlalchemy import text
 from orm.schema import *
 
+# Import des routes
+from routes import register
+
 DATABASE_URL = os.getenv("DATABASE_URL")
 engine = create_engine(DATABASE_URL)
 
@@ -45,3 +48,6 @@ def root():
     except Exception as e:
         raise HTTPException(
             status_code=500, detail=f"Database connection failed: {e}")
+        
+# Inclusion des routes
+app.include_router(register.router)
