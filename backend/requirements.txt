@@ -1,4 +1,3 @@
-fastapi[standard]
-pydantic
+Django
 psycopg2-binary
-sqlmodel
+djangorestframework
