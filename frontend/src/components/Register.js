@@ -21,10 +21,6 @@ function Register() {
     setChecked(newChecked);
   };
 
-
-  fetch("http://localhost:8000/").then((response) => response.json()).then((data) => console.log(data));
-
-
   return (
     <div className="flex flex-col gap-8 max-w-2xl mx-auto p-6">
       {/* Formulaire d'enregistrement */}
