@@ -12,7 +12,7 @@ function App() {
   if (!user) return <Auth />;
 
   return (
-    <div className="App">
+    <div className="App min-h-screen bg-gray-100">
       <Header />
       <Register />
     </div>

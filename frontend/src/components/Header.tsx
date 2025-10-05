@@ -19,8 +19,11 @@ const Header = () => {
   };
 
   return (
-    <div>
-      <Button onClick={logout}>
+    <div className="flex justify-end bg-white p-4">
+      <Button
+        variant="contained"
+        onClick={logout}
+      >
         Déconnexion
       </Button>
     </div>
