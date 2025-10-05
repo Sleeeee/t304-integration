@@ -10,6 +10,12 @@ class RegisterView(APIView):
     permission_classes = [AllowAny]
     
     def post(self, request):
+        user = request.user
+        if not (user.is_authenticated and user.is_superuser):
+            return Response({
+                'error': 'Seuls les admins peuvent créer des comptes'
+            }, status=status.HTTP_403_FORBIDDEN)
+        
         serializer = UserRegistrationSerializer(data=request.data)
         
         if serializer.is_valid():
