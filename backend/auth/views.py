@@ -16,12 +16,12 @@ class MeView(APIView):
 
 class WebLoginView(APIView):
     def post(self, request):
-        if user.is_authenticated:
+        if request.user.is_authenticated:
             return Response({"message": "Déjà authentifié"}, status=200)
 
         data = json.loads(request.body)
-        username = data.username
-        password = data.password
+        username = data.get("username")
+        password = data.get("password")
 
         if username is None or password is None:
             return Response({
@@ -36,7 +36,7 @@ class WebLoginView(APIView):
                 "user": UserSerializer(user).data
             }, status=200)
 
-        return Response({"error": "Informations incorrectes"})
+        return Response({"error": "Informations incorrectes"}, status=401)
 
 
 class WebLogoutView(APIView):
