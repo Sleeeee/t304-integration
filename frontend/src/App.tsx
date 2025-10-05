@@ -1,3 +1,4 @@
+import React from 'react';
 import './App.css';
 import { useAuth } from './context/AuthContext';
 import Auth from './components/Auth';

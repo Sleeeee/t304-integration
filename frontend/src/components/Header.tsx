@@ -3,11 +3,17 @@ import getCookie from "../context/getCookie";
 import Button from "@mui/material/Button";
 
 const Header = () => {
+  const csrfToken = getCookie("csrftoken");
+
+  const headers: HeadersInit = csrfToken
+    ? { "X-CSRFToken": csrfToken }
+    : {};
+
   const logout = async () => {
     await fetch(`${process.env.REACT_APP_BACKEND_URL}/auth/wlogout/`, {
       method: "POST",
       credentials: "include",
-      headers: { "X-CSRFToken": getCookie("csrftoken") },
+      headers,
     });
     window.location.reload(); // Force la page à recharger et à récupérer l'état de la session
   };

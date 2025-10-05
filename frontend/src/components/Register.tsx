@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
 import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
 
@@ -8,7 +7,7 @@ function Register() {
   const [isOpenPerm, setIsOpenPerm] = useState(false);
   const [checked, setChecked] = useState([0]);
 
-  const handleToggle = (value) => {
+  const handleToggle = (value: number) => {
     const currentIndex = checked.indexOf(value);
     const newChecked = [...checked];
 
@@ -33,9 +32,8 @@ function Register() {
             <span className="text-xl font-bold text-gray-800">Enregistrement</span>
             <span className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-md hover:shadow-lg hover:scale-110 transition-all duration-300 flex items-center justify-center">
               <span
-                className={`text-sm font-bold transition-transform duration-300 inline-block ${
-                  isOpenForm ? "" : "rotate-180"
-                }`}
+                className={`text-sm font-bold transition-transform duration-300 inline-block ${isOpenForm ? "" : "rotate-180"
+                  }`}
               >
                 ^
               </span>
@@ -45,10 +43,10 @@ function Register() {
 
         {isOpenForm && (
           <form className="flex flex-col gap-5 animate-in slide-in-from-top duration-300">
-            <TextField 
-              label="Nom d'utilisateur" 
-              variant="outlined" 
-              fullWidth 
+            <TextField
+              label="Nom d'utilisateur"
+              variant="outlined"
+              fullWidth
               className="hover:scale-[1.02] transition-transform"
             />
             <TextField
@@ -58,9 +56,9 @@ function Register() {
               type="email"
               className="hover:scale-[1.02] transition-transform"
             />
-            <Button 
-              variant="contained" 
-              color="primary" 
+            <Button
+              variant="contained"
+              color="primary"
               fullWidth
               className="!py-3 !rounded-xl !shadow-lg hover:!shadow-xl !transition-all"
             >
@@ -86,9 +84,8 @@ function Register() {
             <span className="text-xl font-bold text-gray-800">Permissions</span>
             <span className="w-8 h-8 rounded-full bg-gradient-to-r from-green-500 to-teal-500 text-white shadow-md hover:shadow-lg hover:scale-110 transition-all duration-300 flex items-center justify-center">
               <span
-                className={`text-sm font-bold transition-transform duration-300 inline-block ${
-                  isOpenPerm ? "" : "rotate-180"
-                }`}
+                className={`text-sm font-bold transition-transform duration-300 inline-block ${isOpenPerm ? "" : "rotate-180"
+                  }`}
               >
                 ^
               </span>
@@ -108,13 +105,13 @@ function Register() {
                   <input
                     type="checkbox"
                     checked={checked.includes(value)}
-                    onChange={() => {}}
+                    onChange={() => { }}
                     className="w-6 h-6 cursor-pointer accent-purple-600 rounded-lg"
                   />
                   <span className="font-medium text-gray-700">Line item {value + 1}</span>
                 </div>
 
-                <button 
+                <button
                   className="p-2 rounded-full hover:bg-white transition-colors duration-200"
                   onClick={(e) => e.stopPropagation()}
                 >
@@ -143,9 +140,9 @@ function Register() {
       </fieldset>
 
       <div className="mt-8 pt-8 border-t-2 border-gray-200">
-        <Button 
-          variant="contained" 
-          color="success" 
+        <Button
+          variant="contained"
+          color="success"
           fullWidth
           size="large"
           className="!py-4 !text-lg !font-bold !rounded-2xl !shadow-xl hover:!shadow-2xl !transition-all !bg-gradient-to-r !from-green-500 !to-emerald-500"
