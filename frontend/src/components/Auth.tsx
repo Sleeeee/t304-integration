@@ -17,9 +17,9 @@ const Auth = () => {
 
     const data = await res.json();
     if (data.error) {
-      console.log("Erreur:", data.error);
+      console.log("Error:", data.error);
     } else if (data.message) {
-      console.log("Succès:", data.message);
+      console.log("Success:", data.message);
       window.location.reload();
     }
   };
@@ -39,7 +39,7 @@ const Auth = () => {
 
         <form onSubmit={login} className="flex flex-col gap-6 w-full max-w-sm">
           <TextField
-            label="Nom d'utilisateur"
+            label="Username"
             variant="outlined"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
@@ -48,7 +48,7 @@ const Auth = () => {
           />
 
           <TextField
-            label="Mot de passe"
+            label="Password"
             type="password"
             variant="outlined"
             value={password}
@@ -58,7 +58,7 @@ const Auth = () => {
           />
 
           <Button type="submit" variant="contained" color="primary" fullWidth>
-            Connexion
+            Log In
           </Button>
         </form>
       </div>
@@ -66,7 +66,7 @@ const Auth = () => {
       <div className="w-full lg:w-1/2 bg-blue-50 flex items-center justify-center p-6 sm:p-10">
         <img
           src="hero.png"
-          alt="Un client extrêmement satisfait"
+          alt="A deeply satisfied client"
           className="w-full max-w-xs sm:max-w-md"
         />
       </div>

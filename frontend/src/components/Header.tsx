@@ -24,7 +24,7 @@ const Header = () => {
         variant="contained"
         onClick={logout}
       >
-        Déconnexion
+        Disconnect
       </Button>
     </div>
   );

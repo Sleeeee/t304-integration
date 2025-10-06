@@ -11,13 +11,13 @@ class MeView(APIView):
         if user.is_authenticated and user.is_staff:
             return Response({"user": UserSerializer(user).data})
 
-        return Response({"error": "Non authentifié"}, status=401)
+        return Response({"error": "Unauthenticated"}, status=401)
 
 
 class WebLoginView(APIView):
     def post(self, request):
         if request.user.is_authenticated:
-            return Response({"message": "Déjà authentifié"}, status=200)
+            return Response({"message": "Already authenticated"}, status=200)
 
         data = json.loads(request.body)
         username = data.get("username")
@@ -25,27 +25,27 @@ class WebLoginView(APIView):
 
         if username is None or password is None:
             return Response({
-                "error": "Informations d'authentification manquantes"
+                "error": "Missing credentials"
             }, status=401)
 
         user = authenticate(username=username, password=password)
         if user is not None:
             login(request, user)
             return Response({
-                "message": "Authentifié avec succès",
+                "message": "Successfully authenticated",
                 "user": UserSerializer(user).data
             }, status=200)
 
-        return Response({"error": "Informations incorrectes"}, status=401)
+        return Response({"error": "Incorrect credentials"}, status=401)
 
 
 class WebLogoutView(APIView):
     def post(self, request):
         if not request.user.is_authenticated:
-            return Response({"message": "Non authentifié"}, status=200)
+            return Response({"message": "Unauthenticated"}, status=200)
 
         logout(request)
-        return Response({"message": "Déconnecté avec succès"}, status=200)
+        return Response({"message": "Successfully disconnected"}, status=200)
 
 
 class PhysicalLoginView(APIView):

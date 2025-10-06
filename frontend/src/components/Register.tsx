@@ -29,7 +29,7 @@ function Register() {
             className="flex items-center gap-3 px-4 py-2 bg-white hover:bg-gray-50 transition-all duration-300"
             onClick={() => setIsOpenForm(!isOpenForm)}
           >
-            <span className="text-xl font-bold text-gray-800">Enregistrement</span>
+            <span className="text-xl font-bold text-gray-800">Registering</span>
             <span className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-md hover:shadow-lg hover:scale-110 transition-all duration-300 flex items-center justify-center">
               <span
                 className={`text-sm font-bold transition-transform duration-300 inline-block ${isOpenForm ? "" : "rotate-180"
@@ -44,7 +44,7 @@ function Register() {
         {isOpenForm && (
           <form className="flex flex-col gap-5 animate-in slide-in-from-top duration-300">
             <TextField
-              label="Nom d'utilisateur"
+              label="Username"
               variant="outlined"
               fullWidth
               className="hover:scale-[1.02] transition-transform"
@@ -62,14 +62,14 @@ function Register() {
               fullWidth
               className="!py-3 !rounded-xl !shadow-lg hover:!shadow-xl !transition-all"
             >
-              Manière de connexion
+              Connection method
             </Button>
           </form>
         )}
 
         {!isOpenForm && (
           <div className="text-center text-gray-400 py-4">
-            Cliquez pour ouvrir le formulaire
+            Click to open form
           </div>
         )}
       </fieldset>
@@ -134,7 +134,7 @@ function Register() {
 
         {!isOpenPerm && (
           <div className="text-center text-gray-400 py-4">
-            Cliquez pour gérer les permissions
+            Click here to manage permissions
           </div>
         )}
       </fieldset>
@@ -147,7 +147,7 @@ function Register() {
           size="large"
           className="!py-4 !text-lg !font-bold !rounded-2xl !shadow-xl hover:!shadow-2xl !transition-all !bg-gradient-to-r !from-green-500 !to-emerald-500"
         >
-          S'INSCRIRE
+          REGISTER
         </Button>
       </div>
     </div>
