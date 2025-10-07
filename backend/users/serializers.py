@@ -17,10 +17,12 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         min_length=8,
         style={'input_type': 'password'}
     )
+    is_staff = serializers.BooleanField(default=False)
+    is_superuser = serializers.BooleanField(default=False)
 
     class Meta:
         model = User
-        fields = ['username', 'email', 'password']
+        fields = ['username', 'email', 'password', 'is_staff', 'is_superuser']
         extra_kwargs = {
             'email': {'required': True}
         }
@@ -31,9 +33,8 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         return value
 
     def create(self, validated_data):
-        user = User.objects.create_user(
-            username=validated_data['username'],
-            email=validated_data['email'],
-            password=validated_data['password']
-        )
+        password = validated_data.pop('password')
+        user = User.objects.create(**validated_data)
+        user.set_password(password)
+        user.save()
         return user

@@ -6,16 +6,16 @@ import getCookie from "../context/getCookie";
 
 type MessageType = "success" | "info" | "warning" | "error" | "";
 
+type UserRole = "user" | "moderator" | "admin";
+
 function Register() {
   const [formData, setFormData] = useState({
     username: "",
     email: "",
     password: "",
-    is_superuser: false,
-    is_staff: false,
   });
 
-  const [permissions, setPermissions] = useState<number[]>([]);
+  const [selectedRole, setSelectedRole] = useState<UserRole>("user");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: MessageType; text: string }>({
     type: "",
@@ -29,10 +29,21 @@ function Register() {
     });
   };
 
-  const handlePermissionToggle = (value: number) => {
-    setPermissions((prev) =>
-      prev.includes(value) ? prev.filter((p) => p !== value) : [...prev, value]
-    );
+  const handleRoleChange = (role: UserRole) => {
+    setSelectedRole(role);
+  };
+
+  const getRolePermissions = (role: UserRole) => {
+    switch (role) {
+      case "user":
+        return { is_superuser: false, is_staff: false };
+      case "moderator":
+        return { is_superuser: false, is_staff: true };
+      case "admin":
+        return { is_superuser: true, is_staff: true };
+      default:
+        return { is_superuser: false, is_staff: false };
+    }
   };
 
   const csrfToken = getCookie("csrftoken");
@@ -46,6 +57,8 @@ function Register() {
     setLoading(true);
     setMessage({ type: "", text: "" });
 
+    const rolePermissions = getRolePermissions(selectedRole);
+
     try {
       const response = await fetch("http://localhost:8000/users/", {
         method: "POST",
@@ -53,20 +66,20 @@ function Register() {
         credentials: "include",
         body: JSON.stringify({
           ...formData,
-          //permissions: permissions
+          ...rolePermissions
         })
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        setMessage({ type: "success", text: "Inscription réussie !" });
-        setFormData({ username: "", email: "", password: "", is_superuser: false, is_staff: false });
-        setPermissions([]);
+        setMessage({ type: "success", text: "Utilisateur créé avec succès !" });
+        setFormData({ username: "", email: "", password: "" });
+        setSelectedRole("user");
       } else {
         setMessage({
           type: "error",
-          text: data.detail || "Erreur lors de l'inscription"
+          text: data.error || data.detail || "Erreur lors de la création"
         });
       }
     } catch (error) {
@@ -77,7 +90,23 @@ function Register() {
     }
   };
 
-  const permissionLabels = ["Lecture", "Écriture", "Modification", "Suppression"];
+  const roles = [
+    {
+      value: "user" as UserRole,
+      label: "Utilisateur",
+      description: "Aucun droit d'administration"
+    },
+    {
+      value: "moderator" as UserRole,
+      label: "Modérateur",
+      description: "Peut consulter les utilisateurs"
+    },
+    {
+      value: "admin" as UserRole,
+      label: "Administrateur",
+      description: "Tous les droits d'administration"
+    }
+  ];
 
   return (
     <div className="max-w-2xl mx-auto p-6">
@@ -133,23 +162,30 @@ function Register() {
 
         <fieldset className="border-2 border-gray-300 rounded-2xl p-6">
           <legend className="px-4 text-xl font-bold text-gray-800">
-            Permissions
+            Rôle
           </legend>
 
           <div className="flex flex-col gap-3 mt-4">
-            {permissionLabels.map((label, index) => (
+            {roles.map((role) => (
               <div
-                key={index}
-                className="flex items-center gap-4 p-4 bg-gray-50 hover:bg-blue-50 rounded-xl cursor-pointer transition-all"
-                onClick={() => handlePermissionToggle(index)}
+                key={role.value}
+                className={`flex items-start gap-4 p-4 rounded-xl cursor-pointer transition-all ${
+                  selectedRole === role.value
+                    ? "bg-blue-100 border-2 border-blue-500"
+                    : "bg-gray-50 hover:bg-blue-50 border-2 border-transparent"
+                }`}
+                onClick={() => handleRoleChange(role.value)}
               >
                 <input
-                  type="checkbox"
-                  checked={permissions.includes(index)}
-                  onChange={() => { }}
-                  className="w-6 h-6 cursor-pointer accent-blue-600"
+                  type="radio"
+                  checked={selectedRole === role.value}
+                  onChange={() => handleRoleChange(role.value)}
+                  className="w-6 h-6 cursor-pointer accent-blue-600 mt-1"
                 />
-                <span className="font-medium text-gray-700">{label}</span>
+                <div className="flex flex-col">
+                  <span className="font-bold text-gray-800">{role.label}</span>
+                  <span className="text-sm text-gray-600">{role.description}</span>
+                </div>
               </div>
             ))}
           </div>
@@ -164,7 +200,7 @@ function Register() {
           disabled={loading}
           className="!py-4 !text-lg !font-bold !rounded-2xl"
         >
-          {loading ? "Inscription en cours..." : "S'INSCRIRE"}
+          {loading ? "Création en cours..." : "CRÉER L'UTILISATEUR"}
         </Button>
       </form>
     </div>
@@ -172,4 +208,3 @@ function Register() {
 }
 
 export default Register;
-
