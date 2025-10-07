@@ -14,20 +14,16 @@ class UsersView(APIView):
         user = request.user
         if user.is_authenticated and user.is_staff:
             users = User.objects.all()
-            return Response({"users": UserSerializer(users).data}, status=200)
+            return Response({"users": UserSerializer(users, many=True).data}, status=200)
 
         return Response({"error": "Unauthorized to fetch users"}, status=401)
-
-
-class RegisterView(APIView):
-    permission_classes = [AllowAny]
 
     def post(self, request):
         user = request.user
         if not (user.is_authenticated and user.is_superuser):
             return Response({
                 'error': 'Unauthorized to create users'
-            }, status=status.401)
+            }, status=401)
 
         serializer = UserRegistrationSerializer(data=request.data)
 
@@ -38,8 +34,10 @@ class RegisterView(APIView):
                 'user': {
                     'id': user.id,
                     'username': user.username,
-                    'email': user.email
+                    'email': user.email,
+                    'is_superuser': user.is_superuser or False,
+                    'is_staff': user.is_staff or False
                 }
-            }, status=status.201)
+            }, status=201)
 
         return Response(serializer.errors, status=400)
