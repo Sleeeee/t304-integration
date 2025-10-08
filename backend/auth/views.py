@@ -30,12 +30,14 @@ class WebLoginView(APIView):
 
         user = authenticate(username=username, password=password)
         if user is not None:
-            login(request, user)
-            return Response({
-                "message": "Successfully authenticated",
-                "user": UserSerializer(user).data
-            }, status=200)
-
+            if user.is_staff:
+                login(request, user)
+                return Response({
+                    "message": "Successfully authenticated",
+                    "user": UserSerializer(user).data
+                }, status=200)
+            
+            return Response({"error", "Unauthorized"}, status=401)
         return Response({"error": "Incorrect credentials"}, status=401)
 
 
