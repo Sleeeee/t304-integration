@@ -6,6 +6,11 @@ const Auth = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
+  const [toast, setToast] = useState({
+    isError: false,
+    text: "",
+  });
+
   const login = async (e: React.FormEvent) => {
     e.preventDefault();
     const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/auth/wlogin/`, {
@@ -17,10 +22,12 @@ const Auth = () => {
 
     const data = await res.json();
     if (data.error) {
-      console.log("Error:", data.error);
+      setToast({isError: true, text: data.error});
     } else if (data.message) {
-      console.log("Success:", data.message);
-      window.location.reload();
+      setToast({isError: false, text: data.message});
+      setTimeout(() => {
+        window.location.reload();
+      }, 500); 
     }
   };
 
@@ -60,6 +67,9 @@ const Auth = () => {
           <Button type="submit" variant="contained" color="primary" fullWidth>
             Log In
           </Button>
+
+          {toast.text && !toast.isError && <p className="text-green-500">{toast.text}</p>}
+          {toast.isError && <p className="text-red-500">{toast.text}</p>}
         </form>
       </div>
 
