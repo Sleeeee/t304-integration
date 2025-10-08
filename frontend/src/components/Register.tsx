@@ -1,155 +1,208 @@
-import React, { useState } from "react";
+import React, { useState, ChangeEvent, FormEvent } from "react";
 import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
+import Alert from "@mui/material/Alert";
+import getCookie from "../context/getCookie";
+
+type MessageType = "success" | "info" | "warning" | "error" | "";
+
+type UserRole = "user" | "moderator" | "admin";
 
 function Register() {
-  const [isOpenForm, setIsOpenForm] = useState(false);
-  const [isOpenPerm, setIsOpenPerm] = useState(false);
-  const [checked, setChecked] = useState([0]);
+  const [formData, setFormData] = useState({
+    username: "",
+    email: "",
+    password: "",
+  });
 
-  const handleToggle = (value: number) => {
-    const currentIndex = checked.indexOf(value);
-    const newChecked = [...checked];
+  const [selectedRole, setSelectedRole] = useState<UserRole>("user");
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState<{ type: MessageType; text: string }>({
+    type: "",
+    text: ""
+  });
 
-    if (currentIndex === -1) {
-      newChecked.push(value);
-    } else {
-      newChecked.splice(currentIndex, 1);
-    }
-
-    setChecked(newChecked);
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
   };
 
-  return (
-    <div className="flex flex-col gap-8 max-w-2xl mx-auto p-6">
-      {/* Formulaire d'enregistrement */}
-      <fieldset className="border-2 border-gray-300 rounded-2xl p-6 relative">
-        <legend className="px-2">
-          <button
-            className="flex items-center gap-3 px-4 py-2 bg-white hover:bg-gray-50 transition-all duration-300"
-            onClick={() => setIsOpenForm(!isOpenForm)}
-          >
-            <span className="text-xl font-bold text-gray-800">Registering</span>
-            <span className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-md hover:shadow-lg hover:scale-110 transition-all duration-300 flex items-center justify-center">
-              <span
-                className={`text-sm font-bold transition-transform duration-300 inline-block ${isOpenForm ? "" : "rotate-180"
-                  }`}
-              >
-                ^
-              </span>
-            </span>
-          </button>
-        </legend>
+  const handleRoleChange = (role: UserRole) => {
+    setSelectedRole(role);
+  };
 
-        {isOpenForm && (
-          <form className="flex flex-col gap-5 animate-in slide-in-from-top duration-300">
+  const getRolePermissions = (role: UserRole) => {
+    switch (role) {
+      case "user":
+        return { is_superuser: false, is_staff: false };
+      case "moderator":
+        return { is_superuser: false, is_staff: true };
+      case "admin":
+        return { is_superuser: true, is_staff: true };
+      default:
+        return { is_superuser: false, is_staff: false };
+    }
+  };
+
+  const csrfToken = getCookie("csrftoken");
+  const headers: HeadersInit = csrfToken ? {
+    "Content-Type": "application/json",
+    "X-CSRFToken": csrfToken
+  } : {};
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setMessage({ type: "", text: "" });
+
+    const rolePermissions = getRolePermissions(selectedRole);
+
+    try {
+      const response = await fetch("http://localhost:8000/users/", {
+        method: "POST",
+        headers,
+        credentials: "include",
+        body: JSON.stringify({
+          ...formData,
+          ...rolePermissions
+        })
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setMessage({ type: "success", text: "Utilisateur créé avec succès !" });
+        setFormData({ username: "", email: "", password: "" });
+        setSelectedRole("user");
+      } else {
+        setMessage({
+          type: "error",
+          text: data.error || data.detail || "Erreur lors de la création"
+        });
+      }
+    } catch (error) {
+      setMessage({ type: "error", text: "Erreur de connexion au serveur" });
+      console.error("Erreur:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const roles = [
+    {
+      value: "user" as UserRole,
+      label: "Utilisateur",
+      description: "Aucun droit d'administration"
+    },
+    {
+      value: "moderator" as UserRole,
+      label: "Modérateur",
+      description: "Peut consulter les utilisateurs"
+    },
+    {
+      value: "admin" as UserRole,
+      label: "Administrateur",
+      description: "Tous les droits d'administration"
+    }
+  ];
+
+  return (
+    <div className="max-w-2xl mx-auto p-6">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+        {message.text && message.type !== "" && (
+          <Alert
+            severity={message.type as "success" | "info" | "warning" | "error"}
+            onClose={() => setMessage({ type: "", text: "" })}
+          >
+            {message.text}
+          </Alert>
+        )}
+
+        <fieldset className="border-2 border-gray-300 rounded-2xl p-6">
+          <legend className="px-4 text-xl font-bold text-gray-800">
+            Enregistrement
+          </legend>
+
+          <div className="flex flex-col gap-4 mt-4">
             <TextField
-              label="Username"
+              label="Nom d'utilisateur"
+              name="username"
+              value={formData.username}
+              onChange={handleInputChange}
               variant="outlined"
               fullWidth
-              className="hover:scale-[1.02] transition-transform"
+              required
             />
+
             <TextField
               label="Email"
+              name="email"
+              type="email"
+              value={formData.email}
+              onChange={handleInputChange}
               variant="outlined"
               fullWidth
-              type="email"
-              className="hover:scale-[1.02] transition-transform"
+              required
             />
-            <Button
-              variant="contained"
-              color="primary"
+
+            <TextField
+              label="Mot de passe"
+              name="password"
+              type="password"
+              value={formData.password}
+              onChange={handleInputChange}
+              variant="outlined"
               fullWidth
-              className="!py-3 !rounded-xl !shadow-lg hover:!shadow-xl !transition-all"
-            >
-              Connection method
-            </Button>
-          </form>
-        )}
-
-        {!isOpenForm && (
-          <div className="text-center text-gray-400 py-4">
-            Click to open form
+              required
+            />
           </div>
-        )}
-      </fieldset>
+        </fieldset>
 
-      {/* Permissions */}
-      <fieldset className="border-2 border-gray-300 rounded-2xl p-6 relative">
-        <legend className="px-2">
-          <button
-            className="flex items-center gap-3 px-4 py-2 bg-white hover:bg-gray-50 transition-all duration-300"
-            onClick={() => setIsOpenPerm(!isOpenPerm)}
-          >
-            <span className="text-xl font-bold text-gray-800">Permissions</span>
-            <span className="w-8 h-8 rounded-full bg-gradient-to-r from-green-500 to-teal-500 text-white shadow-md hover:shadow-lg hover:scale-110 transition-all duration-300 flex items-center justify-center">
-              <span
-                className={`text-sm font-bold transition-transform duration-300 inline-block ${isOpenPerm ? "" : "rotate-180"
-                  }`}
-              >
-                ^
-              </span>
-            </span>
-          </button>
-        </legend>
+        <fieldset className="border-2 border-gray-300 rounded-2xl p-6">
+          <legend className="px-4 text-xl font-bold text-gray-800">
+            Rôle
+          </legend>
 
-        {isOpenPerm && (
-          <div className="flex flex-col gap-3 animate-in slide-in-from-top duration-300">
-            {[0, 1, 2, 3].map((value) => (
+          <div className="flex flex-col gap-3 mt-4">
+            {roles.map((role) => (
               <div
-                key={value}
-                className="flex items-center justify-between p-4 bg-gray-50 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 rounded-xl cursor-pointer transition-all duration-200 shadow-sm hover:shadow-md"
-                onClick={() => handleToggle(value)}
+                key={role.value}
+                className={`flex items-start gap-4 p-4 rounded-xl cursor-pointer transition-all ${
+                  selectedRole === role.value
+                    ? "bg-blue-100 border-2 border-blue-500"
+                    : "bg-gray-50 hover:bg-blue-50 border-2 border-transparent"
+                }`}
+                onClick={() => handleRoleChange(role.value)}
               >
-                <div className="flex items-center gap-4">
-                  <input
-                    type="checkbox"
-                    checked={checked.includes(value)}
-                    onChange={() => { }}
-                    className="w-6 h-6 cursor-pointer accent-purple-600 rounded-lg"
-                  />
-                  <span className="font-medium text-gray-700">Line item {value + 1}</span>
+                <input
+                  type="radio"
+                  checked={selectedRole === role.value}
+                  onChange={() => handleRoleChange(role.value)}
+                  className="w-6 h-6 cursor-pointer accent-blue-600 mt-1"
+                />
+                <div className="flex flex-col">
+                  <span className="font-bold text-gray-800">{role.label}</span>
+                  <span className="text-sm text-gray-600">{role.description}</span>
                 </div>
-
-                <button
-                  className="p-2 rounded-full hover:bg-white transition-colors duration-200"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <svg
-                    className="w-5 h-5 text-gray-500 hover:text-gray-700"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </button>
               </div>
             ))}
           </div>
-        )}
+        </fieldset>
 
-        {!isOpenPerm && (
-          <div className="text-center text-gray-400 py-4">
-            Click here to manage permissions
-          </div>
-        )}
-      </fieldset>
-
-      <div className="mt-8 pt-8 border-t-2 border-gray-200">
         <Button
+          type="submit"
           variant="contained"
-          color="success"
+          color="primary"
           fullWidth
           size="large"
-          className="!py-4 !text-lg !font-bold !rounded-2xl !shadow-xl hover:!shadow-2xl !transition-all !bg-gradient-to-r !from-green-500 !to-emerald-500"
+          disabled={loading}
+          className="!py-4 !text-lg !font-bold !rounded-2xl"
         >
-          REGISTER
+          {loading ? "Création en cours..." : "CRÉER L'UTILISATEUR"}
         </Button>
-      </div>
+      </form>
     </div>
   );
 }
