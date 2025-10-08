@@ -47,10 +47,12 @@ function Register() {
   };
 
   const csrfToken = getCookie("csrftoken");
-  const headers: HeadersInit = csrfToken ? {
-    "Content-Type": "application/json",
-    "X-CSRFToken": csrfToken
-  } : {};
+  const headers: HeadersInit = csrfToken
+    ? {
+        "Content-Type": "application/json",
+        "X-CSRFToken": csrfToken
+      }
+    : {};
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -73,18 +75,18 @@ function Register() {
       const data = await response.json();
 
       if (response.ok) {
-        setMessage({ type: "success", text: "Utilisateur créé avec succès !" });
+        setMessage({ type: "success", text: "User created successfully!" });
         setFormData({ username: "", email: "", password: "" });
         setSelectedRole("user");
       } else {
         setMessage({
           type: "error",
-          text: data.error || data.detail || "Erreur lors de la création"
+          text: data.error || data.detail || "Error while creating user"
         });
       }
     } catch (error) {
-      setMessage({ type: "error", text: "Erreur de connexion au serveur" });
-      console.error("Erreur:", error);
+      setMessage({ type: "error", text: "Server connection error" });
+      console.error("Error:", error);
     } finally {
       setLoading(false);
     }
@@ -93,18 +95,18 @@ function Register() {
   const roles = [
     {
       value: "user" as UserRole,
-      label: "Utilisateur",
-      description: "Aucun droit d'administration"
+      label: "User",
+      description: "No administrative privileges"
     },
     {
       value: "moderator" as UserRole,
-      label: "Modérateur",
-      description: "Peut consulter les utilisateurs"
+      label: "Moderator",
+      description: "Can view user information"
     },
     {
       value: "admin" as UserRole,
-      label: "Administrateur",
-      description: "Tous les droits d'administration"
+      label: "Administrator",
+      description: "Full administrative privileges"
     }
   ];
 
@@ -122,12 +124,12 @@ function Register() {
 
         <fieldset className="border-2 border-gray-300 rounded-2xl p-6">
           <legend className="px-4 text-xl font-bold text-gray-800">
-            Enregistrement
+            Registration
           </legend>
 
           <div className="flex flex-col gap-4 mt-4">
             <TextField
-              label="Nom d'utilisateur"
+              label="Username"
               name="username"
               value={formData.username}
               onChange={handleInputChange}
@@ -148,7 +150,7 @@ function Register() {
             />
 
             <TextField
-              label="Mot de passe"
+              label="Password"
               name="password"
               type="password"
               value={formData.password}
@@ -162,7 +164,7 @@ function Register() {
 
         <fieldset className="border-2 border-gray-300 rounded-2xl p-6">
           <legend className="px-4 text-xl font-bold text-gray-800">
-            Rôle
+            Role
           </legend>
 
           <div className="flex flex-col gap-3 mt-4">
@@ -200,7 +202,7 @@ function Register() {
           disabled={loading}
           className="!py-4 !text-lg !font-bold !rounded-2xl"
         >
-          {loading ? "Création en cours..." : "CRÉER L'UTILISATEUR"}
+          {loading ? "Creating user..." : "CREATE USER"}
         </Button>
       </form>
     </div>
