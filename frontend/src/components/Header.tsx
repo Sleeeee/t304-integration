@@ -1,14 +1,7 @@
-import React from "react";
+import React, { useState } from "react";
 import getCookie from "../context/getCookie";
-import {
-  AppBar,
-  Toolbar,
-  Button,
-  Box,
-  Typography,
-  useMediaQuery,
-  useTheme,
-} from "@mui/material";
+import { AppBar, Toolbar, Button, Box, Typography, useMediaQuery, useTheme } from "@mui/material";
+import CustomSnackbar from "./CustomSnackbar";
 
 interface HeaderProps {
   onNavigate: (page: string) => void;
@@ -18,9 +11,11 @@ const Header: React.FC<HeaderProps> = ({ onNavigate }) => {
   const theme = useTheme();
   const isMedium = useMediaQuery(theme.breakpoints.down('lg'));
   const isSmall = useMediaQuery(theme.breakpoints.down('md'));
-  
+
   const csrfToken = getCookie("csrftoken");
   const headers: HeadersInit = csrfToken ? { "X-CSRFToken": csrfToken } : {};
+
+  const [snackbarText, setSnackbarText] = useState("");
 
   const logout = async () => {
     await fetch(`${process.env.REACT_APP_BACKEND_URL}/auth/wlogout/`, {
@@ -28,7 +23,9 @@ const Header: React.FC<HeaderProps> = ({ onNavigate }) => {
       credentials: "include",
       headers,
     });
-    window.location.reload();
+
+    setSnackbarText("Successfully logged out");
+    setTimeout(() => { window.location.reload() }, 1000);
   };
 
   const navItems = [
@@ -40,17 +37,23 @@ const Header: React.FC<HeaderProps> = ({ onNavigate }) => {
   ];
 
   return (
-    <AppBar 
-      position="static" 
+    <AppBar
+      position="static"
       elevation={0}
-      sx={{ 
+      sx={{
         backgroundColor: "white",
         borderBottom: "1px solid #E0E0E0"
       }}
     >
-      <Toolbar 
-        sx={{ 
-          justifyContent: "space-between", 
+      <CustomSnackbar
+        isError={false}
+        text={snackbarText}
+        onClose={() => { setSnackbarText(""); }}
+      />
+
+      <Toolbar
+        sx={{
+          justifyContent: "space-between",
           px: { xs: 2, sm: 3, md: 4, lg: 6 },
           minHeight: { xs: 56, sm: 64 },
         }}
@@ -71,9 +74,9 @@ const Header: React.FC<HeaderProps> = ({ onNavigate }) => {
           Lares
         </Typography>
 
-        <Box 
-          sx={{ 
-            display: "flex", 
+        <Box
+          sx={{
+            display: "flex",
             gap: { xs: 0.5, sm: 1, md: 2, lg: 3 },
             alignItems: "center",
             overflow: "hidden",
