@@ -6,6 +6,7 @@ import Header from './components/Header';
 import Register from './components/Register';
 import UsersPage from './components/UsersPage';
 import { Box } from '@mui/material';
+import KonvaCanva from './components/KonvaCanva';
 
 function App() {
   const { user, loading } = useAuth();
@@ -21,12 +22,7 @@ function App() {
       case "users":
         return <UsersPage onNavigate={setCurrentPage} />;
       case "monitoring":
-        return (
-          <Box sx={{ p: 4 }}>
-            <h2>Monitoring Page</h2>
-            <p>Cette page sera développée prochainement</p>
-          </Box>
-        );
+        return <KonvaCanva onNavigate={setCurrentPage} />;
       case "access":
         return (
           <Box sx={{ p: 4 }}>
