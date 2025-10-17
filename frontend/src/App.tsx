@@ -5,6 +5,7 @@ import Auth from './components/Auth';
 import Header from './components/Header';
 import Register from './components/Register';
 import UsersPage from './components/UsersPage';
+import PermissionTable from './components/permissions/PermissionTable';
 import { Box } from '@mui/material';
 
 function App() {
@@ -35,12 +36,7 @@ function App() {
           </Box>
         );
       case "access-control":
-        return (
-          <Box sx={{ p: 4 }}>
-            <h2>Access Control Page</h2>
-            <p>Cette page sera développée prochainement</p>
-          </Box>
-        );
+        return <PermissionTable />;
       case "settings":
         return (
           <Box sx={{ p: 4 }}>
