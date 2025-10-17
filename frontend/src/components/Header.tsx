@@ -9,7 +9,6 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ onNavigate }) => {
   const theme = useTheme();
-  const isMedium = useMediaQuery(theme.breakpoints.down('lg'));
   const isSmall = useMediaQuery(theme.breakpoints.down('md'));
 
   const csrfToken = getCookie("csrftoken");
