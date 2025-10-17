@@ -1,5 +1,5 @@
 import React from "react";
-import { Check, Close, Visibility } from '@mui/icons-material';
+import { Check, Visibility } from '@mui/icons-material';
 
 interface PermissionRowProps {
   label: string;
