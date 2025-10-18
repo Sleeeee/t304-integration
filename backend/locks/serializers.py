@@ -12,4 +12,11 @@ class LockGroupSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Lock_Group
-        fields = '__all__'
+        fields = ['id_group', 'name', 'locks']
+
+
+class AddLocksToGroupSerializer(serializers.Serializer):
+    lock_ids = serializers.ListField(
+        child=serializers.IntegerField(),
+        allow_empty=False
+    )
