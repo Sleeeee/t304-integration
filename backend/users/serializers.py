@@ -17,6 +17,10 @@ class GroupSerializer(serializers.ModelSerializer):
         model = Group
         fields = ['id', 'name']
 
+class GroupSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Group
+        fields = ['id', 'name']
 
 class AddUserToGroupSerializer(serializers.Serializer):
     user_ids = serializers.ListField(
