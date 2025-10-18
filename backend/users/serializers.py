@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
 
 
 User = get_user_model()
@@ -10,7 +11,18 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ("id", "username", "is_staff", "is_superuser")
 
+class GroupSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Group
+        fields = ['id', 'name']
 
+
+class AddUserToGroupSerializer(serializers.Serializer):
+    user_ids = serializers.ListField(
+        child=serializers.IntegerField(),
+        allow_empty=False,
+        help_text="Liste des IDs d'utilisateurs à ajouter au groupe"
+    )
 class UserRegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(
         write_only=True,

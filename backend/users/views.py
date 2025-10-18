@@ -4,7 +4,10 @@ from rest_framework import status
 from rest_framework.permissions import AllowAny
 from .serializers import UserSerializer, UserRegistrationSerializer
 from django.contrib.auth import get_user_model
-
+from django.contrib.auth.models import Group
+from .serializers import GroupSerializer
+from django.shortcuts import get_object_or_404
+from .serializers import AddUserToGroupSerializer
 
 User = get_user_model()
 
@@ -41,3 +44,63 @@ class UsersView(APIView):
             }, status=201)
 
         return Response(serializer.errors, status=400)
+
+
+class GroupView(APIView):
+    permission_classes = [AllowAny]  # pour l’instant tout le monde peut
+
+    def get(self, request):
+        groups = Group.objects.all()
+        serializer = GroupSerializer(groups, many=True)
+        return Response({"groups": serializer.data}, status=status.HTTP_200_OK)
+
+    def post(self, request):
+        serializer = GroupSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                "message": "Groupe créé avec succès",
+                "group": serializer.data
+            }, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+class AddUserToGroupView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request, group_id):
+        group = get_object_or_404(Group, id=group_id)
+        serializer = AddUserToGroupSerializer(data=request.data)
+
+        if serializer.is_valid():
+            user_ids = serializer.validated_data['user_ids']
+            users = User.objects.filter(id__in=user_ids)
+
+            if not users.exists():
+                return Response(
+                    {"error": "Aucun utilisateur trouvé avec ces IDs."},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+            for user in users:
+                group.user_set.add(user)
+
+            return Response({
+                "message": f"{users.count()} utilisateur(s) ajouté(s) au groupe '{group.name}'.",
+                "group": group.name,
+                "users_added": [user.username for user in users]
+            }, status=status.HTTP_200_OK)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+class GroupUsersView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, group_id):
+        group = get_object_or_404(Group, id=group_id)
+        users = group.user_set.all()
+        serializer = UserSerializer(users, many=True)
+        return Response({
+            "group": group.name,
+            "members_count": users.count(),
+            "members": serializer.data
+        }, status=status.HTTP_200_OK)
