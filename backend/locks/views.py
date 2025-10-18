@@ -9,7 +9,6 @@ from .serializers import LockSerializer
 class LocksView(APIView):
     permission_classes = [IsAuthenticated]
 
-    
     def get(self, request):
         user = request.user
         if not user.is_authenticated:
@@ -22,10 +21,9 @@ class LocksView(APIView):
         serializer = LockSerializer(locks, many=True)
         return Response({"locks": serializer.data}, status=status.HTTP_200_OK)
 
-    
     def post(self, request):
         user = request.user
-        if not user.is_authenticated :
+        if not user.is_authenticated:
             return Response({"error": "Unauthorized: only admin can create locks"}, status=status.HTTP_403_FORBIDDEN)
 
         serializer = LockSerializer(data=request.data)
@@ -38,7 +36,6 @@ class LocksView(APIView):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    
     def delete(self, request):
         user = request.user
         if not user.is_authenticated:
