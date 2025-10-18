@@ -1,6 +1,7 @@
-import React, { useState, FC } from 'react';
+import React, { useEffect, useState, FC } from 'react';
 import { Accordion, AccordionSummary, AccordionDetails, Button, ButtonGroup, Typography } from '@mui/material';
-import { ExpandMore } from '@mui/icons-material';
+import { ExpandMore, CheckCircle, Cancel } from '@mui/icons-material';
+import CustomSnackbar from '../CustomSnackbar';
 import PermissionRow from './PermissionRow';
 
 type Mode = 'locks' | 'users';
@@ -22,23 +23,97 @@ const PermissionTable: FC = () => {
     setMode(mode === 'locks' ? 'users' : 'locks');
   };
 
-  const users = [
-    { id: 1, name: "John" },
-    { id: 2, name: "Maria" },
-    { id: 3, name: "Lili" },
-    { id: 4, name: "Mathéo" }
-  ];
+  const [snackbar, setSnackbar] = useState({
+    isError: false,
+    text: "",
+  });
+
+  const [users, setUsers] = useState([]);
+  const [locks, setLocks] = useState([]);
+  const [permissions, setPermissions] = useState([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Fetch users, locks, and all permissions in parallel
+        const [usersRes, locksRes, permissionsRes] = await Promise.all([
+          fetch(`${process.env.REACT_APP_BACKEND_URL}/users/`, {
+            method: "GET",
+            credentials: "include"
+          }),
+          fetch(`${process.env.REACT_APP_BACKEND_URL}/locks/`, {
+            method: "GET",
+            credentials: "include"
+          }),
+          fetch(`${process.env.REACT_APP_BACKEND_URL}/permissions/?type=all`, {
+            method: "GET",
+            credentials: "include"
+          })
+        ]);
+
+        const usersJson = await usersRes.json();
+        const locksJson = await locksRes.json();
+        const permissionsJson = await permissionsRes.json();
+
+        const transformedUsers = usersJson.users.map((user: any) => ({
+          ...user,
+          name: user.username
+        }));
+
+        const transformedLocks = locksJson.locks.map((lock: any) => ({
+          ...lock,
+          id: lock.id_lock
+        }));
+
+        setUsers(transformedUsers);
+        setLocks(transformedLocks);
+        setPermissions(permissionsJson);
+      } catch (error) {
+        setSnackbar({
+          isError: true,
+          text: `Error fetching data: ${error}`,
+        });
+      }
+    };
+    fetchData();
+  }, []);
+
+  // Helper function to check if a user has permission for a lock
+  const hasPermission = (userId: number, lockId: number): boolean => {
+    return permissions.some((perm: any) =>
+      perm.user !== null && perm.lock !== null &&
+      perm.user === userId && perm.lock === lockId
+    );
+  };
+
+  // Helper function to check if a group has permission for a lock
+  const hasGroupPermission = (groupId: number, lockId: number): boolean => {
+    return permissions.some((perm: any) =>
+      perm.group !== null && perm.lock !== null &&
+      perm.group === groupId && perm.lock === lockId
+    );
+  };
+
+  // Helper function to check if a user has permission for a lock group
+  const hasPermissionToLockGroup = (userId: number, lockGroupId: number): boolean => {
+    return permissions.some((perm: any) =>
+      perm.user !== null && perm.lock_group !== null &&
+      perm.user === userId && perm.lock_group === lockGroupId
+    );
+  };
+
+  // Helper function to check if a group has permission for a lock group
+  const hasGroupPermissionToLockGroup = (groupId: number, lockGroupId: number): boolean => {
+    return permissions.some((perm: any) =>
+      perm.group !== null && perm.lock_group !== null &&
+      perm.group === groupId && perm.lock_group === lockGroupId
+    );
+  };
 
   const userGroups = [
     { id: 1, name: "IT" },
     { id: 2, name: "PROD" },
     { id: 3, name: "MAINTENANCE" }
-  ];
-
-  const locks = [
-    { id: 1, name: "Front door" },
-    { id: 2, name: "Vault door" },
-    { id: 3, name: "Server room" }
   ];
 
   const lockGroups = [
@@ -58,8 +133,18 @@ const PermissionTable: FC = () => {
     }
   };
 
+  // Get the selected item
+  const selectedItem = dataMap[mode][selected.type][selected.index];
+  const selectedItemId = selectedItem?.id;
+
   return (
     <main className="px-8 py-8 max-w-7xl mx-auto">
+      <CustomSnackbar
+        isError={snackbar?.isError}
+        text={snackbar?.text}
+        onClose={() => { setSnackbar({ isError: snackbar?.isError || false, text: "" }); }}
+      />
+
       {/* Mode Toggle Button */}
       <div className="flex justify-end mb-8">
         <Button
@@ -97,7 +182,7 @@ const PermissionTable: FC = () => {
                   </AccordionSummary>
                   <AccordionDetails>
                     <ButtonGroup orientation="vertical" variant="text" className="w-full">
-                      {items.map((item, index) => (
+                      {Array.isArray(items) && items.map((item, index) => (
                         <Button
                           key={item.id || item.name}
                           onClick={() => { setSelected({ type: categoryKey as SelectionType, index }) }}
@@ -118,23 +203,56 @@ const PermissionTable: FC = () => {
         <div className="col-span-2">
           <div className="bg-white rounded-lg shadow p-8">
             <h2 className="text-lg font-semibold text-slate-900 mb-8">
-              {`Assign permissions to ${mode === 'locks' ? 'Lock' : 'User'}${selected.type === 'group' ? ' Group' : ''} ${dataMap[mode][selected.type][selected.index].name}`}
+              {`Assign permissions to ${mode === 'locks' ? 'Lock' : 'User'}${selected.type === 'group' ? ' Group' : ''} ${selectedItem?.name || 'N/A'}`}
             </h2>
 
-
             <div className="grid grid-cols-2 gap-8 mb-8">
-              <>
-                {Object.entries(dataMap[otherMode]).map(([categoryKey, items]) => (
-                  <div key={categoryKey} className="mb-8">
-                    <h3 className="text-sm font-bold text-slate-900 text-center mb-6 uppercase tracking-wide">
-                      {categoryKey === "individual" ? `INDIVIDUAL ${otherMode.toUpperCase()}` : `${otherMode.substring(0, otherMode.length - 1).toUpperCase()} GROUPS`}
-                    </h3>
-                    {items.map(item => (
-                      <PermissionRow label={item.name} expandable={categoryKey === "group"} collapsed={false} />
-                    ))}
-                  </div>
-                ))}
-              </>
+              {Object.entries(dataMap[otherMode]).map(([categoryKey, items]) => (
+                <div key={categoryKey} className="mb-8">
+                  <h3 className="text-sm font-bold text-slate-900 text-center mb-6 uppercase tracking-wide">
+                    {categoryKey === "individual" ? `INDIVIDUAL ${otherMode.toUpperCase()}` : `${otherMode.substring(0, otherMode.length - 1).toUpperCase()} GROUPS`}
+                  </h3>
+                  {Array.isArray(items) && items.map(item => {
+                    let hasAccess = false;
+
+                    // Determine permission status based on mode and selection type
+                    if (mode === 'locks' && selected.type === 'individual') {
+                      // Viewing a specific lock - check which users/groups have access
+                      hasAccess = categoryKey === 'individual'
+                        ? hasPermission(item.id, selectedItemId)
+                        : hasGroupPermission(item.id, selectedItemId);
+                    } else if (mode === 'users' && selected.type === 'individual') {
+                      // Viewing a specific user - check which locks/lock groups they have access to
+                      hasAccess = categoryKey === 'individual'
+                        ? hasPermission(selectedItemId, item.id)
+                        : hasPermissionToLockGroup(selectedItemId, item.id);
+                    } else if (mode === 'locks' && selected.type === 'group') {
+                      // Viewing a specific lock group - check which users/groups have access
+                      hasAccess = categoryKey === 'individual'
+                        ? hasPermissionToLockGroup(item.id, selectedItemId)
+                        : hasGroupPermissionToLockGroup(item.id, selectedItemId);
+                    } else if (mode === 'users' && selected.type === 'group') {
+                      // Viewing a specific user group - check which locks/lock groups they have access to
+                      hasAccess = categoryKey === 'individual'
+                        ? hasGroupPermission(item.id, selectedItemId)
+                        : hasGroupPermissionToLockGroup(item.id, selectedItemId);
+                    }
+
+                    return (
+                      <div key={item.id || item.name} className="flex items-center justify-between mb-3 p-2 hover:bg-slate-50 rounded">
+                        <PermissionRow label={item.name} expandable={categoryKey === "group"} collapsed={false} />
+                        <div className="ml-auto">
+                          {hasAccess ? (
+                            <CheckCircle sx={{ color: 'green', fontSize: 24 }} />
+                          ) : (
+                            <Cancel sx={{ color: 'lightgray', fontSize: 24 }} />
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ))}
             </div>
 
             {/* Footer */}
