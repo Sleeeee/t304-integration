@@ -182,6 +182,8 @@ const UsersPage: React.FC<UsersPageProps> = ({ onNavigate }) => {
                   <TableCell sx={{ fontWeight: 600, color: "#666" }}>
                     Logs
                   </TableCell>
+				  <TableCell>
+				  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -228,6 +230,22 @@ const UsersPage: React.FC<UsersPageProps> = ({ onNavigate }) => {
                             View
                           </Button>
                         </TableCell>
+						<TableCell>
+							<Button
+								size="small"
+								onClick={() => ""}
+								sx={{
+									color: "#3B5CF",
+									textTransform: "none",
+									fontWeight: 500,
+									"&:hover": {
+										backgroundColor: "#F5F7FF",
+									},
+								}}
+							>
+							Manage
+							</Button>
+						</TableCell>
                       </TableRow>
                     );
                   })
