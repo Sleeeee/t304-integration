@@ -1,19 +1,18 @@
 import React, { useEffect, useState, FC } from 'react';
 import { Accordion, AccordionSummary, AccordionDetails, Button, ButtonGroup, Typography, Tooltip, CircularProgress } from '@mui/material';
 import { ExpandMore, CheckCircle, Cancel, Warning } from '@mui/icons-material';
+import getCookie from '../../context/getCookie';
 import CustomSnackbar from '../CustomSnackbar';
 import PermissionRow from './PermissionRow';
 
-// --- TYPE DEFINITIONS ---
-// Base types for mode and selection
+
 type Mode = 'locks' | 'users';
 type SelectionType = 'individual' | 'group';
 
-// Types for backend data structures
 interface Entity {
   id: number;
   name: string;
-  [key: string]: any; // Allow for other properties like username, id_lock, etc.
+  [key: string]: any;
 }
 
 interface User extends Entity {
@@ -45,7 +44,6 @@ type DataMap = {
   };
 };
 
-// --- HELPER FUNCTION: Consistent Key Generation ---
 const getPermissionKey = (permissionObj: Permission): string => {
   // Ensure the keys are always in the same order for consistent stringification
   const keys: Array<keyof Permission> = ['user', 'group', 'lock', 'lock_group'];
@@ -90,11 +88,9 @@ const PermissionTable: FC = () => {
 
   const toggleMode = () => {
     setMode(prevMode => (prevMode === 'locks' ? 'users' : 'locks'));
-    // Reset selection to the first available group in the new mode's data
     setSelected({ type: "group", index: 0 });
   };
 
-  // --- MOCK/MAPPED DATA (for Lock Groups) ---
   const lockGroups: Entity[] = [
     { id: 1, name: "FIRST FLOOR" },
     { id: 2, name: "SERVERS" },
@@ -113,13 +109,11 @@ const PermissionTable: FC = () => {
   };
 
   const selectedData = dataMap[mode];
-  // Ensure we check for valid index/data before accessing selectedItem
   const selectedItem = selectedData[selected.type]?.[selected.index];
   const selectedItemId = selectedItem?.id;
 
   const otherData = dataMap[otherMode];
 
-  // --- EFFECTS AND DATA FETCHING ---
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -160,13 +154,6 @@ const PermissionTable: FC = () => {
     fetchData();
   }, []);
 
-  // --- PERMISSION LOGIC ---
-
-  /**
-   * Defines the Entity/Target relationship for a given context.
-   * NOTE: This function's sole purpose is to simplify entity/target type determination, 
-   * relying on external logic to supply the correct IDs.
-   */
   const getPermissionContext = (
     isEntitySelected: boolean,
     isEntityGroup: boolean,
@@ -179,16 +166,11 @@ const PermissionTable: FC = () => {
     let entityType: 'user' | 'group';
     let targetType: 'lock' | 'lock_group';
 
-    // If mode is 'locks', the selected item is the target and the other item is the entity (user/group).
-    // If mode is 'users', the selected item is the entity (user/group) and the other item is the target (lock/lock_group).
-
     if (mode === 'locks') {
-      // Entity is the OTHER item (user or group), Target is the SELECTED item (lock or lock_group)
-      entityType = isEntitySelected ? 'group' : 'user'; // This line is confusing, let's fix the logic flow.
+      entityType = isEntitySelected ? 'group' : 'user';
       entityType = isEntityGroup ? 'group' : 'user';
       targetType = isTargetGroup ? 'lock_group' : 'lock';
-    } else { // mode === 'users'
-      // Entity is the SELECTED item (user or group), Target is the OTHER item (lock or lock_group)
+    } else {
       entityType = isEntityGroup ? 'group' : 'user';
       targetType = isTargetGroup ? 'lock_group' : 'lock';
     }
@@ -207,12 +189,10 @@ const PermissionTable: FC = () => {
     currentlyGranted: boolean
   ) => {
     const permissionObj: Permission = {
-      // Crucial check: Ensure IDs are numbers before inclusion
       ...(entityType === 'user' && typeof entityId === 'number' ? { user: entityId } : { group: entityId }),
       ...(targetType === 'lock' && typeof targetId === 'number' ? { lock: targetId } : { lock_group: targetId })
     };
 
-    // Exit early if essential IDs are missing (should be caught upstream, but as a fallback)
     if (!getPermissionKey(permissionObj)) {
       console.error("Attempted to toggle permission with missing key IDs.", permissionObj);
       setSnackbar({ isError: true, text: "Error: Entity or Target ID is missing." });
@@ -248,8 +228,22 @@ const PermissionTable: FC = () => {
     setPermissionChanges({ toAdd: [], toRemove: [] });
   };
 
+  const csrfToken = getCookie("csrftoken");
+  const headers: HeadersInit = csrfToken
+    ? {
+      "Content-Type": "application/json",
+      "X-CSRFToken": csrfToken
+    }
+    : {};
+
   const handlePermissionChanges = async () => {
-    console.log("Applying changes:", permissionChanges);
+    await fetch(`${process.env.REACT_APP_BACKEND_URL}/permissions/`, {
+      method: "POST",
+      credentials: "include",
+      headers,
+      body: JSON.stringify(permissionChanges),
+    });
+
     clearPermissionChanges();
     setSnackbar({ isError: false, text: "Permissions updated successfully! (Mock)" });
   };
@@ -321,11 +315,10 @@ const PermissionTable: FC = () => {
 
       const data = await res.json();
 
-      // FIX: Ensure id_user is explicitly mapped to the generic 'id' property
       const transformedMembers: User[] = (data.members || []).map((member: any) => ({
         ...member,
         name: member.username,
-        id: member.id_user, // <--- CRITICAL FIX: Ensure 'id' is set from 'id_user'
+        id: member.id_user,
       }));
 
       setExpandedGroups(prev => ({
@@ -343,8 +336,6 @@ const PermissionTable: FC = () => {
     }
   };
 
-
-  // --- INITIAL LOADING CHECK ---
   const isLoadingOrInvalid = !selectedItem || (mode === 'locks' && locks.length === 0) || (mode === 'users' && users.length === 0);
 
   if (isLoadingOrInvalid) {
@@ -356,7 +347,6 @@ const PermissionTable: FC = () => {
     );
   }
 
-  // --- RENDERING LOGIC ---
   return (
     <main className="px-8 py-8 max-w-7xl mx-auto">
       <CustomSnackbar
