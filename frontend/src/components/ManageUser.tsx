@@ -24,12 +24,12 @@ import getCookie from "../context/getCookie";
 type ManageUserProps = {
 		isDialogOpen: boolean;
 		setIsDialogOpen: React.Dispatch<React.SetStateAction<boolean>>;
-		selectedUserId: number | null;
-		setSelectedUserId: React.Dispatch<React.SetStateAction<number | null>>
+		selectedUser: any | null;
+		setSelectedUser: React.Dispatch<React.SetStateAction<any | null>>
 	};
 
-function ManageUser({isDialogOpen, setIsDialogOpen, selectedUserId, setSelectedUserId}: ManageUserProps) {
-	
+function ManageUser({isDialogOpen, setIsDialogOpen, selectedUser, setSelectedUser}: ManageUserProps) {
+
 	const [formData, setFormData] = useState({
 		username: "",
 		email: "",
@@ -40,13 +40,13 @@ function ManageUser({isDialogOpen, setIsDialogOpen, selectedUserId, setSelectedU
 	// Désaffiche le forme en overlay et remet l'id de l'utilisateur sélectionné a null
 	const handleDialogClose = () => {
 		setIsDialogOpen(false);
-		setSelectedUserId(null);
+		setSelectedUser("");
 	}
 
 	  // Gère l'envoie du formulaire de gestion d'utilisateur
 	const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
-		console.log(selectedUserId)
+		console.log(selectedUser)
 	}
 
 	const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -64,6 +64,7 @@ function ManageUser({isDialogOpen, setIsDialogOpen, selectedUserId, setSelectedU
 			fullWidth = {true}
 			maxWidth = "lg"
 		  >
+		  {selectedUser.email}
 		  <DialogContent>
 			  <DialogActions>
 				  <Button
@@ -89,16 +90,6 @@ function ManageUser({isDialogOpen, setIsDialogOpen, selectedUserId, setSelectedU
 						label="Username"
 						name="username"
 						value={formData.username}
-						onChange={handleInputChange}
-						variant="outlined"
-						fullWidth
-						required
-					/>
-					<TextField
-						label="Email"
-						name="email"
-						type="email"
-						value={formData.email}
 						onChange={handleInputChange}
 						variant="outlined"
 						fullWidth

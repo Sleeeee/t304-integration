@@ -34,7 +34,7 @@ const UsersPage: React.FC<UsersPageProps> = ({ onNavigate }) => {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
+  const [selectedUser, setSelectedUser] = useState<any>("");
   const [isDialogOpen, setIsDialogOpen] = useState(false)
 
   // Fonction pour déterminer le rôle d'un utilisateur
@@ -102,9 +102,9 @@ const UsersPage: React.FC<UsersPageProps> = ({ onNavigate }) => {
   });
 
   // Affiche le form en overlay et assigne l'id de l'utilisateur sélectionné
-  const handleDialogOpen = (userId: number) => {
+  const handleDialogOpen = (user: any) => {
 	setIsDialogOpen(true);
-	setSelectedUserId(userId);
+	setSelectedUser(user);
   };
 
   return (
@@ -242,7 +242,7 @@ const UsersPage: React.FC<UsersPageProps> = ({ onNavigate }) => {
 						<TableCell>
 							<Button
 								size="small"
-								onClick={() => handleDialogOpen(user.id)}
+								onClick={() => handleDialogOpen(user)}
 								sx={{
 									color: "#3B5CF",
 									textTransform: "none",
@@ -267,8 +267,8 @@ const UsersPage: React.FC<UsersPageProps> = ({ onNavigate }) => {
 	  <ManageUser
 	  	isDialogOpen={isDialogOpen}
 		setIsDialogOpen={setIsDialogOpen}
-		selectedUserId={selectedUserId}
-		setSelectedUserId={setSelectedUserId}
+		selectedUser={selectedUser}
+		setSelectedUser={setSelectedUser}
 		/>
     </Box>
   );
