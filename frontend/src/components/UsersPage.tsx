@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, ChangeEvent } from "react";
 import {
   Box,
   Paper,
@@ -15,6 +15,7 @@ import {
   CircularProgress,
 } from "@mui/material";
 import getCookie from "../context/getCookie";
+import ManageUser from "./ManageUser"
 
 interface User {
   id: number;
@@ -33,6 +34,8 @@ const UsersPage: React.FC<UsersPageProps> = ({ onNavigate }) => {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
 
   // Fonction pour déterminer le rôle d'un utilisateur
   const getUserRole = (user: User): string => {
@@ -97,6 +100,12 @@ const UsersPage: React.FC<UsersPageProps> = ({ onNavigate }) => {
       role.toLowerCase().includes(searchQuery.toLowerCase())
     );
   });
+
+  // Affiche le form en overlay et assigne l'id de l'utilisateur sélectionné
+  const handleDialogOpen = (userId: number) => {
+	setIsDialogOpen(true);
+	setSelectedUserId(userId);
+  };
 
   return (
     <Box sx={{ p: 4, backgroundColor: "#F5F5F5", minHeight: "calc(100vh - 64px)" }}>
@@ -233,7 +242,7 @@ const UsersPage: React.FC<UsersPageProps> = ({ onNavigate }) => {
 						<TableCell>
 							<Button
 								size="small"
-								onClick={() => ""}
+								onClick={() => handleDialogOpen(user.id)}
 								sx={{
 									color: "#3B5CF",
 									textTransform: "none",
@@ -255,6 +264,12 @@ const UsersPage: React.FC<UsersPageProps> = ({ onNavigate }) => {
           </TableContainer>
         )}
       </Paper>
+	  <ManageUser
+	  	isDialogOpen={isDialogOpen}
+		setIsDialogOpen={setIsDialogOpen}
+		selectedUserId={selectedUserId}
+		setSelectedUserId={setSelectedUserId}
+		/>
     </Box>
   );
 };
