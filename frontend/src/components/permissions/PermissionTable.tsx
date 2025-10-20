@@ -17,7 +17,7 @@ interface Entity {
 
 interface User extends Entity {
   username: string;
-  id_user: number;
+  id: number;
 }
 
 interface Lock extends Entity {
@@ -114,43 +114,45 @@ const PermissionTable: FC = () => {
 
   const otherData = dataMap[otherMode];
 
+  const fetchData = async () => {
+    try {
+      const [usersRes, locksRes, userGroupsRes, permissionsRes] = await Promise.all([
+        fetch(`${process.env.REACT_APP_BACKEND_URL}/users/`, { method: "GET", credentials: "include" }),
+        fetch(`${process.env.REACT_APP_BACKEND_URL}/locks/`, { method: "GET", credentials: "include" }),
+        fetch(`${process.env.REACT_APP_BACKEND_URL}/users/groups/`, { method: "GET", credentials: "include" }),
+        fetch(`${process.env.REACT_APP_BACKEND_URL}/permissions/?type=all`, { method: "GET", credentials: "include" })
+      ]);
+
+      const usersJson = await usersRes.json();
+      const locksJson = await locksRes.json();
+      const userGroupsJson = await userGroupsRes.json();
+      const permissionsJson = await permissionsRes.json();
+
+      const transformedUsers: User[] = (usersJson.users || []).map((user: any) => ({
+        ...user,
+        name: user.username,
+      }));
+
+      const transformedLocks: Lock[] = (locksJson.locks || []).map((lock: any) => ({
+        ...lock,
+        name: lock.name || `Lock ${lock.id_lock}`,
+        id: lock.id_lock
+      }));
+
+      setUsers(transformedUsers);
+      setLocks(transformedLocks);
+      setUserGroups(userGroupsJson.groups || []);
+      setPermissions(permissionsJson || []);
+      setExpandedGroups({}); // Reset expansion on full data refresh
+    } catch (error) {
+      setSnackbar({
+        isError: true,
+        text: `Error fetching initial data: ${error}`,
+      });
+    }
+  };
+
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [usersRes, locksRes, userGroupsRes, permissionsRes] = await Promise.all([
-          fetch(`${process.env.REACT_APP_BACKEND_URL}/users/`, { method: "GET", credentials: "include" }),
-          fetch(`${process.env.REACT_APP_BACKEND_URL}/locks/`, { method: "GET", credentials: "include" }),
-          fetch(`${process.env.REACT_APP_BACKEND_URL}/users/groups/`, { method: "GET", credentials: "include" }),
-          fetch(`${process.env.REACT_APP_BACKEND_URL}/permissions/?type=all`, { method: "GET", credentials: "include" })
-        ]);
-
-        const usersJson = await usersRes.json();
-        const locksJson = await locksRes.json();
-        const userGroupsJson = await userGroupsRes.json();
-        const permissionsJson = await permissionsRes.json();
-
-        const transformedUsers: User[] = usersJson.users.map((user: any) => ({
-          ...user,
-          name: user.username,
-        }));
-
-        const transformedLocks: Lock[] = locksJson.locks.map((lock: any) => ({
-          ...lock,
-          name: lock.name || `Lock ${lock.id_lock}`,
-          id: lock.id_lock // Map id_lock to generic 'id'
-        }));
-
-        setUsers(transformedUsers);
-        setLocks(transformedLocks);
-        setUserGroups(userGroupsJson.groups || []);
-        setPermissions(permissionsJson || []);
-      } catch (error) {
-        setSnackbar({
-          isError: true,
-          text: `Error fetching data: ${error}`,
-        });
-      }
-    };
     fetchData();
   }, []);
 
@@ -245,7 +247,8 @@ const PermissionTable: FC = () => {
     });
 
     clearPermissionChanges();
-    setSnackbar({ isError: false, text: "Permissions updated successfully! (Mock)" });
+    setSnackbar({ isError: false, text: "Permissions updated successfully!" });
+    fetchData();
   };
 
   // Helper functions for checking **CURRENT** and **PENDING** permissions
@@ -318,7 +321,6 @@ const PermissionTable: FC = () => {
       const transformedMembers: User[] = (data.members || []).map((member: any) => ({
         ...member,
         name: member.username,
-        id: member.id_user,
       }));
 
       setExpandedGroups(prev => ({
@@ -488,7 +490,7 @@ const PermissionTable: FC = () => {
                         <div className="flex items-center justify-between mb-3 p-2 hover:bg-slate-50 rounded">
                           <PermissionRow
                             label={item.name}
-                            expandable={isGroup && otherMode === 'users'} // Only User Groups can expand
+                            expandable={isGroup}
                             collapsed={!isExpanded}
                             onExpand={isGroup && (otherMode === 'users') ? () => fetchGroupMembers(item.id, categoryKey) : undefined}
                             isLoading={isLoading}
