@@ -34,7 +34,7 @@ const UsersPage: React.FC<UsersPageProps> = ({ onNavigate }) => {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [selectedUser, setSelectedUser] = useState<any>("");
+  const [selectedUser, setSelectedUser] = useState("none");
   const [isDialogOpen, setIsDialogOpen] = useState(false)
 
   // Fonction pour déterminer le rôle d'un utilisateur

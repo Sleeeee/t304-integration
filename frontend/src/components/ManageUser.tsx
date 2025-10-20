@@ -24,8 +24,8 @@ import getCookie from "../context/getCookie";
 type ManageUserProps = {
 		isDialogOpen: boolean;
 		setIsDialogOpen: React.Dispatch<React.SetStateAction<boolean>>;
-		selectedUser: any | null;
-		setSelectedUser: React.Dispatch<React.SetStateAction<any | null>>
+		selectedUser: any;
+		setSelectedUser: React.Dispatch<React.SetStateAction<any>>
 	};
 
 function ManageUser({isDialogOpen, setIsDialogOpen, selectedUser, setSelectedUser}: ManageUserProps) {
@@ -40,7 +40,7 @@ function ManageUser({isDialogOpen, setIsDialogOpen, selectedUser, setSelectedUse
 	// Désaffiche le forme en overlay et remet l'id de l'utilisateur sélectionné a null
 	const handleDialogClose = () => {
 		setIsDialogOpen(false);
-		setSelectedUser("");
+		setSelectedUser("none");
 	}
 
 	  // Gère l'envoie du formulaire de gestion d'utilisateur
@@ -64,7 +64,6 @@ function ManageUser({isDialogOpen, setIsDialogOpen, selectedUser, setSelectedUse
 			fullWidth = {true}
 			maxWidth = "lg"
 		  >
-		  {selectedUser.email}
 		  <DialogContent>
 			  <DialogActions>
 				  <Button
