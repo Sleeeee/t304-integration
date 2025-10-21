@@ -60,7 +60,6 @@ const getPermissionKey = (permissionObj: Permission): string => {
   return JSON.stringify(orderedObj);
 };
 
-// --- MAIN COMPONENT ---
 const PermissionTable: FC = () => {
   const [mode, setMode] = useState<Mode>('locks');
   const otherMode = mode === "locks" ? "users" : "locks";
@@ -81,6 +80,7 @@ const PermissionTable: FC = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [locks, setLocks] = useState<Lock[]>([]);
   const [userGroups, setUserGroups] = useState<Entity[]>([]);
+  const [lockGroups, setLockGroups] = useState<Entity[]>([]);
   const [permissions, setPermissions] = useState<Permission[]>([]);
   const [expandedGroups, setExpandedGroups] = useState<{ [key: string]: Entity[] }>({});
   const [loadingGroups, setLoadingGroups] = useState<Set<string>>(new Set());
@@ -90,12 +90,6 @@ const PermissionTable: FC = () => {
     setMode(prevMode => (prevMode === 'locks' ? 'users' : 'locks'));
     setSelected({ type: "group", index: 0 });
   };
-
-  const lockGroups: Entity[] = [
-    { id: 1, name: "FIRST FLOOR" },
-    { id: 2, name: "SERVERS" },
-    { id: 3, name: "OUTSIDE" }
-  ];
 
   const dataMap: DataMap = {
     users: {
@@ -116,16 +110,18 @@ const PermissionTable: FC = () => {
 
   const fetchData = async () => {
     try {
-      const [usersRes, locksRes, userGroupsRes, permissionsRes] = await Promise.all([
+      const [usersRes, locksRes, userGroupsRes, lockGroupsRes, permissionsRes] = await Promise.all([
         fetch(`${process.env.REACT_APP_BACKEND_URL}/users/`, { method: "GET", credentials: "include" }),
         fetch(`${process.env.REACT_APP_BACKEND_URL}/locks/`, { method: "GET", credentials: "include" }),
         fetch(`${process.env.REACT_APP_BACKEND_URL}/users/groups/`, { method: "GET", credentials: "include" }),
+        fetch(`${process.env.REACT_APP_BACKEND_URL}/locks/groups/`, { method: "GET", credentials: "include" }),
         fetch(`${process.env.REACT_APP_BACKEND_URL}/permissions/?type=all`, { method: "GET", credentials: "include" })
       ]);
 
       const usersJson = await usersRes.json();
       const locksJson = await locksRes.json();
       const userGroupsJson = await userGroupsRes.json();
+      const lockGroupsJson = await lockGroupsRes.json();
       const permissionsJson = await permissionsRes.json();
 
       const transformedUsers: User[] = (usersJson.users || []).map((user: any) => ({
@@ -139,9 +135,15 @@ const PermissionTable: FC = () => {
         id: lock.id_lock
       }));
 
+      const transformedLockGroups: Entity[] = (lockGroupsJson.lock_groups || []).map((lockGroup: any) => ({
+        ...lockGroup,
+        id: lockGroup.id_group
+      }));
+
       setUsers(transformedUsers);
       setLocks(transformedLocks);
       setUserGroups(userGroupsJson.groups || []);
+      setLockGroups(transformedLockGroups);
       setPermissions(permissionsJson || []);
       setExpandedGroups({}); // Reset expansion on full data refresh
     } catch (error) {
