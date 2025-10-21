@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, ChangeEvent } from "react";
 import {
   Box,
   Paper,
@@ -15,6 +15,7 @@ import {
   CircularProgress,
 } from "@mui/material";
 import getCookie from "../context/getCookie";
+import ManageUser from "./ManageUser"
 
 interface User {
   id: number;
@@ -33,6 +34,8 @@ const UsersPage: React.FC<UsersPageProps> = ({ onNavigate }) => {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [selectedUser, setSelectedUser] = useState("none");
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
 
   // Fonction pour déterminer le rôle d'un utilisateur
   const getUserRole = (user: User): string => {
@@ -97,6 +100,12 @@ const UsersPage: React.FC<UsersPageProps> = ({ onNavigate }) => {
       role.toLowerCase().includes(searchQuery.toLowerCase())
     );
   });
+
+  // Affiche le form en overlay et assigne l'id de l'utilisateur sélectionné
+  const handleDialogOpen = (user: any) => {
+	setIsDialogOpen(true);
+	setSelectedUser(user);
+  };
 
   return (
     <Box sx={{ p: 4, backgroundColor: "#F5F5F5", minHeight: "calc(100vh - 64px)" }}>
@@ -182,6 +191,8 @@ const UsersPage: React.FC<UsersPageProps> = ({ onNavigate }) => {
                   <TableCell sx={{ fontWeight: 600, color: "#666" }}>
                     Logs
                   </TableCell>
+				  <TableCell>
+				  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -228,6 +239,22 @@ const UsersPage: React.FC<UsersPageProps> = ({ onNavigate }) => {
                             View
                           </Button>
                         </TableCell>
+						<TableCell>
+							<Button
+								size="small"
+								onClick={() => handleDialogOpen(user)}
+								sx={{
+									color: "#3B5CF",
+									textTransform: "none",
+									fontWeight: 500,
+									"&:hover": {
+										backgroundColor: "#F5F7FF",
+									},
+								}}
+							>
+							Manage
+							</Button>
+						</TableCell>
                       </TableRow>
                     );
                   })
@@ -237,6 +264,12 @@ const UsersPage: React.FC<UsersPageProps> = ({ onNavigate }) => {
           </TableContainer>
         )}
       </Paper>
+	  <ManageUser
+	  	isDialogOpen={isDialogOpen}
+		setIsDialogOpen={setIsDialogOpen}
+		selectedUser={selectedUser}
+		setSelectedUser={setSelectedUser}
+		/>
     </Box>
   );
 };
