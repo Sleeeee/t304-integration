@@ -11,18 +11,45 @@ import KonvaCanva from './components/KonvaCanva';
 function App() {
   const { user, loading } = useAuth();
   const [currentPage, setCurrentPage] = useState("users");
+  
+  const [selectedSchematicId, setSelectedSchematicId] = useState<number | null>(null);
 
   if (loading) return <div>Loading...</div>;
   if (!user) return <Auth />;
+
+  const handleViewSchematic = (schematicId: number) => {
+    setSelectedSchematicId(schematicId);
+    setCurrentPage("monitoring");
+  };
 
   const renderPage = () => {
     switch (currentPage) {
       case "register":
         return <Register />;
       case "users":
-        return <UsersPage onNavigate={setCurrentPage} />;
+        return <UsersPage 
+          onNavigate={setCurrentPage} 
+          onViewSchematic={handleViewSchematic} 
+        />;
       case "monitoring":
-        return <KonvaCanva onNavigate={setCurrentPage} />;
+        if (!selectedSchematicId) {
+          return (
+            <Box sx={{ p: 4 }}>
+              <h2>Erreur</h2>
+              <p>Aucun schéma n'a été sélectionné.</p>
+              <button 
+                onClick={() => setCurrentPage("users")}
+                style={{ padding: '8px 16px', backgroundColor: '#f44336', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+              >
+                Retour à la liste des utilisateurs
+              </button>
+            </Box>
+          );
+        }
+        return <KonvaCanva 
+          onNavigate={setCurrentPage} 
+          schematicId={selectedSchematicId} 
+        />;
       case "access":
         return (
           <Box sx={{ p: 4 }}>
@@ -45,7 +72,10 @@ function App() {
           </Box>
         );
       default:
-        return <UsersPage onNavigate={setCurrentPage} />;
+        return <UsersPage 
+          onNavigate={setCurrentPage} 
+          onViewSchematic={handleViewSchematic}
+        />;
     }
   };
 
