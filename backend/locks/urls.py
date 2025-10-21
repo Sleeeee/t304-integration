@@ -10,9 +10,13 @@ from .views import (
 
 urlpatterns = [
     path('', LocksView.as_view(), name='locks'),
-    path('lock-groups/', LockGroupsView.as_view(), name='lock-groups'),
-    path('lock-groups/<int:group_id>/add-locks/', AddLocksToGroupView.as_view(), name='add-locks-to-group'),
-    path('lock-groups/<int:group_id>/locks/', GroupLocksView.as_view(), name='group-locks'),
-    path('lock-groups/<int:group_id>/remove-locks/', RemoveLockFromGroupView.as_view(), name='remove-locks-from-group'),
-    path('lock-groups/<int:group_id>/delete/', DeleteLockGroupView.as_view(), name='delete-lock-group'),
+    path('groups/', LockGroupsView.as_view(), name='lock_groups'),
+    path('groups/<int:group_id>/add_lock/',
+         AddLocksToGroupView.as_view(), name='add_locks_to_group'),
+    path('groups/<int:group_id>/locks/',
+         GroupLocksView.as_view(), name='group_locks'),
+    path('groups/<int:group_id>/remove_lock/',
+         RemoveLockFromGroupView.as_view(), name='remove_locks_from_group'),
+    path('groups/<int:group_id>/delete/',
+         DeleteLockGroupView.as_view(), name='delete-lock-group'),
 ]
