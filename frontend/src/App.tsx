@@ -5,6 +5,9 @@ import Auth from './components/Auth';
 import Header from './components/Header';
 import Register from './components/Register';
 import UsersPage from './components/UsersPage';
+import GroupsPage from './components/GroupsPage';
+import GroupsUserPage from './components/GroupsUser/UserGroupsList';
+import GroupsLocketPage from './components/GroupsLocket/UserLocketsList';
 import PermissionTable from './components/permissions/PermissionTable';
 import { Box } from '@mui/material';
 
@@ -28,13 +31,12 @@ function App() {
             <p>Cette page sera développée prochainement</p>
           </Box>
         );
-      case "access":
-        return (
-          <Box sx={{ p: 4 }}>
-            <h2>Access Page</h2>
-            <p>Cette page sera développée prochainement</p>
-          </Box>
-        );
+      case "groups":
+        return <GroupsPage onNavigate={setCurrentPage} />;
+      case 'user-groups':
+        return <GroupsUserPage onNavigate={setCurrentPage} />;
+      case 'user-lockets':
+        return <GroupsLocketPage onNavigate={setCurrentPage} />;
       case "access-control":
         return <PermissionTable />;
       case "settings":
