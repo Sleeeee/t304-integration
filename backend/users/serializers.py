@@ -9,7 +9,8 @@ User = get_user_model()
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ("username", "is_staff", "is_superuser", "id", "email")
+        fields = ("id", "username", "is_staff", "is_superuser", "email")
+
 
 class GroupSerializer(serializers.ModelSerializer):
     class Meta:
@@ -23,6 +24,8 @@ class AddUserToGroupSerializer(serializers.Serializer):
         allow_empty=False,
         help_text="Liste des IDs d'utilisateurs à ajouter au groupe"
     )
+
+
 class UserRegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(
         write_only=True,
