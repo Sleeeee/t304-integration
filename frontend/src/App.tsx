@@ -8,6 +8,7 @@ import UsersPage from './components/UsersPage';
 import GroupsPage from './components/GroupsPage';
 import GroupsUserPage from './components/GroupsUser/UserGroupsList';
 import GroupsLocketPage from './components/GroupsLocket/UserLocketsList';
+import LockPage from './components/LockPage';
 import PermissionTable from './components/permissions/PermissionTable';
 import { Box } from '@mui/material';
 
@@ -37,6 +38,15 @@ function App() {
         return <GroupsUserPage onNavigate={setCurrentPage} />;
       case 'user-lockets':
         return <GroupsLocketPage onNavigate={setCurrentPage} />;
+      case "lock":
+        return <LockPage onNavigate={setCurrentPage} />;
+      case "access":
+        return (
+          <Box sx={{ p: 4 }}>
+            <h2>Access Page</h2>
+            <p>Cette page sera développée prochainement</p>
+          </Box>
+        );
       case "access-control":
         return <PermissionTable />;
       case "settings":
