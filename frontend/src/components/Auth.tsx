@@ -2,10 +2,13 @@ import React, { useState } from "react";
 import TextField from "@mui/material/TextField";
 import Button from "@mui/material/Button";
 import CustomSnackbar from "./CustomSnackbar";
+import { useAuth } from "../context/AuthContext";
 
 const Auth = () => {
 	const [username, setUsername] = useState("");
 	const [password, setPassword] = useState("");
+	
+	const { setUser, setDefaultSchematicId } = useAuth();
 
 	const [snackbar, setSnackbar] = useState({
 		isError: false,
@@ -25,10 +28,8 @@ const Auth = () => {
 		if (data.error) {
 			setSnackbar({ isError: true, text: data.error });
 		} else if (data.message) {
-			setSnackbar({ isError: false, text: data.message });
-			setTimeout(() => {
-				window.location.reload();
-			}, 500);
+			setUser(data.user);
+			setDefaultSchematicId(data.user.default_schematic_id);
 		}
 	};
 
@@ -89,4 +90,3 @@ const Auth = () => {
 };
 
 export default Auth;
-

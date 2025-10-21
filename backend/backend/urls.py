@@ -16,6 +16,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from schematics import views as schematics_views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -23,4 +24,6 @@ urlpatterns = [
     path('users/', include("users.urls")),
     path('locks/', include("locks.urls")),
     path('permissions/', include("permissions.urls")),
+    path('api/schematics/<int:schematic_id>/data/', schematics_views.get_schematic_data, name='get_schematic_data'),
+    path('api/schematics/<int:schematic_id>/save/', schematics_views.save_schematic_data, name='save_schematic_data'),
 ]

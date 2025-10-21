@@ -9,6 +9,7 @@ interface LineData {
   id: string;
   scaleX?: number;
   scaleY?: number;
+  rotation?: number;
 }
 
 interface LockData {
@@ -19,6 +20,7 @@ interface LockData {
   lock_id?: number; 
   scaleX?: number;
   scaleY?: number;
+  rotation?: number;
 }
 
 type ComponentData = LineData | LockData;
@@ -68,6 +70,7 @@ const TransformableLine: React.FC<{
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
         onDragStart={onDragStart}
+        rotation={shapeProps.rotation || 0}
         // @ts-ignore - React 19 Incompatible
         onDragEnd={(e) => {
           onDragEnd();
@@ -81,6 +84,7 @@ const TransformableLine: React.FC<{
           const node = shapeRef.current;
           const scaleX = node.scaleX();
           const scaleY = node.scaleY();
+          const rotation = node.rotation();
 
           onChange({
             ...shapeProps,
@@ -88,6 +92,7 @@ const TransformableLine: React.FC<{
             y: node.y(),
             scaleX: scaleX,
             scaleY: scaleY,
+            rotation: rotation,
           });
         }}
       />
@@ -145,6 +150,7 @@ const TransformableLock: React.FC<{
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
         onDragStart={onDragStart}
+        rotation={shapeProps.rotation || 0}
         // @ts-ignore - React 19 Incompatible
         onDragEnd={(e) => {
           onDragEnd();
@@ -158,6 +164,7 @@ const TransformableLock: React.FC<{
           const node = shapeRef.current;
           const scaleX = node.scaleX();
           const scaleY = node.scaleY();
+          const rotation = node.rotation();
 
           node.scaleX(0.4);
           node.scaleY(0.4);
@@ -168,6 +175,7 @@ const TransformableLock: React.FC<{
             y: node.y(),
             scaleX: scaleX / 0.4,
             scaleY: scaleY / 0.4,
+            rotation: rotation,
           });
         }}
       />
@@ -200,19 +208,32 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
   const [stageSize, setStageSize] = React.useState({ width: 600, height: 500 });
   const containerRef = React.useRef<HTMLDivElement>(null);
 
-  // États pour le chargement et la sauvegarde
   const [isLoading, setIsLoading] = React.useState(true);
   const [isSaving, setIsSaving] = React.useState(false);
+  
+  const getCookie = (name: string) => {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  };
 
   const linePoints = [0, 0, 100, 0];
 
-  // Chargement des données au montage
   React.useEffect(() => {
     const loadData = async () => {
       if (!schematicId) return;
       setIsLoading(true);
       try {
-        const response = await fetch(`/api/schematics/${schematicId}/data/`);
+        const response = await fetch(`http://localhost:8000/api/schematics/${schematicId}/data/`);
         if (!response.ok) throw new Error('Failed to fetch schematic data');
         
         const data = await response.json();
@@ -265,14 +286,18 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
         ...c,
         scaleX: c.scaleX || 1, 
         scaleY: c.scaleY || 1,
+        rotation: c.rotation || 0,
       })),
     };
+    
+    const csrftoken = getCookie('csrftoken');
 
     try {
-      const response = await fetch(`/api/schematics/${schematicId}/save/`, {
+      const response = await fetch(`http://localhost:8000/api/schematics/${schematicId}/save/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(csrftoken && { 'X-CSRFToken': csrftoken }),
         },
         body: JSON.stringify(payload),
       });
@@ -467,6 +492,7 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
                             id: `line-${Date.now()}`,
                             scaleX: 1,
                             scaleY: 1,
+                            rotation: 0,
                           } as LineData,
                         ]);
                       } else if (draggedType === 'lock') {
@@ -480,6 +506,7 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
                             lock_id: 1, 
                             scaleX: 1,
                             scaleY: 1,
+                            rotation: 0,
                           } as LockData,
                         ]);
                       }
@@ -512,7 +539,6 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
                   onTouchStart={checkDeselect}
                 >
                   <Layer>
-                    {/* Affichage du chargement */}
                     {isLoading ? (
                       <Konva.Text text="Chargement du schéma..." fontSize={20} fill="#888" padding={20} />
                     ) : (
@@ -601,7 +627,6 @@ Please choose a door/user
           border: '2px dashed #ddd',
           borderRadius: '8px'
         }}>
-{/* Zone vide pour l'instant */}
 </div>
 </div>
 </div>

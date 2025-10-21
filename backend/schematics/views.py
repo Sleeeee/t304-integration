@@ -22,7 +22,8 @@ def get_schematic_data(request, schematic_id):
                 "y": w.y,
                 "points": w.points,
                 "scaleX": w.scale_x,
-                "scaleY": w.scale_y
+                "scaleY": w.scale_y,
+                "rotation": w.rotation
             } for w in walls
         ]
     
@@ -34,9 +35,9 @@ def get_schematic_data(request, schematic_id):
                 "y": l.y,
                 "type": "lock",
                 "lock_id": l.lock.id_lock, 
-                
                 "scaleX": l.scale_x,
-                "scaleY": l.scale_y
+                "scaleY": l.scale_y,
+                "rotation": l.rotation
             } for l in locks
         ]
         
@@ -76,7 +77,8 @@ def save_schematic_data(request, schematic_id):
                         y=item['y'],
                         points=item['points'],
                         scale_x=item.get('scaleX', 1),
-                        scale_y=item.get('scaleY', 1)
+                        scale_y=item.get('scaleY', 1),
+                        rotation=item.get('rotation', 0)
                     )
                 )
             elif item.get('type') == 'lock':
@@ -89,7 +91,8 @@ def save_schematic_data(request, schematic_id):
                             x=item['x'],
                             y=item['y'],
                             scale_x=item.get('scaleX', 1),
-                            scale_y=item.get('scaleY', 1)
+                            scale_y=item.get('scaleY', 1),
+                            rotation=item.get('rotation', 0)
                         )
                     )
                 except Lock.DoesNotExist:

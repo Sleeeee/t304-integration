@@ -44,7 +44,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'locks',
     'users',
-    'permissions'
+    'permissions',
+    'schematics',
 ]
 
 MIDDLEWARE = [

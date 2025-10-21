@@ -27,9 +27,10 @@ interface User {
 
 interface UsersPageProps {
   onNavigate: (page: string) => void;
+  onViewSchematic: (schematicId: number) => void;
 }
 
-const UsersPage: React.FC<UsersPageProps> = ({ onNavigate }) => {
+const UsersPage: React.FC<UsersPageProps> = ({ onNavigate, onViewSchematic }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -189,6 +190,9 @@ const UsersPage: React.FC<UsersPageProps> = ({ onNavigate }) => {
                     Role
                   </TableCell>
                   <TableCell sx={{ fontWeight: 600, color: "#666" }}>
+                    Schematic
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600, color: "#666" }}>
                     Logs
                   </TableCell>
 				  <TableCell>
@@ -223,6 +227,22 @@ const UsersPage: React.FC<UsersPageProps> = ({ onNavigate }) => {
                             size="small"
                             sx={{ fontWeight: 600 }}
                           />
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            size="small"
+                            onClick={() => onViewSchematic(1)} 
+                            sx={{
+                              color: "#3B5CFF",
+                              textTransform: "none",
+                              fontWeight: 500,
+                              "&:hover": {
+                                backgroundColor: "#F5F7FF",
+                              },
+                            }}
+                          >
+                            View Schematic
+                          </Button>
                         </TableCell>
                         <TableCell>
                           <Button

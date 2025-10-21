@@ -31,6 +31,7 @@ class SchematicWall(models.Model):
     points = JSONField(default=list)
     scale_x = models.FloatField(default=1)
     scale_y = models.FloatField(default=1)
+    rotation = models.FloatField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -46,6 +47,7 @@ class SchematicLock(models.Model):
     y = models.FloatField()
     scale_x = models.FloatField(default=1)
     scale_y = models.FloatField(default=1)
+    rotation = models.FloatField(default=0)
     color = models.CharField(max_length=7, default='black')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

@@ -4,6 +4,7 @@ const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [defaultSchematicId, setDefaultSchematicId] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -18,10 +19,12 @@ export const AuthProvider = ({ children }) => {
       return res.json();
 
     }).then(data => {
-      setUser(data);
+      setUser(data.user);
+      setDefaultSchematicId(data.user.default_schematic_id); 
 
     }).catch(() => {
       setUser(false);
+      setDefaultSchematicId(null);
 
     }).finally(() => {
       setLoading(false);
@@ -29,7 +32,13 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{user, loading}}>
+    <AuthContext.Provider value={{
+      user, 
+      loading, 
+      defaultSchematicId, 
+      setUser, 
+      setDefaultSchematicId 
+    }}>
       {children}
     </AuthContext.Provider>
   );

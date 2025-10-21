@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import './App.css';
-import { useAuth } from './context/AuthContext';
+import { useAuth } from './context/AuthContext'; 
 import Auth from './components/Auth';
 import Header from './components/Header';
 import Register from './components/Register';
@@ -14,9 +14,10 @@ import { Box } from '@mui/material';
 import KonvaCanva from './components/KonvaCanva';
 
 function App() {
-  const { user, loading } = useAuth();
+  const { user, loading, defaultSchematicId } = useAuth(); 
   const [currentPage, setCurrentPage] = useState("users");
   
+
   const [selectedSchematicId, setSelectedSchematicId] = useState<number | null>(null);
 
   if (loading) return <div>Loading...</div>;
@@ -25,6 +26,20 @@ function App() {
   const handleViewSchematic = (schematicId: number) => {
     setSelectedSchematicId(schematicId);
     setCurrentPage("monitoring");
+  };
+
+  const handleNavigate = (page: string) => {
+    if (page === "monitoring") {
+      if (defaultSchematicId) {
+        setSelectedSchematicId(defaultSchematicId);
+        setCurrentPage("monitoring");
+      } else {
+        setSelectedSchematicId(null);
+        setCurrentPage("monitoring"); 
+      }
+    } else {
+      setCurrentPage(page);
+    }
   };
 
   const renderPage = () => {
@@ -92,7 +107,7 @@ function App() {
 
   return (
     <div className="App min-h-screen bg-gray-100">
-      <Header onNavigate={setCurrentPage} />
+      <Header onNavigate={handleNavigate} /> 
       {renderPage()}
     </div>
   );
