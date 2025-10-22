@@ -96,29 +96,21 @@ class LockGroupsView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-<< << << < HEAD
-    def delete(self, request):
-== == == =
-
-
 class AddLocksToGroupView(APIView):
     """POST: Ajoute des serrures à un groupe"""
     permission_classes = [IsAuthenticated]
 
     def post(self, request, group_id):
-
-
->>>>>> > 0cfe8c6(Lares  # 7 #8 #9 Ajout de GET POST PUT DELETE afin de mieux gérer les serrures et les groupes de serrures)
-        user=request.user
+        user = request.user
         if not user.is_superuser:
             return Response({"error": "Unauthorized to modify lock groups"}, status=status.HTTP_403_FORBIDDEN)
 
-        group=get_object_or_404(Lock_Group, id_group=group_id)
-        serializer=AddLocksToGroupSerializer(data=request.data)
+        group = get_object_or_404(Lock_Group, id_group=group_id)
+        serializer = AddLocksToGroupSerializer(data=request.data)
 
         if serializer.is_valid():
-            lock_ids=serializer.validated_data['lock_ids']
-            locks=Lock.objects.filter(id_lock__in=lock_ids)
+            lock_ids = serializer.validated_data['lock_ids']
+            locks = Lock.objects.filter(id_lock__in=lock_ids)
 
             if not locks.exists():
                 return Response({"error": "Aucune serrure trouvée avec ces IDs"}, status=status.HTTP_404_NOT_FOUND)
@@ -137,16 +129,16 @@ class AddLocksToGroupView(APIView):
 
 class GroupLocksView(APIView):
     """GET: Liste toutes les serrures d’un groupe"""
-    permission_classes=[IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request, group_id):
-        user=request.user
+        user = request.user
         if not user.is_staff:
             return Response({"error": "Unauthorized to view group locks"}, status=status.HTTP_403_FORBIDDEN)
 
-        group=get_object_or_404(Lock_Group, id_group=group_id)
-        locks=group.locks.all()
-        serializer=LockSerializer(locks, many=True)
+        group = get_object_or_404(Lock_Group, id_group=group_id)
+        locks = group.locks.all()
+        serializer = LockSerializer(locks, many=True)
         return Response({
             "group": group.name,
             "locks_count": locks.count(),
@@ -156,19 +148,19 @@ class GroupLocksView(APIView):
 
 class RemoveLockFromGroupView(APIView):
     """DELETE: Supprime des serrures d’un groupe"""
-    permission_classes=[IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     def delete(self, request, group_id):
-        user=request.user
+        user = request.user
         if not user.is_superuser:
             return Response({"error": "Unauthorized to modify lock groups"}, status=status.HTTP_403_FORBIDDEN)
 
-        group=get_object_or_404(Lock_Group, id_group=group_id)
-        serializer=AddLocksToGroupSerializer(data=request.data)
+        group = get_object_or_404(Lock_Group, id_group=group_id)
+        serializer = AddLocksToGroupSerializer(data=request.data)
 
         if serializer.is_valid():
-            lock_ids=serializer.validated_data['lock_ids']
-            locks=Lock.objects.filter(id_lock__in=lock_ids)
+            lock_ids = serializer.validated_data['lock_ids']
+            locks = Lock.objects.filter(id_lock__in=lock_ids)
 
             if not locks.exists():
                 return Response({"error": "Aucune serrure trouvée avec ces IDs"}, status=status.HTTP_404_NOT_FOUND)
@@ -187,15 +179,15 @@ class RemoveLockFromGroupView(APIView):
 
 class DeleteLockGroupView(APIView):
     """DELETE: Supprime un groupe de serrures"""
-    permission_classes=[IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     def delete(self, request, group_id):
-        user=request.user
+        user = request.user
         if not user.is_superuser:
             return Response({"error": "Unauthorized to delete lock groups"}, status=status.HTTP_403_FORBIDDEN)
 
-        group=get_object_or_404(Lock_Group, id_group=group_id)
-        group_name=group.name
+        group = get_object_or_404(Lock_Group, id_group=group_id)
+        group_name = group.name
         group.delete()
 
         return Response(
