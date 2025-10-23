@@ -127,14 +127,6 @@ const UserGroupsList: React.FC<UserGroupsListProps> = ({ onNavigate }) => {
     setIsManageDialogOpen(false);
     setSelectedGroup(null);
   };
-  const handleGroupUpdated = (updatedGroup: Group) => {
-    setGroups(currentGroups => 
-      currentGroups.map(g => (g.id === updatedGroup.id ? updatedGroup : g))
-    );
-    setSelectedGroup(updatedGroup);
-    setSnackbarInfo({ text: "Group updated successfully", isError: false });
-  };
-
 
   // Filtrer les groupes (inchangée)
   const filteredGroups = groups.filter((group) =>
