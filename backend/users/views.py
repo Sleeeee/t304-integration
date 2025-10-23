@@ -180,3 +180,30 @@ class DeleteGroupView(APIView):
             status=status.HTTP_204_NO_CONTENT
         )
 
+
+class UpdateGroupView(APIView):
+    def patch(self, request, group_id):
+        # 1. Vérifier si l'utilisateur est super-utilisateur
+        user = request.user
+        if not (user.is_authenticated and user.is_superuser):
+            return Response(
+                {"error": "Unauthorized to update groups"},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+            
+        # 2. Trouver le groupe
+        group = get_object_or_404(Group, id=group_id)
+
+        # 3. Utiliser le serializer pour valider le nouveau nom
+        # 'partial=True' est ce qui en fait un PATCH (mise à jour partielle)
+        serializer = GroupSerializer(group, data=request.data, partial=True)
+        
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                "message": "Groupe mis à jour avec succès",
+                "group": serializer.data
+            }, status=status.HTTP_200_OK)
+
+        # Si les données ne sont pas valides (ex: nom déjà pris)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
