@@ -8,6 +8,7 @@ from django.contrib.auth.models import Group
 from .serializers import GroupSerializer
 from django.shortcuts import get_object_or_404
 from .serializers import AddUserToGroupSerializer
+from .serializers import UserUpdateSerializer
 
 User = get_user_model()
 
@@ -43,6 +44,22 @@ class UsersView(APIView):
                 }
             }, status=201)
 
+        return Response(serializer.errors, status=400)
+
+    def patch(self, request):
+        user = request.user
+        user_id = request.data.get("user_id")
+        user_to_update = get_object_or_404(User, pk=user_id)
+        if not (user.is_authenticated and user.is_superuser):
+            return Response({
+                'error': 'Unauthorized to update users'
+            }, status=401)
+
+        serializer = UserUpdateSerializer(user_to_update, data=request.data, partial=True)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
         return Response(serializer.errors, status=400)
 
 
