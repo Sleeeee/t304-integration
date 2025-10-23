@@ -1,25 +1,25 @@
-import React, { useState, useEffect, ChangeEvent } from "react";
+import React, { useState, ChangeEvent } from "react";
 import {
-  Box,
-  Paper,
-  Typography,
+  //Box,
+  //Paper,
+  //Typography,
   TextField,
   Button,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Chip,
-  CircularProgress,
+  //Table,
+  //TableBody,
+  //TableCell,
+  //TableContainer,
+  //TableHead,
+  //TableRow,
+  //Chip,
+  //CircularProgress,
   Dialog,
-  DialogTitle,
+  //DialogTitle,
   DialogContent,
   DialogActions,
 } from "@mui/material";
 import CloseIcon from '@mui/icons-material/Close';
-import getCookie from "../context/getCookie";
+//import getCookie from "../context/getCookie";
 
 type ManageUserProps = {
 		isDialogOpen: boolean;
