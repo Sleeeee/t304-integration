@@ -5,8 +5,6 @@ import {
   Dialog,
   DialogContent,
   DialogActions,
-  CircularProgress,
-  Box,
 } from "@mui/material";
 import CloseIcon from '@mui/icons-material/Close';
 import getCookie from "../context/getCookie";
@@ -156,101 +154,94 @@ function ManageUser({ isDialogOpen, setIsDialogOpen, selectedUser, setSelectedUs
       fullWidth={true}
       maxWidth="sm"
     >
-		{!(selectedUser.username === formData.username) && (
-			<Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
-				<CircularProgress />
-			</Box>
-		)}
-		{(selectedUser.username === formData.username) && (
-		  <DialogContent>
-			<DialogActions>
-			  <Button
-				size="small"
-				onClick={() => handleDialogClose()}
-				variant="contained"
-				sx={{
-				  backgroundColor: "#3B5CFF",
-				  textTransform: "none",
-				  fontWeight: 600,
-				  boxShadow: "none",
-				  ml: "auto",
-				  "&:hover": {
-					backgroundColor: "#2A4AE5",
-				  },
-				}}
-			  >
-				<CloseIcon />
-			  </Button>
-			</DialogActions>
-			<form onSubmit={handleSubmit}>
-				<fieldset className="border-2 border-gray-300 rounded-2xl p-6">
-				  <legend className="px-4 text-xl font-bold text-gray-800">
-					Informations	
-				  </legend>
+	  <DialogContent>
+		<DialogActions>
+		  <Button
+			size="small"
+			onClick={() => handleDialogClose()}
+			variant="contained"
+			sx={{
+			  backgroundColor: "#3B5CFF",
+			  textTransform: "none",
+			  fontWeight: 600,
+			  boxShadow: "none",
+			  ml: "auto",
+			  "&:hover": {
+				backgroundColor: "#2A4AE5",
+			  },
+			}}
+		  >
+			<CloseIcon />
+		  </Button>
+		</DialogActions>
+		<form onSubmit={handleSubmit}>
+			<fieldset className="border-2 border-gray-300 rounded-2xl p-6">
+			  <legend className="px-4 text-xl font-bold text-gray-800">
+				Informations	
+			  </legend>
 
-				  <div className="flex flex-col gap-4 mt-4">
-					<TextField
-					  label="Username"
-					  name="username"
-					  value={formData.username}
-					  onChange={handleInputChange}
-					  variant="outlined"
-					  fullWidth
-					  required
+			  <div className="flex flex-col gap-4 mt-4">
+				<TextField
+				  label="Username"
+				  name="username"
+				  value={formData.username}
+				  onChange={handleInputChange}
+				  variant="outlined"
+				  fullWidth
+				  required
+				/>
+
+				<TextField
+				  label="Current password"
+				  name="current_password"
+				  type="password"
+				  value={formData.current_password}
+				  onChange={handleInputChange}
+				  variant="outlined"
+				  fullWidth
+				  required
+				/>
+			  </div>
+			</fieldset>
+		  <fieldset className="border-2 border-gray-300 rounded-2xl p-6">
+			<legend className="px-4 text-xl font-bold text-gray-800">
+				Role
+			</legend>
+
+			<div className="flex flex-col gap-3 mt-4">
+				{roles.map((role) => (
+				  <div
+					key={role.value}
+					className={`flex items-start gap-4 p-4 rounded-xl cursor-pointer transition-all ${
+					  selectedRole === role.value
+						? "bg-blue-100 border-2 border-blue-500"
+						: "bg-gray-50 hover:bg-blue-50 border-2 border-transparent"
+					}`}
+					onClick={() => handleRoleChange(role.value)}
+				  > 
+					<input
+					  type="radio"
+					  checked={selectedRole === role.value}
+					  onChange={() => handleRoleChange(role.value)}
+					  className="w-6 h-6 cursor-pointer accent-blue-600 mt-1"
 					/>
-
-					<TextField
-					  label="Current password"
-					  name="current_password"
-					  type="password"
-					  value={formData.current_password}
-					  onChange={handleInputChange}
-					  variant="outlined"
-					  fullWidth
-					  required
-					/>
+					<div className="flex flex-col">
+					  <span className="font-bold text-gray-800">{role.label}</span>
+					  <span className="text-sm text-gray-600">{role.description}</span>
+					</div>
 				  </div>
-				</fieldset>
-			  <fieldset className="border-2 border-gray-300 rounded-2xl p-6">
-				<legend className="px-4 text-xl font-bold text-gray-800">
-					Role
-				</legend>
-
-				<div className="flex flex-col gap-3 mt-4">
-					{roles.map((role) => (
-					  <div
-						key={role.value}
-						className={`flex items-start gap-4 p-4 rounded-xl cursor-pointer transition-all ${
-						  selectedRole === role.value
-							? "bg-blue-100 border-2 border-blue-500"
-							: "bg-gray-50 hover:bg-blue-50 border-2 border-transparent"
-						}`}
-						onClick={() => handleRoleChange(role.value)}
-					  > 
-						<input
-						  type="radio"
-						  checked={selectedRole === role.value}
-						  onChange={() => handleRoleChange(role.value)}
-						  className="w-6 h-6 cursor-pointer accent-blue-600 mt-1"
-						/>
-						<div className="flex flex-col">
-						  <span className="font-bold text-gray-800">{role.label}</span>
-						  <span className="text-sm text-gray-600">{role.description}</span>
-						</div>
-					  </div>
-					))}
-				  </div>
-				</fieldset>
-			  <DialogActions>
-				<Button
-				  type="submit"
-				>
-				  Submit
-				</Button>
-			  </DialogActions>
-			</form>
-		  </DialogContent>
-  		)}
+				))}
+			  </div>
+			</fieldset>
+		  <DialogActions>
+			<Button
+			  type="submit"
+			>
+			  Submit
+			</Button>
+		  </DialogActions>
+		</form>
+	  </DialogContent>
     </Dialog>
   )
 }
