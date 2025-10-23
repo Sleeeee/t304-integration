@@ -5,6 +5,7 @@ import {
   Dialog,
   DialogContent,
   DialogActions,
+  IconButton,
 } from "@mui/material";
 import CloseIcon from '@mui/icons-material/Close';
 import getCookie from "../context/getCookie";
@@ -156,23 +157,11 @@ function ManageUser({ isDialogOpen, setIsDialogOpen, selectedUser, setSelectedUs
     >
 	  <DialogContent>
 		<DialogActions>
-		  <Button
-			size="small"
+		  <IconButton
 			onClick={() => handleDialogClose()}
-			variant="contained"
-			sx={{
-			  backgroundColor: "#3B5CFF",
-			  textTransform: "none",
-			  fontWeight: 600,
-			  boxShadow: "none",
-			  ml: "auto",
-			  "&:hover": {
-				backgroundColor: "#2A4AE5",
-			  },
-			}}
 		  >
 			<CloseIcon />
-		  </Button>
+		  </IconButton>
 		</DialogActions>
 		<form onSubmit={handleSubmit}>
 			<fieldset className="border-2 border-gray-300 rounded-2xl p-6">
@@ -236,6 +225,11 @@ function ManageUser({ isDialogOpen, setIsDialogOpen, selectedUser, setSelectedUs
 		  <DialogActions>
 			<Button
 			  type="submit"
+			  variant="contained"
+			  sx={{
+				backgroundColor: "#3B5CFF",
+				'&:hover': { backgroundColor: "#2A4AE5" }
+			  }}
 			>
 			  Submit
 			</Button>
