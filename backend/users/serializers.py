@@ -64,3 +64,17 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         user.set_password(password)
         user.save()
         return user
+
+class UserUpdateSerializer(serializers.ModelSerializer):
+    current_password = serializers.CharField(write_only=True, required=True)
+
+    class Meta:
+        model = User
+        fields = ['username', 'email', 'current_password', 'is_staff', 'is_superuser']
+
+    def validate(self, data):
+        user = self.instance
+        if not user.check_password(data['current_password']):
+            raise serializers.ValidationError({"error": "Incorrect password."})
+        data.pop('current_password')
+        return data

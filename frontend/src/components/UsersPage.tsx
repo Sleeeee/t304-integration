@@ -17,6 +17,8 @@ import {
 import getCookie from "../context/getCookie";
 import ManageUser from "./ManageUser";
 
+import CustomSnackbar from "./CustomSnackbar";
+
 // 1. IMPORTER LE COMPOSANT DE LA LISTE DES GROUPES
 // (Assure-toi que le chemin d'importation est correct)
 import UserGroupsList from "./GroupsUser/UserGroupsList";
@@ -40,6 +42,11 @@ const UsersPage: React.FC<UsersPageProps> = ({ onNavigate }) => {
   const [error, setError] = useState("");
   const [selectedUser, setSelectedUser] = useState("none");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  const [snackbar, setSnackbar] = useState({
+		isError: false,
+		text: "",
+  });
 
   // ... (Toutes tes fonctions : getUserRole, getRoleColor, etc. restent ici)
   // Fonction pour déterminer le rôle d'un utilisateur
@@ -65,9 +72,7 @@ const UsersPage: React.FC<UsersPageProps> = ({ onNavigate }) => {
     }
   };
 
-  // Récupérer les utilisateurs depuis le backend
-  useEffect(() => {
-    const fetchUsers = async () => {
+  const fetchUsers = async () => {
       // ... (Ton code fetchUsers reste inchangé)
       const csrfToken = getCookie("csrftoken");
       const headers: HeadersInit = csrfToken ? { "X-CSRFToken": csrfToken } : {};
@@ -93,6 +98,8 @@ const UsersPage: React.FC<UsersPageProps> = ({ onNavigate }) => {
       }
     };
 
+  // Récupérer les utilisateurs depuis le backend
+  useEffect(() => { 
     fetchUsers();
   }, []);
 
@@ -106,6 +113,12 @@ const UsersPage: React.FC<UsersPageProps> = ({ onNavigate }) => {
     );
   });
 
+  const refreshList = (needRefresh: boolean) => {
+	if(needRefresh){
+		fetchUsers();
+	}
+  }
+
   // Affiche le form en overlay
   const handleDialogOpen = (user: any) => {
     setIsDialogOpen(true);
@@ -114,6 +127,12 @@ const UsersPage: React.FC<UsersPageProps> = ({ onNavigate }) => {
 
   return (
     <Box sx={{ p: 4, backgroundColor: "#F5F5F5", minHeight: "calc(100vh - 64px)" }}>
+	  <CustomSnackbar
+			isError={snackbar?.isError}
+			text={snackbar?.text}
+			onClose={() => { setSnackbar({ isError: snackbar?.isError || false, text: "" }); }}
+			/>
+
       {/* Titre principal de la page */}
       <Typography
         variant="h4"
@@ -303,6 +322,9 @@ const UsersPage: React.FC<UsersPageProps> = ({ onNavigate }) => {
         setIsDialogOpen={setIsDialogOpen}
         selectedUser={selectedUser}
         setSelectedUser={setSelectedUser}
+		snackbar={snackbar}
+		setSnackbar={setSnackbar}
+		refresh={refreshList}
       />
     </Box>
   );
