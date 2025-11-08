@@ -11,19 +11,23 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ("id", "username", "is_staff", "is_superuser", "email")
 
+
 class GroupSerializer(serializers.ModelSerializer):
-    # 1. Ajoute ce champ "read-only"
-    members_count = serializers.SerializerMethodField()
-    
     class Meta:
         model = Group
-        # 2. Ajoute 'members_count' à la liste des champs
+        fields = ['id', 'name']
+
+
+class GroupSerializer(serializers.ModelSerializer):
+    members_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Group
         fields = ['id', 'name', 'members_count']
 
-    # 3. Ajoute cette fonction pour que Django sache comment calculer le champ
     def get_members_count(self, obj):
-        # 'obj' est le groupe. On compte simplement les utilisateurs liés.
         return obj.user_set.count()
+
 
 class AddUserToGroupSerializer(serializers.Serializer):
     user_ids = serializers.ListField(
@@ -31,6 +35,8 @@ class AddUserToGroupSerializer(serializers.Serializer):
         allow_empty=False,
         help_text="Liste des IDs d'utilisateurs à ajouter au groupe"
     )
+
+
 class UserRegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(
         write_only=True,

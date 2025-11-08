@@ -73,7 +73,7 @@ class GroupView(APIView):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    
+
 class AddUserToGroupView(APIView):
     def post(self, request, group_id):
         user = request.user
@@ -107,7 +107,7 @@ class AddUserToGroupView(APIView):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    
+
 class GroupUsersView(APIView):
     def get(self, request, group_id):
         user = request.user
@@ -126,7 +126,7 @@ class GroupUsersView(APIView):
             "members": serializer.data
         }, status=status.HTTP_200_OK)
 
-    
+
 class RemoveUserFromGroupView(APIView):
     def delete(self, request, group_id):
         user = request.user
@@ -137,7 +137,8 @@ class RemoveUserFromGroupView(APIView):
             )
 
         group = get_object_or_404(Group, id=group_id)
-        serializer = AddUserToGroupSerializer(data=request.data)  # on réutilise le même serializer
+        serializer = AddUserToGroupSerializer(
+            data=request.data)  # on réutilise le même serializer
 
         if serializer.is_valid():
             user_ids = serializer.validated_data['user_ids']
@@ -160,7 +161,6 @@ class RemoveUserFromGroupView(APIView):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    
 
 class DeleteGroupView(APIView):
     def delete(self, request, group_id):
@@ -190,14 +190,14 @@ class UpdateGroupView(APIView):
                 {"error": "Unauthorized to update groups"},
                 status=status.HTTP_401_UNAUTHORIZED
             )
-            
+
         # 2. Trouver le groupe
         group = get_object_or_404(Group, id=group_id)
 
         # 3. Utiliser le serializer pour valider le nouveau nom
         # 'partial=True' est ce qui en fait un PATCH (mise à jour partielle)
         serializer = GroupSerializer(group, data=request.data, partial=True)
-        
+
         if serializer.is_valid():
             serializer.save()
             return Response({
