@@ -35,18 +35,19 @@ class UsersView(APIView):
         if serializer.is_valid():
             user = serializer.save()
 
+            keypad = None
             if request.data.get("keypad"):
-                code = update_user_keypad_code(user)
+                keypad = update_user_keypad_code(user)
 
             return Response({
-                'message': 'Successfully created user',
+                'message': f'Successfully created user.\nKeypad code : {keypad}',
                 'user': {
                     'id': user.id,
                     'username': user.username,
                     'email': user.email,
                     'is_superuser': user.is_superuser or False,
                     'is_staff': user.is_staff or False,
-                    'code': code
+                    'keypad': keypad
                 }
             }, status=201)
 

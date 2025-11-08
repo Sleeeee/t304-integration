@@ -79,7 +79,7 @@ function Register() {
       const data = await response.json();
 
       if (response.ok) {
-        setMessage({ type: "success", text: "User created successfully!" });
+        setMessage({ type: "success", text: data.message });
         setFormData({ username: "", email: "", password: "" });
         setSelectedRole("user");
         setKeypad(false); // Reset keypad state on success
@@ -91,7 +91,6 @@ function Register() {
       }
     } catch (error) {
       setMessage({ type: "error", text: "Server connection error" });
-      console.error("Error:", error);
     } finally {
       setLoading(false);
     }
@@ -168,8 +167,8 @@ function Register() {
             {/* Keypad Checkbox - Styled to match your Roles UI */}
             <div
               className={`flex items-center gap-4 p-4 rounded-xl cursor-pointer transition-all border-2 mt-2 ${keypad
-                  ? "bg-blue-100 border-blue-500"
-                  : "bg-gray-50 hover:bg-blue-50 border-transparent"
+                ? "bg-blue-100 border-blue-500"
+                : "bg-gray-50 hover:bg-blue-50 border-transparent"
                 }`}
               onClick={() => setKeypad(!keypad)}
             >
@@ -194,8 +193,8 @@ function Register() {
               <div
                 key={role.value}
                 className={`flex items-start gap-4 p-4 rounded-xl cursor-pointer transition-all ${selectedRole === role.value
-                    ? "bg-blue-100 border-2 border-blue-500"
-                    : "bg-gray-50 hover:bg-blue-50 border-2 border-transparent"
+                  ? "bg-blue-100 border-2 border-blue-500"
+                  : "bg-gray-50 hover:bg-blue-50 border-2 border-transparent"
                   }`}
                 onClick={() => handleRoleChange(role.value)}
               >
