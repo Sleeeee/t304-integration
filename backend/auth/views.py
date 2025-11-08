@@ -5,7 +5,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from locks.models import Lock
 from .serializers import UserSerializer
-from .utils import get_user_by_code
+from .utils import get_user_by_keypad_code
 from permissions.utils import user_has_access_to_lock
 
 
@@ -62,7 +62,7 @@ class KeypadCodeLoginView(APIView):
         if not (request_code and lock_id):
             return Response({"error": "Missing code or lock id"}, status=401)
 
-        login_user = get_user_by_code(request_code)
+        login_user = get_user_by_keypad_code(request_code)
         if not login_user:
             return Response({"error": "Access denied"}, status=401)
 

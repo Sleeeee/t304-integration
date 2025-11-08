@@ -9,7 +9,7 @@ from .serializers import GroupSerializer
 from django.shortcuts import get_object_or_404
 from .serializers import AddUserToGroupSerializer
 from .serializers import UserUpdateSerializer
-from .utils import update_user_keypad_code
+from .utils import update_user_keypad_code, update_user_badge_code
 
 User = get_user_model()
 
@@ -34,20 +34,27 @@ class UsersView(APIView):
 
         if serializer.is_valid():
             user = serializer.save()
+            message = "Successfully created user."
+            keypad, badge = None, None
 
-            keypad = None
             if request.data.get("keypad"):
                 keypad = update_user_keypad_code(user)
+                message += f" Keypad code : {keypad}."
+
+            if request.data.get("badge"):
+                badge = update_user_badge_code(user)
+                message += f" Badge code : {badge}."
 
             return Response({
-                'message': f'Successfully created user.\nKeypad code : {keypad}',
+                'message': message,
                 'user': {
                     'id': user.id,
                     'username': user.username,
                     'email': user.email,
                     'is_superuser': user.is_superuser or False,
                     'is_staff': user.is_staff or False,
-                    'keypad': keypad
+                    'keypad': keypad,
+                    'badge': badge
                 }
             }, status=201)
 
