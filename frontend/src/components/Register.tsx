@@ -15,6 +15,9 @@ function Register() {
     password: "",
   });
 
+  // New state for keypad
+  const [keypad, setKeypad] = useState(false);
+
   const [selectedRole, setSelectedRole] = useState<UserRole>("user");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: MessageType; text: string }>({
@@ -49,9 +52,9 @@ function Register() {
   const csrfToken = getCookie("csrftoken");
   const headers: HeadersInit = csrfToken
     ? {
-        "Content-Type": "application/json",
-        "X-CSRFToken": csrfToken
-      }
+      "Content-Type": "application/json",
+      "X-CSRFToken": csrfToken
+    }
     : {};
 
   const handleSubmit = async (e: FormEvent) => {
@@ -68,7 +71,8 @@ function Register() {
         credentials: "include",
         body: JSON.stringify({
           ...formData,
-          ...rolePermissions
+          ...rolePermissions,
+          keypad, // Included in the POST request payload
         })
       });
 
@@ -78,6 +82,7 @@ function Register() {
         setMessage({ type: "success", text: "User created successfully!" });
         setFormData({ username: "", email: "", password: "" });
         setSelectedRole("user");
+        setKeypad(false); // Reset keypad state on success
       } else {
         setMessage({
           type: "error",
@@ -159,6 +164,23 @@ function Register() {
               fullWidth
               required
             />
+
+            {/* Keypad Checkbox - Styled to match your Roles UI */}
+            <div
+              className={`flex items-center gap-4 p-4 rounded-xl cursor-pointer transition-all border-2 mt-2 ${keypad
+                  ? "bg-blue-100 border-blue-500"
+                  : "bg-gray-50 hover:bg-blue-50 border-transparent"
+                }`}
+              onClick={() => setKeypad(!keypad)}
+            >
+              <input
+                type="checkbox"
+                checked={keypad}
+                onChange={(e) => setKeypad(e.target.checked)}
+                className="w-6 h-6 cursor-pointer accent-blue-600"
+              />
+              <span className="font-bold text-gray-800">Generate a keypad code</span>
+            </div>
           </div>
         </fieldset>
 
@@ -171,11 +193,10 @@ function Register() {
             {roles.map((role) => (
               <div
                 key={role.value}
-                className={`flex items-start gap-4 p-4 rounded-xl cursor-pointer transition-all ${
-                  selectedRole === role.value
+                className={`flex items-start gap-4 p-4 rounded-xl cursor-pointer transition-all ${selectedRole === role.value
                     ? "bg-blue-100 border-2 border-blue-500"
                     : "bg-gray-50 hover:bg-blue-50 border-2 border-transparent"
-                }`}
+                  }`}
                 onClick={() => handleRoleChange(role.value)}
               >
                 <input

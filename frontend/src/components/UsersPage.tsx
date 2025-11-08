@@ -44,8 +44,8 @@ const UsersPage: React.FC<UsersPageProps> = ({ onNavigate }) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const [snackbar, setSnackbar] = useState({
-		isError: false,
-		text: "",
+    isError: false,
+    text: "",
   });
 
   // ... (Toutes tes fonctions : getUserRole, getRoleColor, etc. restent ici)
@@ -73,33 +73,33 @@ const UsersPage: React.FC<UsersPageProps> = ({ onNavigate }) => {
   };
 
   const fetchUsers = async () => {
-      // ... (Ton code fetchUsers reste inchangé)
-      const csrfToken = getCookie("csrftoken");
-      const headers: HeadersInit = csrfToken ? { "X-CSRFToken": csrfToken } : {};
+    // ... (Ton code fetchUsers reste inchangé)
+    const csrfToken = getCookie("csrftoken");
+    const headers: HeadersInit = csrfToken ? { "X-CSRFToken": csrfToken } : {};
 
-      try {
-        const response = await fetch("http://localhost:8000/users/", {
-          method: "GET",
-          credentials: "include",
-          headers,
-        });
+    try {
+      const response = await fetch("http://localhost:8000/users/", {
+        method: "GET",
+        credentials: "include",
+        headers,
+      });
 
-        if (response.ok) {
-          const data = await response.json();
-          setUsers(data.users || []);
-        } else {
-          setError("Erreur lors de la récupération des utilisateurs");
-        }
-      } catch (err) {
-        setError("Erreur de connexion au serveur");
-        console.error("Erreur:", err);
-      } finally {
-        setLoading(false);
+      if (response.ok) {
+        const data = await response.json();
+        setUsers(data.users || []);
+      } else {
+        setError("Erreur lors de la récupération des utilisateurs");
       }
-    };
+    } catch (err) {
+      setError("Erreur de connexion au serveur");
+      console.error("Erreur:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Récupérer les utilisateurs depuis le backend
-  useEffect(() => { 
+  useEffect(() => {
     fetchUsers();
   }, []);
 
@@ -114,9 +114,9 @@ const UsersPage: React.FC<UsersPageProps> = ({ onNavigate }) => {
   });
 
   const refreshList = (needRefresh: boolean) => {
-	if(needRefresh){
-		fetchUsers();
-	}
+    if (needRefresh) {
+      fetchUsers();
+    }
   }
 
   // Affiche le form en overlay
@@ -127,11 +127,11 @@ const UsersPage: React.FC<UsersPageProps> = ({ onNavigate }) => {
 
   return (
     <Box sx={{ p: 4, backgroundColor: "#F5F5F5", minHeight: "calc(100vh - 64px)" }}>
-	  <CustomSnackbar
-			isError={snackbar?.isError}
-			text={snackbar?.text}
-			onClose={() => { setSnackbar({ isError: snackbar?.isError || false, text: "" }); }}
-			/>
+      <CustomSnackbar
+        isError={snackbar?.isError}
+        text={snackbar?.text}
+        onClose={() => { setSnackbar({ isError: snackbar?.isError || false, text: "" }); }}
+      />
 
       {/* Titre principal de la page */}
       <Typography
@@ -149,7 +149,7 @@ const UsersPage: React.FC<UsersPageProps> = ({ onNavigate }) => {
       <Box
         sx={{
           display: 'flex',
-          gap: 4, 
+          gap: 4,
           flexDirection: { xs: 'column', md: 'row' }
         }}
       >
@@ -322,9 +322,9 @@ const UsersPage: React.FC<UsersPageProps> = ({ onNavigate }) => {
         setIsDialogOpen={setIsDialogOpen}
         selectedUser={selectedUser}
         setSelectedUser={setSelectedUser}
-		snackbar={snackbar}
-		setSnackbar={setSnackbar}
-		refresh={refreshList}
+        snackbar={snackbar}
+        setSnackbar={setSnackbar}
+        refresh={refreshList}
       />
     </Box>
   );

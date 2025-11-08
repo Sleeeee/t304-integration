@@ -9,6 +9,7 @@ from .serializers import GroupSerializer
 from django.shortcuts import get_object_or_404
 from .serializers import AddUserToGroupSerializer
 from .serializers import UserUpdateSerializer
+from .utils import update_user_keypad_code
 
 User = get_user_model()
 
@@ -33,6 +34,10 @@ class UsersView(APIView):
 
         if serializer.is_valid():
             user = serializer.save()
+
+            if request.data.get("keypad"):
+                code = update_user_keypad_code(user)
+
             return Response({
                 'message': 'Successfully created user',
                 'user': {
@@ -40,7 +45,8 @@ class UsersView(APIView):
                     'username': user.username,
                     'email': user.email,
                     'is_superuser': user.is_superuser or False,
-                    'is_staff': user.is_staff or False
+                    'is_staff': user.is_staff or False,
+                    'code': code
                 }
             }, status=201)
 
@@ -55,7 +61,8 @@ class UsersView(APIView):
                 'error': 'Unauthorized to update users'
             }, status=401)
 
-        serializer = UserUpdateSerializer(user_to_update, data=request.data, partial=True)
+        serializer = UserUpdateSerializer(
+            user_to_update, data=request.data, partial=True)
 
         if serializer.is_valid():
             serializer.save()
