@@ -31,7 +31,6 @@ const Header: React.FC<HeaderProps> = ({ onNavigate }) => {
     { label: "Monitoring", icon: "📊", page: "monitoring" },
     { label: "Users", icon: "👥", page: "users" },
     { label: "Lock", icon: "🔒", page: "lock" },
-    { label: "Groups", icon: "👥", page: "groups" },
     { label: "Access", icon: "🔑", page: "access" },
     { label: "Access Control", icon: "🛡️", page: "access-control" },
     { label: "Settings", icon: "⚙️", page: "settings" },
