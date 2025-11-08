@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import UsersView, GroupView, AddUserToGroupSerializer, GroupUsersView, RemoveUserFromGroupView, DeleteGroupView, UpdateGroupView
+from .views import UsersView, GroupView, AddUserToGroupView, GroupUsersView, RemoveUserFromGroupView, DeleteGroupView, UpdateGroupView
 
 urlpatterns = [
     path("", UsersView.as_view(), name="users"),
