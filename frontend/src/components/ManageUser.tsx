@@ -6,8 +6,12 @@ import {
   DialogContent,
   DialogActions,
   IconButton,
+  // Add Checkbox and FormControlLabel imports
+  Checkbox,
+  FormControlLabel,
 } from "@mui/material";
 import CloseIcon from '@mui/icons-material/Close';
+import { Key, KeyOff } from '@mui/icons-material';
 import getCookie from "../context/getCookie";
 
 type ManageUserProps = {
@@ -26,6 +30,7 @@ interface User {
   email: string;
   is_staff: boolean;
   is_superuser: boolean;
+  has_keypad_code?: boolean;
 }
 
 type UserRole = "user" | "moderator" | "admin";
@@ -43,12 +48,15 @@ function ManageUser({ isDialogOpen, setIsDialogOpen, selectedUser, setSelectedUs
   };
 
   const [selectedRole, setSelectedRole] = useState<UserRole>("user");
+  // New state for the Generate/Regenerate checkbox
+  const [generateKeypad, setGenerateKeypad] = useState(false);
+
   const csrfToken = getCookie("csrftoken");
   const headers: HeadersInit = csrfToken
     ? {
-        "Content-Type": "application/json",
-        "X-CSRFToken": csrfToken
-      }
+      "Content-Type": "application/json",
+      "X-CSRFToken": csrfToken
+    }
     : {};
 
   const [formData, setFormData] = useState({
@@ -57,17 +65,17 @@ function ManageUser({ isDialogOpen, setIsDialogOpen, selectedUser, setSelectedUs
   });
 
   const getRolePermissions = (role: UserRole) => {
-	switch(role) {
-		case "user":
-			return { is_superuser: false, is_staff: false };
-		case "moderator":
-			return { is_superuser: false, is_staff: true };
-		case "admin":
-			return { is_superuser: true, is_staff: true };
-		default:
-			return { is_superuser: false, is_staff: false };
-	}
-  }; 
+    switch (role) {
+      case "user":
+        return { is_superuser: false, is_staff: false };
+      case "moderator":
+        return { is_superuser: false, is_staff: true };
+      case "admin":
+        return { is_superuser: true, is_staff: true };
+      default:
+        return { is_superuser: false, is_staff: false };
+    }
+  };
 
   const handleRoleChange = (role: UserRole) => {
     setSelectedRole(role);
@@ -91,43 +99,41 @@ function ManageUser({ isDialogOpen, setIsDialogOpen, selectedUser, setSelectedUs
     }
   ];
 
-  // Désaffiche le forme en overlay et remet l'id de l'utilisateur sélectionné a null
   const handleDialogClose = () => {
     setIsDialogOpen(false);
-    setSelectedUser("none");	
-	formData.current_password = "";
+    setSelectedUser("none");
+    formData.current_password = "";
   }
 
-  // Gère l'envoie du formulaire de gestion d'utilisateur
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-	const rolePermissions = getRolePermissions(selectedRole);
-	
-	console.log(JSON.stringify({user_id: selectedUser.id, ...formData, ...rolePermissions}))
+    const rolePermissions = getRolePermissions(selectedRole);
 
-	try {
-		const response = await fetch("http://localhost:8000/users/", {
-			method: "PATCH",
-			headers,
-			credentials: "include",
-			body: JSON.stringify({
-				user_id: selectedUser.id,
-				...formData,
-				...rolePermissions
-			})
-		});
-		const data = await response.json();
-		if(data.error) {
-			setSnackbar({isError: true, text: data.error})
-		} else {
-			setSnackbar({isError: false, text: "User updated successfully"})
-			refresh(true);
-			handleDialogClose()
-		}
-	} catch (error) {
-		setSnackbar({isError: true, text: error})
-	}
+    try {
+      const response = await fetch("http://localhost:8000/users/", {
+        method: "PATCH",
+        headers,
+        credentials: "include",
+        body: JSON.stringify({
+          user_id: selectedUser.id,
+          ...formData,
+          ...rolePermissions,
+          // Send the instruction to generate/regenerate the code
+          keypad: generateKeypad
+        })
+      });
+      const data = await response.json();
+      if (data.error) {
+        setSnackbar({ isError: true, text: data.error })
+      } else {
+        setSnackbar({ isError: false, text: data.message })
+        refresh(true);
+        handleDialogClose()
+      }
+    } catch (error) {
+      setSnackbar({ isError: true, text: error })
+    }
   }
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -138,13 +144,15 @@ function ManageUser({ isDialogOpen, setIsDialogOpen, selectedUser, setSelectedUs
   };
 
   useEffect(() => {
-	if (isDialogOpen) {
-		setSelectedRole(getUserRole(selectedUser))
-		setFormData({
-      		...formData,
-      		username: selectedUser.username
-    	});
-	}
+    if (isDialogOpen) {
+      setSelectedRole(getUserRole(selectedUser))
+      setFormData({
+        ...formData,
+        username: selectedUser.username
+      });
+      // Reset the checkbox when dialog opens
+      setGenerateKeypad(false);
+    }
   }, [isDialogOpen]);
 
 
@@ -155,87 +163,119 @@ function ManageUser({ isDialogOpen, setIsDialogOpen, selectedUser, setSelectedUs
       fullWidth={true}
       maxWidth="sm"
     >
-	  <DialogContent>
-		<DialogActions>
-		  <IconButton
-			onClick={() => handleDialogClose()}
-		  >
-			<CloseIcon />
-		  </IconButton>
-		</DialogActions>
-		<form onSubmit={handleSubmit}>
-			<fieldset className="border-2 border-gray-300 rounded-2xl p-6">
-			  <legend className="px-4 text-xl font-bold text-gray-800">
-				Informations	
-			  </legend>
+      <DialogContent>
+        <DialogActions>
+          <IconButton onClick={() => handleDialogClose()}>
+            <CloseIcon />
+          </IconButton>
+        </DialogActions>
+        <form onSubmit={handleSubmit}>
+          <fieldset className="border-2 border-gray-300 rounded-2xl p-6">
+            <legend className="px-4 text-xl font-bold text-gray-800">
+              Informations
+            </legend>
 
-			  <div className="flex flex-col gap-4 mt-4">
-				<TextField
-				  label="Username"
-				  name="username"
-				  value={formData.username}
-				  onChange={handleInputChange}
-				  variant="outlined"
-				  fullWidth
-				  required
-				/>
+            <div className="flex flex-col gap-4 mt-4">
+              <TextField
+                label="Username"
+                name="username"
+                value={formData.username}
+                onChange={handleInputChange}
+                variant="outlined"
+                fullWidth
+                required
+              />
 
-				<TextField
-				  label="Current password"
-				  name="current_password"
-				  type="password"
-				  value={formData.current_password}
-				  onChange={handleInputChange}
-				  variant="outlined"
-				  fullWidth
-				  required
-				/>
-			  </div>
-			</fieldset>
-		  <fieldset className="border-2 border-gray-300 rounded-2xl p-6">
-			<legend className="px-4 text-xl font-bold text-gray-800">
-				Role
-			</legend>
+              <TextField
+                label="Current password"
+                name="current_password"
+                type="password"
+                value={formData.current_password}
+                onChange={handleInputChange}
+                variant="outlined"
+                fullWidth
+                required
+              />
 
-			<div className="flex flex-col gap-3 mt-4">
-				{roles.map((role) => (
-				  <div
-					key={role.value}
-					className={`flex items-start gap-4 p-4 rounded-xl cursor-pointer transition-all ${
-					  selectedRole === role.value
-						? "bg-blue-100 border-2 border-blue-500"
-						: "bg-gray-50 hover:bg-blue-50 border-2 border-transparent"
-					}`}
-					onClick={() => handleRoleChange(role.value)}
-				  > 
-					<input
-					  type="radio"
-					  checked={selectedRole === role.value}
-					  onChange={() => handleRoleChange(role.value)}
-					  className="w-6 h-6 cursor-pointer accent-blue-600 mt-1"
-					/>
-					<div className="flex flex-col">
-					  <span className="font-bold text-gray-800">{role.label}</span>
-					  <span className="text-sm text-gray-600">{role.description}</span>
-					</div>
-				  </div>
-				))}
-			  </div>
-			</fieldset>
-		  <DialogActions>
-			<Button
-			  type="submit"
-			  variant="contained"
-			  sx={{
-				backgroundColor: "#3B5CFF",
-				'&:hover': { backgroundColor: "#2A4AE5" }
-			  }}
-			>
-			  Submit
-			</Button>
-		  </DialogActions>
-		</form>
-	  </DialogContent>
+              {/* Keypad Management Row */}
+              <div className={`flex items-center justify-between p-3 rounded-xl border-2 transition-colors ${selectedUser.has_keypad_code
+                ? "bg-blue-50 border-blue-100"
+                : "bg-gray-50 border-gray-200"
+                }`}>
+                <div className="flex items-center gap-3">
+                  {selectedUser.has_keypad_code ? (
+                    <Key className="text-blue-500" />
+                  ) : (
+                    <KeyOff className="text-gray-400" />
+                  )}
+                  <span className={`font-medium ${selectedUser.has_keypad_code ? "text-blue-900" : "text-gray-600"}`}>
+                    {selectedUser.has_keypad_code ? "Keypad code set up" : "No existing keypad code"}
+                  </span>
+                </div>
+
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={generateKeypad}
+                      onChange={(e) => setGenerateKeypad(e.target.checked)}
+                      sx={{
+                        '&.Mui-checked': { color: "#3B5CFF" },
+                      }}
+                    />
+                  }
+                  label={
+                    <span className="text-sm font-bold text-gray-700">
+                      {selectedUser.has_keypad_code ? "Regenerate" : "Generate"}
+                    </span>
+                  }
+                />
+              </div>
+            </div>
+          </fieldset>
+
+          <fieldset className="border-2 border-gray-300 rounded-2xl p-6 mt-6">
+            <legend className="px-4 text-xl font-bold text-gray-800">
+              Role
+            </legend>
+
+            <div className="flex flex-col gap-3 mt-4">
+              {roles.map((role) => (
+                <div
+                  key={role.value}
+                  className={`flex items-start gap-4 p-4 rounded-xl cursor-pointer transition-all ${selectedRole === role.value
+                    ? "bg-blue-100 border-2 border-blue-500"
+                    : "bg-gray-50 hover:bg-blue-50 border-2 border-transparent"
+                    }`}
+                  onClick={() => handleRoleChange(role.value)}
+                >
+                  <input
+                    type="radio"
+                    checked={selectedRole === role.value}
+                    onChange={() => handleRoleChange(role.value)}
+                    className="w-6 h-6 cursor-pointer accent-blue-600 mt-1"
+                  />
+                  <div className="flex flex-col">
+                    <span className="font-bold text-gray-800">{role.label}</span>
+                    <span className="text-sm text-gray-600">{role.description}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </fieldset>
+          <DialogActions>
+            <Button
+              type="submit"
+              variant="contained"
+              sx={{
+                backgroundColor: "#3B5CFF",
+                '&:hover': { backgroundColor: "#2A4AE5" }
+              }}
+            >
+              Submit
+            </Button>
+          </DialogActions>
+        </form>
+      </DialogContent>
     </Dialog>
   )
 }

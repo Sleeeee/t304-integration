@@ -1,15 +1,22 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
+from .models import UserKeypadCode
 
 
 User = get_user_model()
 
 
 class UserSerializer(serializers.ModelSerializer):
+    has_keypad_code = serializers.SerializerMethodField()
+
     class Meta:
         model = User
-        fields = ("id", "username", "is_staff", "is_superuser", "email")
+        fields = ("id", "username", "is_staff",
+                  "is_superuser", "email", "has_keypad_code")
+
+    def get_has_keypad_code(self, obj):
+        return UserKeypadCode.objects.filter(user=obj).exists()
 
 
 class GroupSerializer(serializers.ModelSerializer):
@@ -65,12 +72,14 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         user.save()
         return user
 
+
 class UserUpdateSerializer(serializers.ModelSerializer):
     current_password = serializers.CharField(write_only=True, required=True)
 
     class Meta:
         model = User
-        fields = ['username', 'email', 'current_password', 'is_staff', 'is_superuser']
+        fields = ['username', 'email', 'current_password',
+                  'is_staff', 'is_superuser']
 
     def validate(self, data):
         user = self.instance

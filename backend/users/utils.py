@@ -16,7 +16,7 @@ def generate_safe_6digit_code():
 
 def update_user_keypad_code(user):
     code = generate_safe_6digit_code()
-    user_code = UserKeypadCode(user=user)
+    user_code, created = UserKeypadCode.objects.get_or_create(user=user)
     user_code.set_code(code)
     user_code.save()
     return code

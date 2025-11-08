@@ -63,11 +63,22 @@ class UsersView(APIView):
             }, status=401)
 
         serializer = UserUpdateSerializer(
-            user_to_update, data=request.data, partial=True)
+            user_to_update, data=request.data, partial=True
+        )
 
         if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
+            updated_user = serializer.save()
+            response_data = {
+                "message": "User updated successfully.",
+                "user": serializer.data
+            }
+
+            if request.data.get("keypad"):
+                new_code = update_user_keypad_code(updated_user)
+                response_data["message"] += f" New keypad code generated: {
+                    new_code}"
+
+            return Response(response_data)
         return Response(serializer.errors, status=400)
 
 
