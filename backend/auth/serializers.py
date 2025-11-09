@@ -10,7 +10,7 @@ class UserSerializer(ModelSerializer):
 
     class Meta:
         model = User
-        fields = ("username", "is_staff", "is_superuser", "default_schematic_id")
+        fields = ("id", "username", "is_staff", "is_superuser", "default_schematic_id")
 
     def get_default_schematic_id(self, obj):
         try:
