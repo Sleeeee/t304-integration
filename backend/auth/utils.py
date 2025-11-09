@@ -13,12 +13,11 @@ def get_user_by_keypad_code(raw_code):
     return None
 
 
-def get_user_by_badge_code(code):
-    if not code:
+def get_user_by_badge_code(raw_code):
+    if not raw_code:
         return None
 
     for code in UserBadgeCode.objects.select_related("user"):
-        print(check_password(code, code.code_hash))
-        if check_password(code, code.code_hash):
+        if check_password(raw_code, code.code_hash):
             return code.user
     return None

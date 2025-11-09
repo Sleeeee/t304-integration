@@ -93,7 +93,7 @@ class BadgeCodeLoginView(APIView):
 
         if user_has_access_to_lock(login_user, lock):
             return Response({
-                "message": "Access grnted",
+                "message": "Access granted",
                 "user": UserSerializer(login_user).data
             }, status=200)
 
