@@ -93,6 +93,23 @@ class UsersView(APIView):
             return Response(response_data)
         return Response(serializer.errors, status=400)
 
+    def delete(self, request):
+        user = request.user
+        user_id = request.data.get("user_id")
+
+        if not (user.is_authenticated and user.is_superuser):
+            return Response({"error": "Unauthorized to delete users"}, status=401)
+
+        user_to_delete = get_object_or_404(User, pk=user_id)
+
+        if user.id == user_to_delete.id:
+            return Response({"error": "You cannot delete yourself."}, status=400)
+
+        username = user_to_delete.username
+        user_to_delete.delete()
+
+        return Response({"message": f"User '{username}' deleted successfully."}, status=200)
+
 
 class GroupView(APIView):
     def get(self, request):

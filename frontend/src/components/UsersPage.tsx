@@ -16,6 +16,7 @@ import {
 } from "@mui/material";
 import getCookie from "../context/getCookie";
 import ManageUser from "./ManageUser";
+import DeleteUser from "./DeleteUser";
 
 import CustomSnackbar from "./CustomSnackbar";
 
@@ -290,7 +291,16 @@ const UsersPage: React.FC<UsersPageProps> = ({ onNavigate }) => {
                             >
                               Manage
                             </Button>
-                          </TableCell>
+							<DeleteUser
+							  selectedUser={user}
+							  onUserDeleted={() => {
+								setSelectedUser("null");
+							  }}
+							  refresh={refreshList}
+							  snackbar={snackbar}
+							  setSnackbar={setSnackbar}
+							/>
+						  </TableCell>
                         </TableRow>
                       );
                     })
