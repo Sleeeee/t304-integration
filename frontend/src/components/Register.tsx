@@ -15,8 +15,9 @@ function Register() {
     password: "",
   });
 
-  // New state for keypad
+  // State for extra generation options
   const [keypad, setKeypad] = useState(false);
+  const [badge, setBadge] = useState(false);
 
   const [selectedRole, setSelectedRole] = useState<UserRole>("user");
   const [loading, setLoading] = useState(false);
@@ -72,17 +73,20 @@ function Register() {
         body: JSON.stringify({
           ...formData,
           ...rolePermissions,
-          keypad, // Included in the POST request payload
+          keypad,
+          badge, // Included in the POST request payload
         })
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        setMessage({ type: "success", text: data.message });
+        setMessage({ type: "success", text: data.message || "User created successfully!" });
         setFormData({ username: "", email: "", password: "" });
         setSelectedRole("user");
-        setKeypad(false); // Reset keypad state on success
+        // Reset extra options
+        setKeypad(false);
+        setBadge(false);
       } else {
         setMessage({
           type: "error",
@@ -164,7 +168,7 @@ function Register() {
               required
             />
 
-            {/* Keypad Checkbox - Styled to match your Roles UI */}
+            {/* Keypad Checkbox */}
             <div
               className={`flex items-center gap-4 p-4 rounded-xl cursor-pointer transition-all border-2 mt-2 ${keypad
                 ? "bg-blue-100 border-blue-500"
@@ -180,6 +184,24 @@ function Register() {
               />
               <span className="font-bold text-gray-800">Generate a keypad code</span>
             </div>
+
+            {/* Badge Checkbox */}
+            <div
+              className={`flex items-center gap-4 p-4 rounded-xl cursor-pointer transition-all border-2 ${badge
+                ? "bg-blue-100 border-blue-500"
+                : "bg-gray-50 hover:bg-blue-50 border-transparent"
+                }`}
+              onClick={() => setBadge(!badge)}
+            >
+              <input
+                type="checkbox"
+                checked={badge}
+                onChange={(e) => setBadge(e.target.checked)}
+                className="w-6 h-6 cursor-pointer accent-blue-600"
+              />
+              <span className="font-bold text-gray-800">Generate a badge code</span>
+            </div>
+
           </div>
         </fieldset>
 

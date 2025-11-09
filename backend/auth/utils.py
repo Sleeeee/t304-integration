@@ -18,6 +18,7 @@ def get_user_by_badge_code(code):
         return None
 
     for code in UserBadgeCode.objects.select_related("user"):
+        print(check_password(code, code.code_hash))
         if check_password(code, code.code_hash):
             return code.user
     return None

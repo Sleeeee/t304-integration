@@ -6,12 +6,11 @@ import {
   DialogContent,
   DialogActions,
   IconButton,
-  // Add Checkbox and FormControlLabel imports
   Checkbox,
   FormControlLabel,
 } from "@mui/material";
 import CloseIcon from '@mui/icons-material/Close';
-import { Key, KeyOff } from '@mui/icons-material';
+import { Key, KeyOff, Badge } from '@mui/icons-material'; // Added Badge icon
 import getCookie from "../context/getCookie";
 
 type ManageUserProps = {
@@ -31,6 +30,7 @@ interface User {
   is_staff: boolean;
   is_superuser: boolean;
   has_keypad_code?: boolean;
+  has_badge_code?: boolean; // Added has_badge_code to interface
 }
 
 type UserRole = "user" | "moderator" | "admin";
@@ -48,8 +48,9 @@ function ManageUser({ isDialogOpen, setIsDialogOpen, selectedUser, setSelectedUs
   };
 
   const [selectedRole, setSelectedRole] = useState<UserRole>("user");
-  // New state for the Generate/Regenerate checkbox
+  // State for Generate/Regenerate checkboxes
   const [generateKeypad, setGenerateKeypad] = useState(false);
+  const [generateBadge, setGenerateBadge] = useState(false); // New state for badge
 
   const csrfToken = getCookie("csrftoken");
   const headers: HeadersInit = csrfToken
@@ -119,8 +120,9 @@ function ManageUser({ isDialogOpen, setIsDialogOpen, selectedUser, setSelectedUs
           user_id: selectedUser.id,
           ...formData,
           ...rolePermissions,
-          // Send the instruction to generate/regenerate the code
-          keypad: generateKeypad
+          // Send instructions to generate/regenerate codes
+          keypad: generateKeypad,
+          badge: generateBadge // Added badge to payload
         })
       });
       const data = await response.json();
@@ -150,8 +152,9 @@ function ManageUser({ isDialogOpen, setIsDialogOpen, selectedUser, setSelectedUs
         ...formData,
         username: selectedUser.username
       });
-      // Reset the checkbox when dialog opens
+      // Reset checkboxes when dialog opens
       setGenerateKeypad(false);
+      setGenerateBadge(false);
     }
   }, [isDialogOpen]);
 
@@ -230,6 +233,38 @@ function ManageUser({ isDialogOpen, setIsDialogOpen, selectedUser, setSelectedUs
                   }
                 />
               </div>
+
+              {/* Badge Management Row */}
+              <div className={`flex items-center justify-between p-3 rounded-xl border-2 transition-colors ${selectedUser.has_badge_code
+                ? "bg-blue-50 border-blue-100"
+                : "bg-gray-50 border-gray-200"
+                }`}>
+                <div className="flex items-center gap-3">
+                  {/* Using Badge icon here, you might want a different one if preferred, e.g. BadgeOutlined if available or similar from MUI icons */}
+                  <Badge className={selectedUser.has_badge_code ? "text-blue-500" : "text-gray-400"} />
+                  <span className={`font-medium ${selectedUser.has_badge_code ? "text-blue-900" : "text-gray-600"}`}>
+                    {selectedUser.has_badge_code ? "Badge code set up" : "No existing badge code"}
+                  </span>
+                </div>
+
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={generateBadge}
+                      onChange={(e) => setGenerateBadge(e.target.checked)}
+                      sx={{
+                        '&.Mui-checked': { color: "#3B5CFF" },
+                      }}
+                    />
+                  }
+                  label={
+                    <span className="text-sm font-bold text-gray-700">
+                      {selectedUser.has_badge_code ? "Regenerate" : "Generate"}
+                    </span>
+                  }
+                />
+              </div>
+
             </div>
           </fieldset>
 

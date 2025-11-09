@@ -5,7 +5,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from locks.models import Lock
 from .serializers import UserSerializer
-from .utils import get_user_by_keypad_code
+from .utils import get_user_by_keypad_code, get_user_by_badge_code
 from permissions.utils import user_has_access_to_lock
 
 
@@ -71,6 +71,29 @@ class KeypadCodeLoginView(APIView):
         if user_has_access_to_lock(login_user, lock):
             return Response({
                 "message": "Access granted",
+                "user": UserSerializer(login_user).data
+            }, status=200)
+
+        return Response({"error": "Access denied"}, status=401)
+
+
+class BadgeCodeLoginView(APIView):
+    def post(self, request):
+        request_code = request.data.get("code")
+        lock_id = request.data.get("lock")
+
+        if not (request_code and lock_id):
+            return Response({"error": "Missing code or lock id"}, status=401)
+
+        login_user = get_user_by_badge_code(request_code)
+        if not login_user:
+            return Response({"error": "Access denied"}, status=401)
+
+        lock = get_object_or_404(Lock, pk=lock_id)
+
+        if user_has_access_to_lock(login_user, lock):
+            return Response({
+                "message": "Access grnted",
                 "user": UserSerializer(login_user).data
             }, status=200)
 

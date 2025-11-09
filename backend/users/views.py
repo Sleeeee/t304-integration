@@ -83,7 +83,12 @@ class UsersView(APIView):
             if request.data.get("keypad"):
                 new_code = update_user_keypad_code(updated_user)
                 response_data["message"] += f" New keypad code generated: {
-                    new_code}"
+                    new_code}."
+
+            if request.data.get("badge"):
+                new_code = update_user_badge_code(updated_user)
+                response_data["message"] += f" New badge code generated: {
+                    new_code}."
 
             return Response(response_data)
         return Response(serializer.errors, status=400)
