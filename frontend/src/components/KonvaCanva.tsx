@@ -105,6 +105,7 @@ const TransformableLine: React.FC<{
         scaleY={shapeProps.scaleY || 1}
         stroke={isDragging || isHovered ? '#4CAF50' : 'black'}
         strokeWidth={isSelected ? 4 : 2}
+        hitStrokeWidth={20}
         lineCap="round"
         lineJoin="round"
         draggable
@@ -188,6 +189,7 @@ const TransformableLock: React.FC<{
         scaleX={(shapeProps.scaleX || 1) * BASE_SCALE}
         scaleY={(shapeProps.scaleY || 1) * BASE_SCALE}
         fill={isDragging || isHovered ? '#4CAF50' : 'black'}
+        hitStrokeWidth={30}
         draggable
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
@@ -221,20 +223,20 @@ const TransformableLock: React.FC<{
           });
         }}
       />
-      {/* Texte avec le nom de la serrure */}
+      {/* Texte avec le nom de la serrure - TOUJOURS AU-DESSUS, SANS ROTATION */}
       {shapeProps.lock_name && (
         <Text
           ref={textRef}
           text={shapeProps.lock_name}
           x={shapeProps.x}
-          y={shapeProps.y + 60 * ((shapeProps.scaleY || 1) * BASE_SCALE)}
+          y={shapeProps.y - 40}
           fontSize={14}
           fill="#333"
           fontStyle="bold"
           align="center"
           offsetX={shapeProps.lock_name.length * 3.5}
           listening={false}
-          rotation={shapeProps.rotation || 0}
+          rotation={0}
         />
       )}
       {isSelected && (
@@ -282,6 +284,9 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
   const [selectedSchematicId, setSelectedSchematicId] = React.useState<number>(schematicId);
   const [showAddBuildingModal, setShowAddBuildingModal] = React.useState(false);
   const [showAddFloorModal, setShowAddFloorModal] = React.useState(false);
+
+  // State for selected object details panel
+  const [selectedObjectDetails, setSelectedObjectDetails] = React.useState<ComponentData | null>(null);
 
   const stageRef = React.useRef<KonvaStage>(null);
   const canvasContainerRef = React.useRef<HTMLDivElement>(null);
@@ -355,6 +360,12 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
     if (!id) return;
 
     setIsLoading(true);
+    // Vider le canvas avant de charger de nouvelles données
+    setComponents([]);
+    setPlacedLockIds(new Set());
+    setSelectedId(null);
+    setSelectedObjectDetails(null);
+
     try {
       const response = await fetch(`http://localhost:8000/api/schematics/${id}/data/`, {
         method: 'GET',
@@ -374,9 +385,15 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
         setPlacedLockIds(new Set(placedIds));
       } else {
         console.error('Failed to fetch schematic data');
+        // Même en cas d'erreur, garder le canvas vide
+        setComponents([]);
+        setPlacedLockIds(new Set());
       }
     } catch (error) {
       console.error('Error fetching schematic:', error);
+      // Même en cas d'erreur, garder le canvas vide
+      setComponents([]);
+      setPlacedLockIds(new Set());
     } finally {
       setIsLoading(false);
     }
@@ -384,7 +401,7 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
 
   // Save schematic data to backend
   const saveSchematic = React.useCallback(async () => {
-    if (!schematicId) return;
+    if (!selectedSchematicId) return;
 
     setIsSaving(true);
     setSaveMessage('');
@@ -396,7 +413,7 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
         ...(csrfToken ? { 'X-CSRFToken': csrfToken } : {}),
       };
 
-      const response = await fetch(`http://localhost:8000/api/schematics/${schematicId}/save/`, {
+      const response = await fetch(`http://localhost:8000/api/schematics/${selectedSchematicId}/save/`, {
         method: 'POST',
         credentials: 'include',
         headers,
@@ -415,7 +432,7 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
     } finally {
       setIsSaving(false);
     }
-  }, [schematicId, components]);
+  }, [selectedSchematicId, components]);
 
   // Create new building
   const createBuilding = React.useCallback(async (name: string, description: string, floor: number) => {
@@ -487,10 +504,11 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
   React.useEffect(() => {
     fetchAvailableLocks();
     fetchBuildings();
-    if (schematicId) {
-      fetchSchematicData(schematicId);
+    // Synchroniser selectedSchematicId avec la prop schematicId au démarrage
+    if (schematicId && schematicId !== selectedSchematicId) {
+      setSelectedSchematicId(schematicId);
     }
-  }, [schematicId, fetchAvailableLocks, fetchSchematicData, fetchBuildings]);
+  }, [schematicId, fetchAvailableLocks, fetchBuildings]); // Removed fetchSchematicData and selectedSchematicId
 
   // Fetch schematics when building is selected
   React.useEffect(() => {
@@ -500,11 +518,15 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
   }, [selectedBuildingId, fetchSchematicsForBuilding]);
 
   // Load schematic when selection changes
+  const lastLoadedSchematicId = React.useRef<number | null>(null);
+
   React.useEffect(() => {
-    if (selectedSchematicId && selectedSchematicId !== schematicId) {
+    // Charger les données si un schéma est sélectionné ET qu'il est différent du dernier chargé
+    if (selectedSchematicId && selectedSchematicId !== lastLoadedSchematicId.current) {
+      lastLoadedSchematicId.current = selectedSchematicId;
       fetchSchematicData(selectedSchematicId);
     }
-  }, [selectedSchematicId, schematicId, fetchSchematicData]);
+  }, [selectedSchematicId, fetchSchematicData]);
 
   // Gestion du redimensionnement du canvas
   React.useEffect(() => {
@@ -545,6 +567,7 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
         // Remove component from canvas
         setComponents(components.filter(c => c.id !== selectedId));
         setSelectedId(null);
+        setSelectedObjectDetails(null);
       }
     };
 
@@ -557,6 +580,7 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
     const clickedOnEmpty = e.target === e.target.getStage();
     if (clickedOnEmpty) {
       setSelectedId(null);
+      setSelectedObjectDetails(null);
     }
   };
 
@@ -989,7 +1013,10 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
                         key={component.id}
                         shapeProps={component}
                         isSelected={component.id === selectedId}
-                        onSelect={() => setSelectedId(component.id)}
+                        onSelect={() => {
+                          setSelectedId(component.id);
+                          setSelectedObjectDetails(component);
+                        }}
                         onChange={(newAttrs) => {
                           const comps = components.slice();
                           comps[i] = newAttrs;
@@ -1006,7 +1033,10 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
                         key={component.id}
                         shapeProps={component}
                         isSelected={component.id === selectedId}
-                        onSelect={() => setSelectedId(component.id)}
+                        onSelect={() => {
+                          setSelectedId(component.id);
+                          setSelectedObjectDetails(component);
+                        }}
                         onChange={(newAttrs) => {
                           const comps = components.slice();
                           comps[i] = newAttrs;
@@ -1025,6 +1055,111 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
             </Stage>
           </div>
         </div>
+
+        {/* PETIT CARRÉ D'INFOS */}
+        {selectedObjectDetails && (
+          <div style={{
+            position: 'absolute',
+            top: '80px',
+            right: '20px',
+            width: '220px',
+            backgroundColor: 'white',
+            borderRadius: '6px',
+            padding: '12px',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+            zIndex: 1000,
+            fontSize: '12px'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+              <span style={{ fontWeight: '600', fontSize: '13px' }}>
+                {'type' in selectedObjectDetails && selectedObjectDetails.type === 'lock' ? 'Serrure' : 'Mur'}
+              </span>
+              <button
+                onClick={() => {
+                  setSelectedId(null);
+                  setSelectedObjectDetails(null);
+                }}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '16px',
+                  cursor: 'pointer',
+                  color: '#999',
+                  padding: 0,
+                  lineHeight: 1
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            {'type' in selectedObjectDetails && selectedObjectDetails.type === 'lock' ? (
+              <>
+                <div style={{ marginBottom: '6px' }}>
+                  <span style={{ color: '#666', fontSize: '11px' }}>Nom: </span>
+                  <span style={{ fontWeight: '500' }}>
+                    {selectedObjectDetails.lock_name || 'Sans nom'}
+                  </span>
+                </div>
+
+                <div style={{ marginBottom: '6px' }}>
+                  <span style={{ color: '#666', fontSize: '11px' }}>ID: </span>
+                  <span style={{ fontFamily: 'monospace', fontSize: '11px' }}>
+                    {selectedObjectDetails.lock_id || 'N/A'}
+                  </span>
+                </div>
+
+                <div style={{ marginBottom: '6px' }}>
+                  <span style={{ color: '#666', fontSize: '11px' }}>Statut: </span>
+                  {(() => {
+                    const lock = availableLocks.find(l => l.id_lock === selectedObjectDetails.lock_id);
+                    const status = lock?.status || 'unknown';
+                    const statusColors: Record<string, string> = {
+                      'connected': '#4CAF50',
+                      'disconnected': '#F44336',
+                      'error': '#FF9800',
+                      'unknown': '#9E9E9E'
+                    };
+                    const statusLabels: Record<string, string> = {
+                      'connected': 'Connecté',
+                      'disconnected': 'Déconnecté',
+                      'error': 'Erreur',
+                      'unknown': 'Inconnu'
+                    };
+                    return (
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                        <span style={{
+                          width: '8px',
+                          height: '8px',
+                          borderRadius: '50%',
+                          backgroundColor: statusColors[status] || statusColors['unknown'],
+                          display: 'inline-block'
+                        }} />
+                        <span style={{ fontSize: '11px' }}>
+                          {statusLabels[status] || 'Inconnu'}
+                        </span>
+                      </span>
+                    );
+                  })()}
+                </div>
+              </>
+            ) : (
+              <div style={{ marginBottom: '6px' }}>
+                <span style={{ color: '#666', fontSize: '11px' }}>ID: </span>
+                <span style={{ fontFamily: 'monospace', fontSize: '11px' }}>
+                  {selectedObjectDetails.id}
+                </span>
+              </div>
+            )}
+
+            <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px solid #eee' }}>
+              <div style={{ fontSize: '11px', color: '#666' }}>
+                X: {Math.round(selectedObjectDetails.x)}, Y: {Math.round(selectedObjectDetails.y)}
+                {selectedObjectDetails.rotation !== undefined && `, ${Math.round(selectedObjectDetails.rotation)}°`}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Modal pour ajouter un bâtiment */}
