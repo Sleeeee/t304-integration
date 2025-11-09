@@ -8,6 +8,8 @@ from django.contrib.auth.models import Group
 from .serializers import GroupSerializer
 from django.shortcuts import get_object_or_404
 from .serializers import AddUserToGroupSerializer
+from .serializers import UserUpdateSerializer
+from .utils import update_user_keypad_code
 
 User = get_user_model()
 
@@ -32,17 +34,51 @@ class UsersView(APIView):
 
         if serializer.is_valid():
             user = serializer.save()
+
+            keypad = None
+            if request.data.get("keypad"):
+                keypad = update_user_keypad_code(user)
+
             return Response({
-                'message': 'Successfully created user',
+                'message': f'Successfully created user.\nKeypad code : {keypad}',
                 'user': {
                     'id': user.id,
                     'username': user.username,
                     'email': user.email,
                     'is_superuser': user.is_superuser or False,
-                    'is_staff': user.is_staff or False
+                    'is_staff': user.is_staff or False,
+                    'keypad': keypad
                 }
             }, status=201)
 
+        return Response(serializer.errors, status=400)
+
+    def patch(self, request):
+        user = request.user
+        user_id = request.data.get("user_id")
+        user_to_update = get_object_or_404(User, pk=user_id)
+        if not (user.is_authenticated and user.is_superuser):
+            return Response({
+                'error': 'Unauthorized to update users'
+            }, status=401)
+
+        serializer = UserUpdateSerializer(
+            user_to_update, data=request.data, partial=True
+        )
+
+        if serializer.is_valid():
+            updated_user = serializer.save()
+            response_data = {
+                "message": "User updated successfully.",
+                "user": serializer.data
+            }
+
+            if request.data.get("keypad"):
+                new_code = update_user_keypad_code(updated_user)
+                response_data["message"] += f" New keypad code generated: {
+                    new_code}"
+
+            return Response(response_data)
         return Response(serializer.errors, status=400)
 
 
@@ -73,7 +109,7 @@ class GroupView(APIView):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    
+
 class AddUserToGroupView(APIView):
     def post(self, request, group_id):
         user = request.user
@@ -107,7 +143,7 @@ class AddUserToGroupView(APIView):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    
+
 class GroupUsersView(APIView):
     def get(self, request, group_id):
         user = request.user
@@ -126,7 +162,7 @@ class GroupUsersView(APIView):
             "members": serializer.data
         }, status=status.HTTP_200_OK)
 
-    
+
 class RemoveUserFromGroupView(APIView):
     def delete(self, request, group_id):
         user = request.user
@@ -137,7 +173,8 @@ class RemoveUserFromGroupView(APIView):
             )
 
         group = get_object_or_404(Group, id=group_id)
-        serializer = AddUserToGroupSerializer(data=request.data)  # on réutilise le même serializer
+        serializer = AddUserToGroupSerializer(
+            data=request.data)  # on réutilise le même serializer
 
         if serializer.is_valid():
             user_ids = serializer.validated_data['user_ids']
@@ -160,7 +197,6 @@ class RemoveUserFromGroupView(APIView):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    
 
 class DeleteGroupView(APIView):
     def delete(self, request, group_id):
@@ -180,3 +216,30 @@ class DeleteGroupView(APIView):
             status=status.HTTP_204_NO_CONTENT
         )
 
+
+class UpdateGroupView(APIView):
+    def patch(self, request, group_id):
+        # 1. Vérifier si l'utilisateur est super-utilisateur
+        user = request.user
+        if not (user.is_authenticated and user.is_superuser):
+            return Response(
+                {"error": "Unauthorized to update groups"},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+
+        # 2. Trouver le groupe
+        group = get_object_or_404(Group, id=group_id)
+
+        # 3. Utiliser le serializer pour valider le nouveau nom
+        # 'partial=True' est ce qui en fait un PATCH (mise à jour partielle)
+        serializer = GroupSerializer(group, data=request.data, partial=True)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                "message": "Groupe mis à jour avec succès",
+                "group": serializer.data
+            }, status=status.HTTP_200_OK)
+
+        # Si les données ne sont pas valides (ex: nom déjà pris)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

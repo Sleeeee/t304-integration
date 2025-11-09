@@ -1,6 +1,6 @@
 import React, { useEffect, useState, FC } from 'react';
-import { Accordion, AccordionSummary, AccordionDetails, Button, ButtonGroup, Typography, Tooltip, CircularProgress } from '@mui/material';
-import { ExpandMore, CheckCircle, Cancel, Warning } from '@mui/icons-material';
+import { Accordion, AccordionSummary, AccordionDetails, Button, ButtonGroup, Typography, Tooltip, CircularProgress, IconButton } from '@mui/material';
+import { ExpandMore, CheckCircle, Cancel, Warning, ChevronRight } from '@mui/icons-material';
 import getCookie from '../../context/getCookie';
 import CustomSnackbar from '../CustomSnackbar';
 import PermissionRow from './PermissionRow';
@@ -45,11 +45,9 @@ type DataMap = {
 };
 
 const getPermissionKey = (permissionObj: Permission): string => {
-  // Ensure the keys are always in the same order for consistent stringification
   const keys: Array<keyof Permission> = ['user', 'group', 'lock', 'lock_group'];
   const orderedObj: { [k: string]: number } = {};
   keys.forEach(key => {
-    // Only include keys that are defined and not null/undefined
     if (permissionObj.hasOwnProperty(key) && permissionObj[key] !== undefined && permissionObj[key] !== null) {
       const value = permissionObj[key]!;
       if (typeof value === 'number') {
@@ -60,7 +58,6 @@ const getPermissionKey = (permissionObj: Permission): string => {
   return JSON.stringify(orderedObj);
 };
 
-// --- MAIN COMPONENT ---
 const PermissionTable: FC = () => {
   const [mode, setMode] = useState<Mode>('locks');
   const otherMode = mode === "locks" ? "users" : "locks";
@@ -81,21 +78,18 @@ const PermissionTable: FC = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [locks, setLocks] = useState<Lock[]>([]);
   const [userGroups, setUserGroups] = useState<Entity[]>([]);
+  const [lockGroups, setLockGroups] = useState<Entity[]>([]);
   const [permissions, setPermissions] = useState<Permission[]>([]);
+
   const [expandedGroups, setExpandedGroups] = useState<{ [key: string]: Entity[] }>({});
   const [loadingGroups, setLoadingGroups] = useState<Set<string>>(new Set());
+
+  const [selectedGroupMembers, setSelectedGroupMembers] = useState<Entity[] | null>(null);
+  const [loadingSelectedGroup, setLoadingSelectedGroup] = useState(false);
+  // NEW STATE: Control whether the selected group members are displayed
+  const [isSelectedGroupExpanded, setIsSelectedGroupExpanded] = useState(false);
+
   const [permissionChanges, setPermissionChanges] = useState<PermissionChanges>({ toAdd: [], toRemove: [] });
-
-  const toggleMode = () => {
-    setMode(prevMode => (prevMode === 'locks' ? 'users' : 'locks'));
-    setSelected({ type: "group", index: 0 });
-  };
-
-  const lockGroups: Entity[] = [
-    { id: 1, name: "FIRST FLOOR" },
-    { id: 2, name: "SERVERS" },
-    { id: 3, name: "OUTSIDE" }
-  ];
 
   const dataMap: DataMap = {
     users: {
@@ -114,18 +108,30 @@ const PermissionTable: FC = () => {
 
   const otherData = dataMap[otherMode];
 
+  const toggleMode = () => {
+    setMode(prevMode => (prevMode === 'locks' ? 'users' : 'locks'));
+    // Reset selection state upon mode switch
+    setSelected({ type: "group", index: 0 });
+    setSelectedGroupMembers(null);
+    setIsSelectedGroupExpanded(false); // Reset expansion state
+  };
+
+  // --- CORE DATA FETCHING ---
+
   const fetchData = async () => {
     try {
-      const [usersRes, locksRes, userGroupsRes, permissionsRes] = await Promise.all([
+      const [usersRes, locksRes, userGroupsRes, lockGroupsRes, permissionsRes] = await Promise.all([
         fetch(`${process.env.REACT_APP_BACKEND_URL}/users/`, { method: "GET", credentials: "include" }),
         fetch(`${process.env.REACT_APP_BACKEND_URL}/locks/`, { method: "GET", credentials: "include" }),
         fetch(`${process.env.REACT_APP_BACKEND_URL}/users/groups/`, { method: "GET", credentials: "include" }),
+        fetch(`${process.env.REACT_APP_BACKEND_URL}/locks/groups/`, { method: "GET", credentials: "include" }),
         fetch(`${process.env.REACT_APP_BACKEND_URL}/permissions/?type=all`, { method: "GET", credentials: "include" })
       ]);
 
       const usersJson = await usersRes.json();
       const locksJson = await locksRes.json();
       const userGroupsJson = await userGroupsRes.json();
+      const lockGroupsJson = await lockGroupsRes.json();
       const permissionsJson = await permissionsRes.json();
 
       const transformedUsers: User[] = (usersJson.users || []).map((user: any) => ({
@@ -139,16 +145,20 @@ const PermissionTable: FC = () => {
         id: lock.id_lock
       }));
 
+      const transformedLockGroups: Entity[] = (lockGroupsJson.lock_groups || []).map((lockGroup: any) => ({
+        ...lockGroup,
+        id: lockGroup.id_group
+      }));
+
       setUsers(transformedUsers);
       setLocks(transformedLocks);
       setUserGroups(userGroupsJson.groups || []);
+      setLockGroups(transformedLockGroups);
       setPermissions(permissionsJson || []);
-      setExpandedGroups({}); // Reset expansion on full data refresh
+      setExpandedGroups({});
     } catch (error) {
-      setSnackbar({
-        isError: true,
-        text: `Error fetching initial data: ${error}`,
-      });
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      setSnackbar({ isError: true, text: `Error fetching initial data: ${errorMessage}` });
     }
   };
 
@@ -156,20 +166,87 @@ const PermissionTable: FC = () => {
     fetchData();
   }, []);
 
+  // --- MANUAL MEMBER FETCHING FOR SELECTED GROUP (LEFT COLUMN) ---
+
+  const toggleSelectedGroupMembers = async () => {
+    const isCurrentlyExpanded = isSelectedGroupExpanded;
+
+    if (!selectedItem || selected.type !== 'group') return;
+
+    // If currently expanded, just collapse (no fetch needed)
+    if (isCurrentlyExpanded) {
+      setIsSelectedGroupExpanded(false);
+      return;
+    }
+
+    // If collapsing is false, proceed to fetch and expand
+    const groupType = mode; // 'users' or 'locks'
+    const groupItem = selectedItem;
+    const groupId = groupType === 'locks' ? groupItem.id_group || groupItem.id : groupItem.id;
+
+    if (typeof groupId !== 'number') return;
+
+    setLoadingSelectedGroup(true);
+
+    try {
+      const membersEndpoint = `${process.env.REACT_APP_BACKEND_URL}/${groupType}/groups/${groupId}/${groupType}/`;
+
+      const res = await fetch(membersEndpoint, { method: "GET", credentials: "include" });
+
+      if (!res.ok) {
+        throw new Error(`Failed to fetch group members from ${membersEndpoint} with status: ${res.status}`);
+      }
+
+      const data = await res.json();
+      let members: Entity[];
+
+      if (groupType === 'users') {
+        members = (data.members || []).map((member: any) => ({
+          ...member,
+          name: member.username,
+        })) as User[];
+      } else { // groupType === 'locks'
+        members = (data.locks || []).map((member: any) => ({
+          ...member,
+          name: member.name || `Lock ${member.id_lock}`,
+          id: member.id_lock
+        })) as Lock[];
+      }
+
+      setSelectedGroupMembers(members);
+      setIsSelectedGroupExpanded(true); // Set expanded only upon successful fetch
+
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      setSnackbar({ isError: true, text: `Error fetching ${groupType} members: ${errorMessage}` });
+      setSelectedGroupMembers(null);
+      setIsSelectedGroupExpanded(false);
+    } finally {
+      setLoadingSelectedGroup(false);
+    }
+  };
+
+  // Reset expansion state when selected item changes (without refetching)
+  useEffect(() => {
+    setIsSelectedGroupExpanded(false);
+    setSelectedGroupMembers(null);
+  }, [selected.type, selected.index, mode]);
+
+
+  // --- PERMISSION/PENDING STATUS HELPERS ---
+
   const getPermissionContext = (
-    isEntitySelected: boolean,
+    isSelectedEntity: boolean,
     isEntityGroup: boolean,
     isTargetGroup: boolean,
   ): {
     entityType: 'user' | 'group',
     targetType: 'lock' | 'lock_group',
   } => {
-
     let entityType: 'user' | 'group';
     let targetType: 'lock' | 'lock_group';
 
     if (mode === 'locks') {
-      entityType = isEntitySelected ? 'group' : 'user';
       entityType = isEntityGroup ? 'group' : 'user';
       targetType = isTargetGroup ? 'lock_group' : 'lock';
     } else {
@@ -177,29 +254,25 @@ const PermissionTable: FC = () => {
       targetType = isTargetGroup ? 'lock_group' : 'lock';
     }
 
-    return {
-      entityType,
-      targetType,
-    };
+    return { entityType, targetType };
   };
 
   const togglePermission = (
-    entityId: number,
-    targetId: number,
+    entityId: number | undefined,
+    targetId: number | undefined,
     entityType: 'user' | 'group',
     targetType: 'lock' | 'lock_group',
     currentlyGranted: boolean
   ) => {
-    const permissionObj: Permission = {
-      ...(entityType === 'user' && typeof entityId === 'number' ? { user: entityId } : { group: entityId }),
-      ...(targetType === 'lock' && typeof targetId === 'number' ? { lock: targetId } : { lock_group: targetId })
-    };
-
-    if (!getPermissionKey(permissionObj)) {
-      console.error("Attempted to toggle permission with missing key IDs.", permissionObj);
+    if (typeof entityId !== 'number' || typeof targetId !== 'number') {
       setSnackbar({ isError: true, text: "Error: Entity or Target ID is missing." });
       return;
     }
+
+    const permissionObj: Permission = {
+      ...(entityType === 'user' ? { user: entityId } : { group: entityId }),
+      ...(targetType === 'lock' ? { lock: targetId } : { lock_group: targetId })
+    };
 
     const permKey = getPermissionKey(permissionObj);
 
@@ -209,16 +282,12 @@ const PermissionTable: FC = () => {
       const inRemove = newChanges.toRemove.some(p => getPermissionKey(p) === permKey);
 
       if (inAdd) {
-        // Revert a pending Add -> Remove from Add list
         newChanges.toAdd = newChanges.toAdd.filter(p => getPermissionKey(p) !== permKey);
       } else if (inRemove) {
-        // Revert a pending Remove -> Remove from Remove list
         newChanges.toRemove = newChanges.toRemove.filter(p => getPermissionKey(p) !== permKey);
       } else if (currentlyGranted) {
-        // Currently granted, user wants to revoke -> add to remove list
         newChanges.toRemove = [...newChanges.toRemove, permissionObj];
       } else {
-        // Currently not granted, user wants to grant -> add to add list
         newChanges.toAdd = [...newChanges.toAdd, permissionObj];
       }
 
@@ -226,38 +295,14 @@ const PermissionTable: FC = () => {
     });
   };
 
-  const clearPermissionChanges = () => {
-    setPermissionChanges({ toAdd: [], toRemove: [] });
-  };
-
-  const csrfToken = getCookie("csrftoken");
-  const headers: HeadersInit = csrfToken
-    ? {
-      "Content-Type": "application/json",
-      "X-CSRFToken": csrfToken
-    }
-    : {};
-
-  const handlePermissionChanges = async () => {
-    await fetch(`${process.env.REACT_APP_BACKEND_URL}/permissions/`, {
-      method: "POST",
-      credentials: "include",
-      headers,
-      body: JSON.stringify(permissionChanges),
-    });
-
-    clearPermissionChanges();
-    setSnackbar({ isError: false, text: "Permissions updated successfully!" });
-    fetchData();
-  };
-
-  // Helper functions for checking **CURRENT** and **PENDING** permissions
   const hasExplicitPermission = (
-    entityId: number,
-    targetId: number,
+    entityId: number | undefined,
+    targetId: number | undefined,
     entityType: 'user' | 'group',
     targetType: 'lock' | 'lock_group'
   ): boolean | null => {
+    if (typeof entityId !== 'number' || typeof targetId !== 'number') return null;
+
     const perm = permissions.find((p: Permission) => {
       const matchEntity = (entityType === 'user' ? p.user : p.group) === entityId;
       const matchTarget = (targetType === 'lock' ? p.lock : p.lock_group) === targetId;
@@ -267,18 +312,20 @@ const PermissionTable: FC = () => {
   };
 
   const isPermissionPending = (
-    entityId: number,
-    targetId: number,
+    entityId: number | undefined,
+    targetId: number | undefined,
     entityType: 'user' | 'group',
     targetType: 'lock' | 'lock_group'
   ): 'add' | 'remove' | false => {
+    if (typeof entityId !== 'number' || typeof targetId !== 'number') return false;
+
     const permissionObj: Permission = {
       ...(entityType === 'user' ? { user: entityId } : { group: entityId }),
       ...(targetType === 'lock' ? { lock: targetId } : { lock_group: targetId })
     };
     const permKey = getPermissionKey(permissionObj);
 
-    if (!permKey) return false; // Exit if key couldn't be generated
+    if (!permKey) return false;
 
     if (permissionChanges.toAdd.some(p => getPermissionKey(p) === permKey)) {
       return 'add';
@@ -294,10 +341,51 @@ const PermissionTable: FC = () => {
     return permissionChanges.toAdd.some(isPending) || permissionChanges.toRemove.some(isPending);
   };
 
+  // --- ACTIONS ---
 
-  // --- GROUP EXPANSION LOGIC ---
-  const fetchGroupMembers = async (groupId: number, categoryKey: string) => {
-    const key = `${categoryKey}-${otherMode}-group-${groupId}`;
+  const clearPermissionChanges = () => {
+    setPermissionChanges({ toAdd: [], toRemove: [] });
+  };
+
+  const handlePermissionChanges = async () => {
+    const csrfToken = getCookie("csrftoken");
+    const headers: HeadersInit = csrfToken
+      ? {
+        "Content-Type": "application/json",
+        "X-CSRFToken": csrfToken
+      }
+      : {};
+
+    try {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/permissions/`, {
+        method: "POST",
+        credentials: "include",
+        headers,
+        body: JSON.stringify(permissionChanges),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP error! status: ${response.status}. Details: ${errorText.substring(0, 100)}...`);
+      }
+
+      clearPermissionChanges();
+      setSnackbar({ isError: false, text: "Permissions updated successfully!" });
+      fetchData();
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      setSnackbar({ isError: true, text: `Error saving permissions: ${errorMessage}` });
+    }
+  };
+
+  // --- GROUP EXPANSION LOGIC FOR RIGHT COLUMN ---
+
+  const fetchRightColumnGroupMembers = async (groupItem: Entity, groupType: Mode) => {
+    const groupId = groupType === 'locks' ? groupItem.id_group || groupItem.id : groupItem.id;
+
+    if (typeof groupId !== 'number') return;
+
+    const key = `${groupType}-group-${groupId}`;
 
     if (expandedGroups[key]) {
       setExpandedGroups(prev => {
@@ -311,24 +399,34 @@ const PermissionTable: FC = () => {
     setLoadingGroups(prev => new Set(prev).add(key));
 
     try {
-      const res = await fetch(
-        `${process.env.REACT_APP_BACKEND_URL}/users/groups/${groupId}/users/`,
-        { method: "GET", credentials: "include" }
-      );
+      const membersEndpoint = `${process.env.REACT_APP_BACKEND_URL}/${groupType}/groups/${groupId}/${groupType}/`;
+
+      const res = await fetch(membersEndpoint, { method: "GET", credentials: "include" });
+
+      if (!res.ok) {
+        throw new Error(`Failed to fetch group members from ${membersEndpoint} with status: ${res.status}`);
+      }
 
       const data = await res.json();
+      let transformedMembers: Entity[];
 
-      const transformedMembers: User[] = (data.members || []).map((member: any) => ({
-        ...member,
-        name: member.username,
-      }));
+      if (groupType === 'users') {
+        transformedMembers = (data.members || []).map((member: any) => ({
+          ...member,
+          name: member.username,
+        })) as User[];
+      } else { // groupType === 'locks'
+        transformedMembers = (data.locks || []).map((member: any) => ({
+          ...member,
+          name: member.name || `Lock ${member.id_lock}`,
+          id: member.id_lock
+        })) as Lock[];
+      }
 
-      setExpandedGroups(prev => ({
-        ...prev,
-        [key]: transformedMembers
-      }));
+      setExpandedGroups(prev => ({ ...prev, [key]: transformedMembers }));
     } catch (error) {
-      setSnackbar({ isError: true, text: `Error fetching group members: ${error}` });
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      setSnackbar({ isError: true, text: `Error fetching ${groupType} group members: ${errorMessage}` });
     } finally {
       setLoadingGroups(prev => {
         const newSet = new Set(prev);
@@ -338,7 +436,8 @@ const PermissionTable: FC = () => {
     }
   };
 
-  const isLoadingOrInvalid = !selectedItem || (mode === 'locks' && locks.length === 0) || (mode === 'users' && users.length === 0);
+
+  const isLoadingOrInvalid = !selectedItem || (mode === 'locks' && locks.length === 0 && lockGroups.length === 0) || (mode === 'users' && users.length === 0 && userGroups.length === 0);
 
   if (isLoadingOrInvalid) {
     return (
@@ -398,40 +497,42 @@ const PermissionTable: FC = () => {
                       className="w-full space-y-1"
                     >
                       {items.map((item: Entity, index: number) => {
+                        const isCurrentSelection = selected.type === categoryKey && selected.index === index;
                         const itemType: keyof Permission = categoryKey === 'group'
                           ? (mode === 'locks' ? 'lock_group' : 'group')
                           : (mode === 'locks' ? 'lock' : 'user');
                         const hasPending = hasItemPendingChanges(item.id, itemType);
 
                         return (
-                          <Button
-                            key={item.id}
-                            onClick={() => {
-                              setSelected({ type: categoryKey as SelectionType, index });
-                            }}
-                            sx={{
-                              color: selected.type === categoryKey && selected.index === index ? "primary.main" : "text.secondary",
-                              fontWeight: selected.type === categoryKey && selected.index === index ? 700 : 500,
-                              justifyContent: "flex-start",
-                              textTransform: "none",
-                              paddingRight: 1,
-                              backgroundColor: selected.type === categoryKey && selected.index === index ? "rgba(25, 118, 210, 0.04)" : "transparent",
-                              '&:hover': {
-                                backgroundColor: selected.type === categoryKey && selected.index === index ? "rgba(25, 118, 210, 0.08)" : "rgba(0, 0, 0, 0.04)"
-                              }
-                            }}
-                            size="small"
-                            className="w-full"
-                          >
-                            <div className="flex w-full justify-between items-center">
-                              <span className="truncate">{item.name}</span>
-                              {hasPending && (
-                                <Tooltip title="Pending changes">
-                                  <Warning sx={{ color: "orange", fontSize: 18, flexShrink: 0 }} />
-                                </Tooltip>
-                              )}
-                            </div>
-                          </Button>
+                          <div key={item.id}>
+                            <Button
+                              onClick={() => {
+                                setSelected({ type: categoryKey as SelectionType, index });
+                              }}
+                              sx={{
+                                color: isCurrentSelection ? "primary.main" : "text.secondary",
+                                fontWeight: isCurrentSelection ? 700 : 500,
+                                justifyContent: "flex-start",
+                                textTransform: "none",
+                                paddingRight: 1,
+                                backgroundColor: isCurrentSelection ? "rgba(25, 118, 210, 0.04)" : "transparent",
+                                '&:hover': {
+                                  backgroundColor: isCurrentSelection ? "rgba(25, 118, 210, 0.08)" : "rgba(0, 0, 0, 0.04)"
+                                }
+                              }}
+                              size="small"
+                              className="w-full"
+                            >
+                              <div className="flex w-full justify-between items-center">
+                                <span className="truncate">{item.name}</span>
+                                {hasPending && (
+                                  <Tooltip title="Pending changes">
+                                    <Warning sx={{ color: "orange", fontSize: 18, flexShrink: 0 }} />
+                                  </Tooltip>
+                                )}
+                              </div>
+                            </Button>
+                          </div>
                         );
                       })}
                     </ButtonGroup>
@@ -445,9 +546,60 @@ const PermissionTable: FC = () => {
         {/* Right Column: Permission Assignment */}
         <div className="col-span-2">
           <div className="bg-white rounded-lg shadow p-8">
-            <h2 className="text-lg font-semibold text-slate-900 mb-8">
-              {`Manage permissions for ${mode === 'locks' ? 'Lock' : 'User'}${selected.type === 'group' ? ' Group' : ''} "${selectedItem?.name}"`}
-            </h2>
+
+            <div className="flex items-center justify-start mb-2">
+              <h2 className="text-2xl font-semibold text-slate-900 mr-4 mb-6">
+                {`Manage permissions for ${mode === 'locks' ? 'Lock' : 'User'}${selected.type === 'group' ? ' Group' : ''} "${selectedItem?.name}"`}
+              </h2>
+
+              {/* MANUAL EXPAND/COLLAPSE BUTTON */}
+              {selected.type === 'group' && (
+                <Tooltip title={`${isSelectedGroupExpanded ? 'Hide' : 'Show'} group members`}>
+                  <IconButton
+                    size="small"
+                    onClick={toggleSelectedGroupMembers}
+                    disabled={loadingSelectedGroup}
+                  >
+                    {loadingSelectedGroup ? (
+                      <CircularProgress size={16} />
+                    ) : (
+                      <ChevronRight
+                        sx={{
+                          transition: 'transform 0.2s',
+                          transform: isSelectedGroupExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
+                          color: isSelectedGroupExpanded ? 'primary.main' : 'text.secondary'
+                        }}
+                      />
+                    )}
+                  </IconButton>
+                </Tooltip>
+              )}
+            </div>
+
+            {/* Expanded members under the title (Conditional Display) */}
+            {selected.type === 'group' && isSelectedGroupExpanded && (
+              <div className="mb-6 pb-2 border-b border-slate-200">
+                {selectedGroupMembers && selectedGroupMembers.length > 0 && (
+                  <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs mt-2">
+                    <Typography variant="caption" className="font-bold text-slate-500 w-full mb-1">
+                      Members of this {mode === 'users' ? 'User' : 'Lock'} Group:
+                    </Typography>
+                    {selectedGroupMembers.map(member => (
+                      <span key={member.id} className="text-slate-600 truncate py-0.5">
+                        {member.name}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                {selectedGroupMembers && selectedGroupMembers.length === 0 && (
+                  <Typography variant="caption" className="text-slate-500 mt-2 block">
+                    This {mode === 'users' ? 'User' : 'Lock'} Group has no members.
+                  </Typography>
+                )}
+              </div>
+            )}
+            {/* End Expanded members under the title */}
+
 
             <div className="grid grid-cols-2 gap-8 mb-8">
               {Object.entries(otherData).map(([categoryKey, items]) => (
@@ -456,8 +608,6 @@ const PermissionTable: FC = () => {
                     {categoryKey === "individual" ? `INDIVIDUAL ${otherMode.toUpperCase()}` : `${otherMode.substring(0, otherMode.length - 1).toUpperCase()} GROUPS`}
                   </h3>
                   {items.map((item: Entity) => {
-                    // --- CORE LOGIC: Main list item (in the right column) ---
-
                     const isSelectedEntity = mode === 'users';
                     const isEntityGroup = isSelectedEntity ? selected.type === 'group' : categoryKey === 'group';
                     const isTargetGroup = isSelectedEntity ? categoryKey === 'group' : selected.type === 'group';
@@ -465,22 +615,16 @@ const PermissionTable: FC = () => {
                     let entityId = isSelectedEntity ? selectedItemId : item.id;
                     let targetId = isSelectedEntity ? item.id : selectedItemId;
 
-                    const {
-                      entityType,
-                      targetType
-                    } = getPermissionContext(
-                      isSelectedEntity,
-                      isEntityGroup,
-                      isTargetGroup,
-                    );
-
-                    // --- Permission Status Check (Current Access) ---
+                    const { entityType, targetType } = getPermissionContext(isSelectedEntity, isEntityGroup, isTargetGroup);
                     const hasAccess = hasExplicitPermission(entityId, targetId, entityType, targetType);
                     const isCurrentlyGranted = hasAccess === true;
                     const pendingStatus = isPermissionPending(entityId, targetId, entityType, targetType);
 
                     const isGroup = categoryKey === 'group';
-                    const groupKey = `${categoryKey}-${otherMode}-group-${item.id}`;
+
+                    const groupIdForLookup = otherMode === 'locks' ? item.id_group || item.id : item.id;
+                    const groupKey = `${otherMode}-group-${groupIdForLookup}`;
+
                     const isExpanded = expandedGroups[groupKey] !== undefined;
                     const isLoading = loadingGroups.has(groupKey);
                     const members = expandedGroups[groupKey] || [];
@@ -492,116 +636,77 @@ const PermissionTable: FC = () => {
                             label={item.name}
                             expandable={isGroup}
                             collapsed={!isExpanded}
-                            onExpand={isGroup && (otherMode === 'users') ? () => fetchGroupMembers(item.id, categoryKey) : undefined}
+                            onExpand={isGroup ? () => fetchRightColumnGroupMembers(item, otherMode) : undefined}
                             isLoading={isLoading}
                           />
                           <button
                             onClick={() => {
-                              // Ensure IDs are valid numbers before passing
-                              if (typeof entityId === 'number' && typeof targetId === 'number') {
-                                togglePermission(entityId, targetId, entityType, targetType, isCurrentlyGranted);
-                              }
+                              togglePermission(entityId, targetId, entityType, targetType, isCurrentlyGranted);
                             }}
                             className="ml-auto hover:opacity-70 transition"
+                            disabled={typeof entityId !== 'number' || typeof targetId !== 'number'}
                           >
                             {(() => {
                               const status = isCurrentlyGranted ? (pendingStatus === 'remove' ? 'pending_remove' : 'granted') : (pendingStatus === 'add' ? 'pending_add' : 'revoked');
 
-                              if (status === 'pending_add') {
-                                return <CheckCircle sx={{ color: 'blue', fontSize: 24 }} />;
-                              } else if (status === 'pending_remove') {
-                                return <Cancel sx={{ color: 'blue', fontSize: 24 }} />;
-                              } else if (status === 'granted') {
-                                return <CheckCircle sx={{ color: 'green', fontSize: 24 }} />;
-                              } else {
-                                return <Cancel sx={{ color: 'lightgray', fontSize: 24 }} />;
-                              }
+                              if (status === 'pending_add') return <CheckCircle sx={{ color: 'blue', fontSize: 24 }} />;
+                              if (status === 'pending_remove') return <Cancel sx={{ color: 'blue', fontSize: 24 }} />;
+                              if (status === 'granted') return <CheckCircle sx={{ color: 'green', fontSize: 24 }} />;
+                              return <Cancel sx={{ color: 'lightgray', fontSize: 24 }} />;
                             })()}
                           </button>
                         </div>
 
-                        {/* Nested Group Members (Only for User Groups when mode is 'locks') */}
-                        {isGroup && isExpanded && otherMode === 'users' && members.length > 0 && (
+                        {/* Expanded Group Members (Inner List) */}
+                        {isGroup && isExpanded && members.length > 0 && (
                           <div className="pl-6 border-l-2 border-slate-200 ml-3 mb-3">
                             {members.map((member: Entity) => {
-                              // --- NESTED CORE LOGIC: Always User <-> Selected Target ---
 
-                              // Entity is the individual User (member)
-                              const memberEntityId = member.id;
-                              const memberEntityType: 'user' = 'user';
+                              let memberEntityId: number | undefined;
+                              let memberTargetId: number | undefined;
+                              let memberEntityType: 'user' | 'group';
+                              let memberTargetType: 'lock' | 'lock_group';
 
-                              // Target is the Selected Lock/Lock Group
-                              const memberTargetId = selectedItemId!;
-                              const memberTargetType = selected.type === 'individual' ? 'lock' : 'lock_group';
-
-                              // Defensive check
-                              if (typeof memberEntityId !== 'number' || typeof memberTargetId !== 'number') {
-                                return <div key={member.id} className="text-red-500 p-2">Error: Missing User or Lock ID.</div>;
+                              if (mode === 'locks') {
+                                memberEntityId = member.id;
+                                memberEntityType = 'user';
+                                memberTargetId = selectedItemId;
+                                memberTargetType = selected.type === 'individual' ? 'lock' : 'lock_group';
+                              } else {
+                                memberEntityId = selectedItemId;
+                                memberEntityType = selected.type === 'individual' ? 'user' : 'group';
+                                memberTargetId = member.id;
+                                memberTargetType = 'lock';
                               }
 
-                              // Check for explicit permission on the member user (User <-> Lock/Lock Group)
-                              const memberExplicitPermission = hasExplicitPermission(
-                                memberEntityId,
-                                memberTargetId,
-                                memberEntityType,
-                                memberTargetType
-                              );
-
+                              const memberExplicitPermission = hasExplicitPermission(memberEntityId, memberTargetId, memberEntityType, memberTargetType);
                               const memberIsCurrentlyGranted = memberExplicitPermission === true;
-                              const memberPendingStatus = isPermissionPending(
-                                memberEntityId,
-                                memberTargetId,
-                                memberEntityType,
-                                memberTargetType
-                              );
+                              const memberPendingStatus = isPermissionPending(memberEntityId, memberTargetId, memberEntityType, memberTargetType);
+
+                              if (typeof memberEntityId !== 'number' || typeof memberTargetId !== 'number') {
+                                return <div key={member.id} className="text-red-500 p-2">Error: Missing ID for member check.</div>;
+                              }
 
                               return (
                                 <div key={member.id} className="flex items-center justify-between p-2 hover:bg-slate-50 rounded text-sm">
-                                  <span className="text-slate-600">{(member as User).username || member.name}</span>
+                                  <span className="text-slate-600">{member.name}</span>
                                   <button
                                     onClick={() => {
-                                      togglePermission(
-                                        memberEntityId,
-                                        memberTargetId,
-                                        memberEntityType,
-                                        memberTargetType,
-                                        memberIsCurrentlyGranted
-                                      );
+                                      togglePermission(memberEntityId, memberTargetId, memberEntityType, memberTargetType, memberIsCurrentlyGranted);
                                     }}
                                     className="ml-auto hover:opacity-70 transition"
                                   >
                                     {(() => {
                                       const status = memberIsCurrentlyGranted ? (memberPendingStatus === 'remove' ? 'pending_remove' : 'granted') : (memberPendingStatus === 'add' ? 'pending_add' : 'revoked');
-
                                       let Icon, color, title;
-
-                                      if (status === 'pending_add') {
-                                        Icon = CheckCircle;
-                                        color = 'blue';
-                                        title = 'Permission add pending (User override)';
-                                      } else if (status === 'pending_remove') {
-                                        Icon = Cancel;
-                                        color = 'blue';
-                                        title = 'Permission revoke pending (User override)';
-                                      } else if (status === 'granted') {
-                                        Icon = CheckCircle;
-                                        color = 'green';
-                                        title = 'Explicit permission granted';
-                                      } else { // 'revoked'
-                                        // Hide icon if no explicit permission and no pending change
-                                        if (!memberIsCurrentlyGranted && !memberPendingStatus) {
-                                          return <div className="w-5 h-5" />;
-                                        }
-                                        Icon = Cancel;
-                                        color = 'lightgray';
-                                        title = 'No explicit permission';
+                                      if (status === 'pending_add') { Icon = CheckCircle; color = 'blue'; title = `${mode === 'locks' ? 'User' : 'Lock'} permission add pending (Individual override)`; }
+                                      else if (status === 'pending_remove') { Icon = Cancel; color = 'blue'; title = `${mode === 'locks' ? 'User' : 'Lock'} permission revoke pending (Individual override)`; }
+                                      else if (status === 'granted') { Icon = CheckCircle; color = 'green'; title = 'Explicit individual permission granted'; }
+                                      else {
+                                        if (!memberIsCurrentlyGranted && !memberPendingStatus) return <div className="w-5 h-5" />;
+                                        Icon = Cancel; color = 'lightgray'; title = 'No explicit individual permission';
                                       }
-
-                                      return (
-                                        <Tooltip title={title}>
-                                          <Icon sx={{ color: color, fontSize: 20 }} />
-                                        </Tooltip>
-                                      );
+                                      return (<Tooltip title={title}><Icon sx={{ color: color, fontSize: 20 }} /></Tooltip>);
                                     })()}
                                   </button>
                                 </div>

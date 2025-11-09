@@ -97,6 +97,7 @@ const UsersPage: React.FC<UsersPageProps> = ({ onNavigate, onViewSchematic }) =>
   }, []);
 
   const filteredUsers = users.filter((user) => {
+    // ... (Ton code filteredUsers reste inchangé)
     const role = getUserRole(user);
     return (
       user.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -215,6 +216,7 @@ const UsersPage: React.FC<UsersPageProps> = ({ onNavigate, onViewSchematic }) =>
                     </TableCell>
                     <TableCell>
                     </TableCell>
+                    <TableCell></TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>

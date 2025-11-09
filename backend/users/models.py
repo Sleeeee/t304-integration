@@ -1,6 +1,9 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import make_password, check_password
 from schematics.models import Schematic
+from django.db import models
+from django.contrib.auth import get_user_model
+from django.contrib.auth.hashers import make_password, check_password
 
 User = get_user_model()
 
