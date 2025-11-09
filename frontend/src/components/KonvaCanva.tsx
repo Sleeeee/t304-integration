@@ -6,7 +6,6 @@ import type { Line as KonvaLine } from 'konva/lib/shapes/Line';
 import type { Path as KonvaPath } from 'konva/lib/shapes/Path';
 import type { Transformer as KonvaTransformer } from 'konva/lib/shapes/Transformer';
 
-// Utility function for CSRF token
 const getCookie = (name: string): string | null => {
   const value = `; ${document.cookie}`;
   const parts = value.split(`; ${name}=`);
@@ -38,7 +37,6 @@ interface LockData {
 
 type ComponentData = LineData | LockData;
 
-// Interface for Lock from backend
 interface Lock {
   id_lock: number;
   name: string;
@@ -47,7 +45,6 @@ interface Lock {
   last_connexion: string | null;
 }
 
-// Interface for Building from backend
 interface Building {
   id: number;
   name: string;
@@ -55,7 +52,6 @@ interface Building {
   floor: number;
 }
 
-// Interface for Schematic from backend
 interface Schematic {
   id: number;
   name: string;
@@ -70,7 +66,6 @@ interface KonvaCanvaProps {
   schematicId: number;
 }
 
-// Composant pour une ligne transformable
 const TransformableLine: React.FC<{
   shapeProps: LineData;
   isSelected: boolean;
@@ -150,7 +145,6 @@ const TransformableLine: React.FC<{
   );
 };
 
-// Composant pour une serrure transformable
 const TransformableLock: React.FC<{
   shapeProps: LockData;
   isSelected: boolean;
@@ -165,7 +159,6 @@ const TransformableLock: React.FC<{
   const textRef = React.useRef<any>(null);
   const [isHovered, setIsHovered] = React.useState(false);
 
-  // Facteur de scale de base pour la serrure
   const BASE_SCALE = 0.4;
 
   React.useEffect(() => {
@@ -208,7 +201,6 @@ const TransformableLock: React.FC<{
           const scaleX = node.scaleX();
           const scaleY = node.scaleY();
 
-          // Réinitialiser le scale du node pour éviter l'effet cumulatif
           node.scaleX(1);
           node.scaleY(1);
 
@@ -216,14 +208,12 @@ const TransformableLock: React.FC<{
             ...shapeProps,
             x: node.x(),
             y: node.y(),
-            // Diviser par BASE_SCALE pour stocker uniquement le scale de l'utilisateur
             scaleX: scaleX / BASE_SCALE,
             scaleY: scaleY / BASE_SCALE,
             rotation: node.rotation(),
           });
         }}
       />
-      {/* Texte avec le nom de la serrure - TOUJOURS AU-DESSUS, SANS ROTATION */}
       {shapeProps.lock_name && (
         <Text
           ref={textRef}
@@ -257,7 +247,6 @@ const TransformableLock: React.FC<{
   );
 };
 
-// Composant principal
 const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
   const [components, setComponents] = React.useState<ComponentData[]>([]);
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
@@ -269,7 +258,6 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
   const [isLoading, setIsLoading] = React.useState(false);
   const [stageSize, setStageSize] = React.useState({ width: 800, height: 600 });
 
-  // New states for database synchronization
   const [availableLocks, setAvailableLocks] = React.useState<Lock[]>([]);
   const [placedLockIds, setPlacedLockIds] = React.useState<Set<number>>(new Set());
   const [draggedLockId, setDraggedLockId] = React.useState<number | null>(null);
@@ -277,7 +265,6 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
   const [isSaving, setIsSaving] = React.useState(false);
   const [saveMessage, setSaveMessage] = React.useState<string>('');
 
-  // States for building and schematic management
   const [buildings, setBuildings] = React.useState<Building[]>([]);
   const [schematics, setSchematics] = React.useState<Schematic[]>([]);
   const [selectedBuildingId, setSelectedBuildingId] = React.useState<number | null>(null);
@@ -285,16 +272,13 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
   const [showAddBuildingModal, setShowAddBuildingModal] = React.useState(false);
   const [showAddFloorModal, setShowAddFloorModal] = React.useState(false);
 
-  // State for selected object details panel
   const [selectedObjectDetails, setSelectedObjectDetails] = React.useState<ComponentData | null>(null);
 
   const stageRef = React.useRef<KonvaStage>(null);
   const canvasContainerRef = React.useRef<HTMLDivElement>(null);
 
-  // Points pour dessiner un mur (ligne verticale)
   const linePoints = [0, 0, 0, 100];
 
-  // Fetch available locks from backend
   const fetchAvailableLocks = React.useCallback(async () => {
     try {
       const csrfToken = getCookie('csrftoken');
@@ -317,7 +301,24 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
     }
   }, []);
 
-  // Fetch buildings from backend
+  const fetchGlobalPlacedLockIds = React.useCallback(async () => {
+    try {
+      const response = await fetch('http://localhost:8000/api/schematics/placed-locks/', {
+        method: 'GET',
+        credentials: 'include',
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setPlacedLockIds(new Set(data.placed_lock_ids || []));
+      } else {
+        console.error('Failed to fetch placed lock IDs');
+      }
+    } catch (error) {
+      console.error('Error fetching placed lock IDs:', error);
+    }
+  }, []);
+
   const fetchBuildings = React.useCallback(async () => {
     try {
       const response = await fetch('http://localhost:8000/api/buildings/', {
@@ -336,7 +337,6 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
     }
   }, []);
 
-  // Fetch schematics for a specific building
   const fetchSchematicsForBuilding = React.useCallback(async (buildingId: number) => {
     try {
       const response = await fetch(`http://localhost:8000/api/buildings/${buildingId}/schematics/`, {
@@ -355,14 +355,11 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
     }
   }, []);
 
-  // Fetch schematic data from backend
   const fetchSchematicData = React.useCallback(async (id: number) => {
     if (!id) return;
 
     setIsLoading(true);
-    // Vider le canvas avant de charger de nouvelles données
     setComponents([]);
-    setPlacedLockIds(new Set());
     setSelectedId(null);
     setSelectedObjectDetails(null);
 
@@ -375,31 +372,18 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
       if (response.ok) {
         const data = await response.json();
         setComponents(data.components || []);
-
-        // Extract IDs of placed locks
-        const placedIds = (data.components || [])
-          .filter((c: ComponentData) => 'type' in c && c.type === 'lock')
-          .map((c: LockData) => c.lock_id)
-          .filter((id: number | undefined): id is number => id !== undefined);
-
-        setPlacedLockIds(new Set(placedIds));
       } else {
         console.error('Failed to fetch schematic data');
-        // Même en cas d'erreur, garder le canvas vide
         setComponents([]);
-        setPlacedLockIds(new Set());
       }
     } catch (error) {
       console.error('Error fetching schematic:', error);
-      // Même en cas d'erreur, garder le canvas vide
       setComponents([]);
-      setPlacedLockIds(new Set());
     } finally {
       setIsLoading(false);
     }
   }, []);
 
-  // Save schematic data to backend
   const saveSchematic = React.useCallback(async () => {
     if (!selectedSchematicId) return;
 
@@ -421,20 +405,22 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
       });
 
       if (response.ok) {
-        setSaveMessage('✅ Sauvegardé avec succès');
+        setSaveMessage('Sauvegardé avec succès');
+        
+        await fetchGlobalPlacedLockIds();
+
         setTimeout(() => setSaveMessage(''), 3000);
       } else {
-        setSaveMessage('❌ Erreur lors de la sauvegarde');
+        setSaveMessage('Erreur lors de la sauvegarde');
       }
     } catch (error) {
       console.error('Error saving schematic:', error);
-      setSaveMessage('❌ Erreur de connexion');
+      setSaveMessage('Erreur de connexion');
     } finally {
       setIsSaving(false);
     }
-  }, [selectedSchematicId, components]);
+  }, [selectedSchematicId, components, fetchGlobalPlacedLockIds]);
 
-  // Create new building
   const createBuilding = React.useCallback(async (name: string, description: string, floor: number) => {
     try {
       const csrfToken = getCookie('csrftoken');
@@ -452,9 +438,7 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
 
       if (response.ok) {
         const data = await response.json();
-        // Refresh buildings list
         await fetchBuildings();
-        // Select the newly created building
         setSelectedBuildingId(data.id || data.building?.id);
         return true;
       } else {
@@ -467,7 +451,6 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
     }
   }, [fetchBuildings]);
 
-  // Create new floor/schematic
   const createFloor = React.useCallback(async (buildingId: number, name: string, description: string) => {
     try {
       const csrfToken = getCookie('csrftoken');
@@ -485,9 +468,7 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
 
       if (response.ok) {
         const data = await response.json();
-        // Refresh schematics list
         await fetchSchematicsForBuilding(buildingId);
-        // Select the newly created schematic
         setSelectedSchematicId(data.id || data.schematic?.id);
         return true;
       } else {
@@ -500,35 +481,30 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
     }
   }, [fetchSchematicsForBuilding]);
 
-  // Load data on mount
   React.useEffect(() => {
     fetchAvailableLocks();
     fetchBuildings();
-    // Synchroniser selectedSchematicId avec la prop schematicId au démarrage
+    fetchGlobalPlacedLockIds();
     if (schematicId && schematicId !== selectedSchematicId) {
       setSelectedSchematicId(schematicId);
     }
-  }, [schematicId, fetchAvailableLocks, fetchBuildings]); // Removed fetchSchematicData and selectedSchematicId
+  }, [schematicId, fetchAvailableLocks, fetchBuildings, fetchGlobalPlacedLockIds]); 
 
-  // Fetch schematics when building is selected
   React.useEffect(() => {
     if (selectedBuildingId) {
       fetchSchematicsForBuilding(selectedBuildingId);
     }
   }, [selectedBuildingId, fetchSchematicsForBuilding]);
 
-  // Load schematic when selection changes
   const lastLoadedSchematicId = React.useRef<number | null>(null);
 
   React.useEffect(() => {
-    // Charger les données si un schéma est sélectionné ET qu'il est différent du dernier chargé
     if (selectedSchematicId && selectedSchematicId !== lastLoadedSchematicId.current) {
       lastLoadedSchematicId.current = selectedSchematicId;
       fetchSchematicData(selectedSchematicId);
     }
   }, [selectedSchematicId, fetchSchematicData]);
 
-  // Gestion du redimensionnement du canvas
   React.useEffect(() => {
     const updateSize = () => {
       if (canvasContainerRef.current) {
@@ -543,29 +519,28 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
     return () => window.removeEventListener('resize', updateSize);
   }, []);
 
-  // Filter available locks (not placed)
   const unplacedLocks = React.useMemo(() => {
     return availableLocks.filter(lock => !placedLockIds.has(lock.id_lock));
   }, [availableLocks, placedLockIds]);
-
-  // Delete selected component (Delete or Backspace key)
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.key === 'Delete' || e.key === 'Backspace') && selectedId) {
-        // Find the component being deleted
-        const deletedComponent = components.find(c => c.id === selectedId);
+        
+        setComponents(prevComponents => {
+          const deletedComponent = prevComponents.find(c => c.id === selectedId);
 
-        // If it's a lock, remove it from placedLockIds
-        if (deletedComponent && 'type' in deletedComponent && deletedComponent.type === 'lock' && deletedComponent.lock_id) {
-          setPlacedLockIds(prev => {
-            const newSet = new Set(prev);
-            newSet.delete(deletedComponent.lock_id!);
-            return newSet;
-          });
-        }
+          if (deletedComponent && 'type' in deletedComponent && deletedComponent.type === 'lock' && deletedComponent.lock_id) {
+            
+            setPlacedLockIds(prevPlacedIds => {
+              const newSet = new Set(prevPlacedIds);
+              newSet.delete(deletedComponent.lock_id!);
+              return newSet;
+            });
+          }
+          
+          return prevComponents.filter(c => c.id !== selectedId);
+        });
 
-        // Remove component from canvas
-        setComponents(components.filter(c => c.id !== selectedId));
         setSelectedId(null);
         setSelectedObjectDetails(null);
       }
@@ -573,9 +548,8 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedId, components]);
+  }, [selectedId]);
 
-  // Déselection
   const checkDeselect = (e: KonvaEventObject<MouseEvent | TouchEvent>) => {
     const clickedOnEmpty = e.target === e.target.getStage();
     if (clickedOnEmpty) {
@@ -593,7 +567,6 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
       padding: '20px',
       gap: '20px'
     }}>
-      {/* SECTION DU HAUT: Bâtiments et Étages */}
       <div style={{
         backgroundColor: 'white',
         borderRadius: '8px',
@@ -663,7 +636,6 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
         </div>
 
         <div style={{ display: 'flex', gap: '20px' }}>
-          {/* Building Selection */}
           <div style={{ flex: 1 }}>
             <label style={{ fontSize: '12px', fontWeight: '600', color: '#666', marginBottom: '8px', display: 'block' }}>
               Sélectionner un bâtiment
@@ -696,7 +668,6 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
             </select>
           </div>
 
-          {/* Schematic/Floor Selection */}
           <div style={{ flex: 1 }}>
             <label style={{ fontSize: '12px', fontWeight: '600', color: '#666', marginBottom: '8px', display: 'block' }}>
               Sélectionner un étage
@@ -730,14 +701,13 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
         </div>
       </div>
 
-      {/* SECTION DU BAS: Éléments draggables à gauche + Canvas à droite */}
       <div style={{
         display: 'flex',
         gap: '20px',
         flex: 1,
         minHeight: 0
       }}>
-        {/* GAUCHE: Éléments draggables */}
+        {/* Sidebar gauche avec Éléments */}
         <div style={{
           width: '250px',
           backgroundColor: 'white',
@@ -874,7 +844,6 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
                     } as LineData,
                   ]);
                 } else if (draggedType === 'lock' && draggedLockId) {
-                  // Add lock with real DB ID and name
                   const newLock: LockData = {
                     x: pos.x,
                     y: pos.y,
@@ -887,7 +856,6 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
                     rotation: 0,
                   };
                   setComponents([...components, newLock]);
-                  // Mark lock as placed
                   setPlacedLockIds(prev => {
                     const newSet = new Set(prev);
                     newSet.add(draggedLockId);
@@ -909,7 +877,7 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
             setIsDragOver(false);
           }}
         >
-          {/* Save button */}
+          {/* Bouton Sauvegarder et Message */}
           <button
             onClick={saveSchematic}
             disabled={isSaving}
@@ -946,8 +914,6 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
           >
             {isSaving ? 'Sauvegarde...' : 'Sauvegarder'}
           </button>
-
-          {/* Save message */}
           {saveMessage && (
             <div style={{
               position: 'absolute',
@@ -967,7 +933,7 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
             </div>
           )}
 
-          {/* Helper text */}
+          {/* Texte d'aide pour la suppression */}
           {selectedId && (
             <div style={{
               position: 'absolute',
@@ -986,6 +952,7 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
             </div>
           )}
 
+          {/* Stage Konva */}
           <div style={{
             border: isDragOver ? '3px solid #4CAF50' : '2px solid #ddd',
             borderRadius: '8px',
@@ -1056,7 +1023,7 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
           </div>
         </div>
 
-        {/* PETIT CARRÉ D'INFOS */}
+        {/* Carré d'infos */}
         {selectedObjectDetails && (
           <div style={{
             position: 'absolute',
@@ -1162,7 +1129,7 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
         )}
       </div>
 
-      {/* Modal pour ajouter un bâtiment */}
+      {/* Modals pour Ajouter Bâtiment et Étage*/}
       {showAddBuildingModal && (
         <div style={{
           position: 'fixed',
@@ -1296,7 +1263,6 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
         </div>
       )}
 
-      {/* Modal pour ajouter un étage */}
       {showAddFloorModal && (
         <div style={{
           position: 'fixed',

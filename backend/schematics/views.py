@@ -8,9 +8,6 @@ from locks.models import Lock
 
 @require_http_methods(["GET"])
 def get_schematic_data(request, schematic_id):
-    """
-    Récupère tous les murs et serrures pour un schéma donné.
-    """
     try:
         schematic = Schematic.objects.get(pk=schematic_id)
         
@@ -54,10 +51,6 @@ def get_schematic_data(request, schematic_id):
 @require_http_methods(["POST"])
 @transaction.atomic
 def save_schematic_data(request, schematic_id):
-    """
-    Sauvegarde l'état du schéma.
-    (Cette fonction est déjà correcte car elle utilise 'pk')
-    """
     try:
         schematic = Schematic.objects.get(pk=schematic_id)
         data = json.loads(request.body)
@@ -111,14 +104,8 @@ def save_schematic_data(request, schematic_id):
         return JsonResponse({"error": str(e)}, status=400)
 
 
-# ========== NOUVEAUX ENDPOINTS POUR BUILDINGS ==========
-
 @csrf_exempt
 def buildings_list(request):
-    """
-    GET: Récupère tous les bâtiments
-    POST: Crée un nouveau bâtiment
-    """
     if request.method == "GET":
         try:
             buildings = Building.objects.all().order_by('-created_at')
@@ -167,10 +154,6 @@ def buildings_list(request):
 
 @csrf_exempt
 def building_schematics(request, building_id):
-    """
-    GET: Récupère tous les schémas (étages) d'un bâtiment
-    POST: Crée un nouveau schéma pour un bâtiment
-    """
     if request.method == "GET":
         try:
             building = Building.objects.get(pk=building_id)
@@ -224,3 +207,19 @@ def building_schematics(request, building_id):
             return JsonResponse({"error": str(e)}, status=400)
 
     return JsonResponse({"error": "Method not allowed"}, status=405)
+
+
+@require_http_methods(["GET"])
+def get_all_placed_lock_ids(request):
+    """
+    Retourne tous les lock_ids qui sont déjà placés dans tous les schémas
+    (globalement, tous bâtiments et étages confondus)
+    """
+    try:
+        # Récupère tous les SchematicLock et extrait les lock_ids uniques
+        placed_locks = SchematicLock.objects.select_related('lock').all()
+        lock_ids = list(set([sl.lock.id_lock for sl in placed_locks]))
+
+        return JsonResponse({"placed_lock_ids": lock_ids})
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)

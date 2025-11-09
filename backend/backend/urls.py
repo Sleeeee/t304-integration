@@ -26,6 +26,7 @@ urlpatterns = [
     path('permissions/', include("permissions.urls")),
     path('api/schematics/<int:schematic_id>/data/', schematics_views.get_schematic_data, name='get_schematic_data'),
     path('api/schematics/<int:schematic_id>/save/', schematics_views.save_schematic_data, name='save_schematic_data'),
+    path('api/schematics/placed-locks/', schematics_views.get_all_placed_lock_ids, name='get_all_placed_lock_ids'),
     path('api/buildings/', schematics_views.buildings_list, name='buildings_list'),
     path('api/buildings/<int:building_id>/schematics/', schematics_views.building_schematics, name='building_schematics'),
 ]
