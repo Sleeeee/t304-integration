@@ -6,6 +6,7 @@ from django.shortcuts import get_object_or_404
 from .models import Lock, Lock_Group
 from .serializers import LockSerializer, LockGroupSerializer, AddLocksToGroupSerializer
 
+
 class LocksView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -18,8 +19,10 @@ class LocksView(APIView):
 
     def post(self, request):
         user = request.user
-        if not user.is_superuser:
+
+        if not (user.is_authenticated and user.is_superuser):
             return Response({"error": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
+
         serializer = LockSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -60,6 +63,7 @@ class LocksView(APIView):
             return Response({"message": "Lock deleted"}, status=status.HTTP_200_OK)
         except Lock.DoesNotExist:
             return Response({"error": "Lock not found"}, status=status.HTTP_404_NOT_FOUND)
+
 
 class LockGroupsView(APIView):
     """GET: Liste les groupes de serrures

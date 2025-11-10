@@ -18,6 +18,12 @@ import getCookie from "../context/getCookie";
 import ManageUser from "./ManageUser";
 
 import CustomSnackbar from "./CustomSnackbar";
+<<<<<<< HEAD
+=======
+
+// 1. IMPORTER LE COMPOSANT DE LA LISTE DES GROUPES
+// (Assure-toi que le chemin d'importation est correct)
+>>>>>>> main
 import UserGroupsList from "./GroupsUser/UserGroupsList";
 
 interface User {
@@ -40,12 +46,23 @@ const UsersPage: React.FC<UsersPageProps> = ({ onNavigate, onViewSchematic }) =>
   const [error, setError] = useState("");
   const [selectedUser, setSelectedUser] = useState("none");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+<<<<<<< HEAD
 
   const [snackbar, setSnackbar] = useState({
     isError: false,
     text: "",
   });
 
+=======
+
+  const [snackbar, setSnackbar] = useState({
+    isError: false,
+    text: "",
+  });
+
+  // ... (Toutes tes fonctions : getUserRole, getRoleColor, etc. restent ici)
+  // Fonction pour déterminer le rôle d'un utilisateur
+>>>>>>> main
   const getUserRole = (user: User): string => {
     if (user.is_superuser && user.is_staff) {
       return "Admin";
@@ -68,6 +85,10 @@ const UsersPage: React.FC<UsersPageProps> = ({ onNavigate, onViewSchematic }) =>
   };
 
   const fetchUsers = async () => {
+<<<<<<< HEAD
+=======
+    // ... (Ton code fetchUsers reste inchangé)
+>>>>>>> main
     const csrfToken = getCookie("csrftoken");
     const headers: HeadersInit = csrfToken ? { "X-CSRFToken": csrfToken } : {};
 
@@ -92,11 +113,16 @@ const UsersPage: React.FC<UsersPageProps> = ({ onNavigate, onViewSchematic }) =>
     }
   };
 
+<<<<<<< HEAD
+=======
+  // Récupérer les utilisateurs depuis le backend
+>>>>>>> main
   useEffect(() => {
     fetchUsers();
   }, []);
 
   const filteredUsers = users.filter((user) => {
+    // ... (Ton code filteredUsers reste inchangé)
     const role = getUserRole(user);
     return (
       user.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -110,6 +136,10 @@ const UsersPage: React.FC<UsersPageProps> = ({ onNavigate, onViewSchematic }) =>
     }
   }
 
+<<<<<<< HEAD
+=======
+  // Affiche le form en overlay
+>>>>>>> main
   const handleDialogOpen = (user: any) => {
     setIsDialogOpen(true);
     setSelectedUser(user);
@@ -123,6 +153,10 @@ const UsersPage: React.FC<UsersPageProps> = ({ onNavigate, onViewSchematic }) =>
         onClose={() => { setSnackbar({ isError: snackbar?.isError || false, text: "" }); }}
       />
 
+<<<<<<< HEAD
+=======
+      {/* Titre principal de la page */}
+>>>>>>> main
       <Typography
         variant="h4"
         sx={{
@@ -134,6 +168,10 @@ const UsersPage: React.FC<UsersPageProps> = ({ onNavigate, onViewSchematic }) =>
         User Management
       </Typography>
 
+<<<<<<< HEAD
+=======
+      {/* 2. NOUVELLE STRUCTURE EN DEUX COLONNES */}
+>>>>>>> main
       <Box
         sx={{
           display: 'flex',
@@ -141,19 +179,34 @@ const UsersPage: React.FC<UsersPageProps> = ({ onNavigate, onViewSchematic }) =>
           flexDirection: { xs: 'column', md: 'row' }
         }}
       >
+<<<<<<< HEAD
+=======
+        {/* COLONNE DE GAUCHE : LISTE DES UTILISATEURS */}
+>>>>>>> main
         <Paper
           elevation={0}
           sx={{
             p: 3,
             borderRadius: 2,
             border: "1px solid #E0E0E0",
+<<<<<<< HEAD
             width: { xs: '100%', md: '50%' }
           }}
         >
+=======
+            width: { xs: '100%', md: '50%' } // Largeur 50%
+          }}
+        >
+          {/* 3. TITRE AJOUTÉ POUR LA SYMÉTRIE */}
+>>>>>>> main
           <Typography variant="h5" sx={{ fontWeight: 600, color: '#333', mb: 3 }}>
             User List
           </Typography>
 
+<<<<<<< HEAD
+=======
+          {/* Search Bar */}
+>>>>>>> main
           <Box sx={{ display: "flex", gap: 2, mb: 3, alignItems: "center" }}>
             <TextField
               placeholder="Name or role"
@@ -184,18 +237,30 @@ const UsersPage: React.FC<UsersPageProps> = ({ onNavigate, onViewSchematic }) =>
             </Button>
           </Box>
 
+<<<<<<< HEAD
+=======
+          {/* Loading State */}
+>>>>>>> main
           {loading && (
             <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
               <CircularProgress />
             </Box>
           )}
 
+<<<<<<< HEAD
+=======
+          {/* Error State */}
+>>>>>>> main
           {error && (
             <Typography color="error" sx={{ textAlign: "center", py: 2 }}>
               {error}
             </Typography>
           )}
 
+<<<<<<< HEAD
+=======
+          {/* Table */}
+>>>>>>> main
           {!loading && !error && (
             <TableContainer>
               <Table>
@@ -203,6 +268,7 @@ const UsersPage: React.FC<UsersPageProps> = ({ onNavigate, onViewSchematic }) =>
                   <TableRow>
                     <TableCell sx={{ fontWeight: 600, color: "#666" }}>
                       Username
+<<<<<<< HEAD
                     </TableCell>
                     <TableCell sx={{ fontWeight: 600, color: "#666" }}>
                       Role
@@ -214,13 +280,26 @@ const UsersPage: React.FC<UsersPageProps> = ({ onNavigate, onViewSchematic }) =>
                       Logs
                     </TableCell>
                     <TableCell>
+=======
+>>>>>>> main
                     </TableCell>
+                    <TableCell sx={{ fontWeight: 600, color: "#666" }}>
+                      Role
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 600, color: "#666" }}>
+                      Logs
+                    </TableCell>
+                    <TableCell></TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {filteredUsers.length === 0 ? (
                     <TableRow>
+<<<<<<< HEAD
                       <TableCell colSpan={5} sx={{ textAlign: "center", py: 4 }}>
+=======
+                      <TableCell colSpan={4} sx={{ textAlign: "center", py: 4 }}>
+>>>>>>> main
                         Aucun utilisateur trouvé
                       </TableCell>
                     </TableRow>
@@ -249,6 +328,7 @@ const UsersPage: React.FC<UsersPageProps> = ({ onNavigate, onViewSchematic }) =>
                           <TableCell>
                             <Button
                               size="small"
+<<<<<<< HEAD
                               onClick={() => onViewSchematic(1)} 
                               sx={{
                                 color: "#3B5CFF",
@@ -265,6 +345,8 @@ const UsersPage: React.FC<UsersPageProps> = ({ onNavigate, onViewSchematic }) =>
                           <TableCell>
                             <Button
                               size="small"
+=======
+>>>>>>> main
                               sx={{
                                 color: "#3B5CFF",
                                 textTransform: "none",
@@ -303,19 +385,34 @@ const UsersPage: React.FC<UsersPageProps> = ({ onNavigate, onViewSchematic }) =>
           )}
         </Paper>
 
+<<<<<<< HEAD
+=======
+        {/* COLONNE DE DROITE : LISTE DES GROUPES */}
+>>>>>>> main
         <Paper
           elevation={0}
           sx={{
             p: 3,
             borderRadius: 2,
             border: "1px solid #E0E0E0",
+<<<<<<< HEAD
             width: { xs: '100%', md: '50%' }
           }}
         >
+=======
+            width: { xs: '100%', md: '50%' } // Largeur 50%
+          }}
+        >
+          {/* On insère le composant de la liste des groupes ici */}
+>>>>>>> main
           <UserGroupsList onNavigate={onNavigate} />
         </Paper>
       </Box>
 
+<<<<<<< HEAD
+=======
+      {/* Le composant Modal/Dialog reste en dehors de la mise en page */}
+>>>>>>> main
       <ManageUser
         isDialogOpen={isDialogOpen}
         setIsDialogOpen={setIsDialogOpen}

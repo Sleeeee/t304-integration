@@ -11,17 +11,9 @@ import {
   Typography,
 } from '@mui/material';
 import getCookie from '../context/getCookie';
+import { Lock } from '../types/index';
 
-// Interface pour la serrure (peut être partagée depuis LockPage)
-interface Lock {
-  id_lock: number;
-  name: string;
-  description: string | null;
-  status: string;
-  last_connexion: string | null;
-}
 
-// Interface pour les props du modal
 interface ManageLockProps {
   isDialogOpen: boolean;
   onClose: (shouldUpdate: boolean) => void;
@@ -37,7 +29,6 @@ const ManageLock: React.FC<ManageLockProps> = ({ isDialogOpen, onClose, selected
   
   const isEditMode = selectedLock !== null;
 
-  // Mettre à jour le formulaire
   useEffect(() => {
     if (isDialogOpen) {
       if (isEditMode && selectedLock) {
@@ -54,8 +45,7 @@ const ManageLock: React.FC<ManageLockProps> = ({ isDialogOpen, onClose, selected
   const handleClose = (shouldUpdate: boolean = false) => {
     onClose(shouldUpdate);
   };
-  
-  // Gère la sauvegarde (Création POST ou Mise à jour PUT)
+
   const handleSave = async () => {
     setIsLoading(true);
     setError('');
@@ -81,23 +71,22 @@ const ManageLock: React.FC<ManageLockProps> = ({ isDialogOpen, onClose, selected
       });
 
       if (response.ok) {
-        handleClose(true); // Ferme et rafraîchit
+        handleClose(true); 
       } else {
         const data = await response.json();
-        setError(data.error || 'Error saving lock'); // Traduit
+        setError(data.error || 'Error saving lock'); 
       }
     } catch (err) {
-      setError("Server connection error."); // Traduit
+      setError("Server connection error."); 
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Gère la suppression (DELETE)
   const handleDelete = async () => {
     if (!isEditMode || !selectedLock) return;
     
-    // Traduit
+
     if (!window.confirm(`Are you sure you want to delete the lock "${selectedLock.name}"?`)) {
       return;
     }
@@ -119,13 +108,13 @@ const ManageLock: React.FC<ManageLockProps> = ({ isDialogOpen, onClose, selected
       });
 
       if (response.ok) {
-        handleClose(true); // Ferme et rafraîchit
+        handleClose(true); 
       } else {
          const data = await response.json();
-        setError(data.error || "Error deleting lock."); // Traduit
+        setError(data.error || "Error deleting lock."); 
       }
     } catch (err) {
-      setError("Server connection error."); // Traduit
+      setError("Server connection error."); 
     } finally {
       setIsLoading(false);
     }
@@ -133,7 +122,7 @@ const ManageLock: React.FC<ManageLockProps> = ({ isDialogOpen, onClose, selected
 
   return (
     <Dialog open={isDialogOpen} onClose={() => handleClose(false)} fullWidth maxWidth="xs">
-      <DialogTitle>{isEditMode ? 'Manage Lock' : 'Add Lock'}</DialogTitle> {/* Traduit */}
+      <DialogTitle>{isEditMode ? 'Manage Lock' : 'Add Lock'}</DialogTitle> 
       <DialogContent>
         <Box component="form" noValidate sx={{ mt: 1 }}>
           <TextField
@@ -141,7 +130,7 @@ const ManageLock: React.FC<ManageLockProps> = ({ isDialogOpen, onClose, selected
             required
             fullWidth
             id="name"
-            label="Lock Name" // Traduit
+            label="Lock Name" 
             name="name"
             value={name}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
@@ -151,7 +140,7 @@ const ManageLock: React.FC<ManageLockProps> = ({ isDialogOpen, onClose, selected
             margin="normal"
             fullWidth
             id="description"
-            label="Description (optional)" // Traduit
+            label="Description (optional)" 
             name="description"
             value={description}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDescription(e.target.value)}
@@ -173,18 +162,18 @@ const ManageLock: React.FC<ManageLockProps> = ({ isDialogOpen, onClose, selected
             color="error" 
             disabled={isLoading}
           >
-            {isLoading ? <CircularProgress size={20} /> : 'Delete'} {/* Traduit */}
+            {isLoading ? <CircularProgress size={20} /> : 'Delete'} 
           </Button>
         ) : <Box />}
         
         <Box>
-          <Button onClick={() => handleClose(false)} sx={{ mr: 1 }}>Cancel</Button> {/* Traduit */}
+          <Button onClick={() => handleClose(false)} sx={{ mr: 1 }}>Cancel</Button> 
           <Button 
             onClick={handleSave} 
             variant="contained" 
             disabled={isLoading}
           >
-            {isLoading ? <CircularProgress size={24} color="inherit" /> : 'Save'} {/* Traduit */}
+            {isLoading ? <CircularProgress size={24} color="inherit" /> : 'Save'} 
           </Button>
         </Box>
         
