@@ -23,5 +23,5 @@ urlpatterns = [
     path('users/', include("users.urls")),
     path('locks/', include("locks.urls")),
     path('permissions/', include("permissions.urls")),
-    path('schematics/', include("schematics.urls")),
+    path('api/schematics/', include("schematics.urls")),
 ]

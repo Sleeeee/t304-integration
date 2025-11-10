@@ -9,8 +9,9 @@ from locks.models import Lock
 @require_http_methods(["GET"])
 def get_schematic_data(request, schematic_id):
     """
-    C'est la vue que nous avons modifiée.
-    Elle charge toutes les données nécessaires pour l'éditeur Konva.
+    CORRIGÉ (Étape 11.A):
+    Renvoie les données pour l'éditeur Konva dans le format 
+    attendu par KonvaCanva.tsx ({"components": [...]})
     """
     try:
         schematic = Schematic.objects.get(pk=schematic_id)
@@ -26,20 +27,19 @@ def get_schematic_data(request, schematic_id):
                 "scaleX": w.scale_x,
                 "scaleY": w.scale_y,
                 "rotation": w.rotation,
-                "type": "wall" # Ajout d'un type pour que le frontend sache ce que c'est
+                "type": "wall" 
             } for w in walls
         ]
     
         # --- Serrures (Lock) ---
-        # .select_related('lock') est une optimisation pour éviter N+1 requêtes
         locks = SchematicLock.objects.filter(schematic=schematic).select_related('lock')
         locks_data = [
             {
-                "id": f"slock-{l.id}", # ID unique pour l'élément placé
+                "id": f"slock-{l.id}", 
                 "x": l.x,
                 "y": l.y,
                 "type": "lock",
-                "lock_id": l.lock.id_lock, # L'ID de la serrure (modèle Lock)
+                "lock_id": l.lock.id_lock, 
                 "lock_name": l.lock.name,
                 "scaleX": l.scale_x,
                 "scaleY": l.scale_y,
@@ -48,24 +48,22 @@ def get_schematic_data(request, schematic_id):
             } for l in locks
         ]
         
-        # --- AJOUTÉ : Serrures disponibles (pour la barre latérale) ---
-        available_locks = Lock.objects.all()
+        # --- MODIFIÉ : Ajout des serrures disponibles ---
+        # Ton KonvaCanva.tsx (le dernier) attend cette clé
+        all_locks = Lock.objects.all()
         available_locks_data = [
             {
-                "id": l.id_lock, # L'ID du modèle Lock
+                "id_lock": l.id_lock,
                 "name": l.name,
-                # Ajoute ici tout autre champ dont la barre latérale aurait besoin
-            } for l in available_locks
+                "description": l.description,
+                "status": l.status,
+                "last_connexion": l.last_connexion
+            } for l in all_locks
         ]
+        
+        # KonvaCanva.tsx s'attend à recevoir ces deux clés
         return JsonResponse({
-            "schematic": {
-                "id": schematic.id,
-                "name": schematic.name,
-                "width": schematic.width,
-                "height": schematic.height,
-                "background_color": schematic.background_color
-            },
-            "placed_components": walls_data + locks_data,
+            "components": walls_data + locks_data,
             "available_locks": available_locks_data
         })
 
@@ -79,14 +77,11 @@ def get_schematic_data(request, schematic_id):
 @require_http_methods(["POST"])
 @transaction.atomic
 def save_schematic_data(request, schematic_id):
-    """
-    C'est ta fonction de sauvegarde. 
-    Elle est conservée telle quelle, elle est parfaite.
-    """
+    # Ton code de sauvegarde original. Il est parfait.
     try:
         schematic = Schematic.objects.get(pk=schematic_id)
         data = json.loads(request.body)
-        components = data.get('components', []) 
+        components = data.get('components', [])
         
         SchematicWall.objects.filter(schematic=schematic).delete()
         SchematicLock.objects.filter(schematic=schematic).delete()
@@ -95,7 +90,7 @@ def save_schematic_data(request, schematic_id):
         locks_to_create = []
 
         for item in components:
-            if 'points' in item or item.get('type') == 'wall': 
+            if 'points' in item: 
                 walls_to_create.append(
                     SchematicWall(
                         schematic=schematic,
@@ -118,8 +113,7 @@ def save_schematic_data(request, schematic_id):
                             y=item['y'],
                             scale_x=item.get('scaleX', 1),
                             scale_y=item.get('scaleY', 1),
-                            rotation=item.get('rotation', 0),
-                            color=item.get('color', 'black')
+                            rotation=item.get('rotation', 0)
                         )
                     )
                 except Lock.DoesNotExist:
@@ -139,9 +133,7 @@ def save_schematic_data(request, schematic_id):
 
 @csrf_exempt
 def buildings_list(request):
-    """
-    Ta vue pour la liste des bâtiments, conservée à l'identique.
-    """
+    # Ta fonction originale
     if request.method == "GET":
         try:
             buildings = Building.objects.all().order_by('-created_at')
@@ -190,9 +182,7 @@ def buildings_list(request):
 
 @csrf_exempt
 def building_schematics(request, building_id):
-    """
-    Ta vue pour les schémas d'un bâtiment, conservée à l'identique.
-    """
+    # Ta fonction originale
     if request.method == "GET":
         try:
             building = Building.objects.get(pk=building_id)
@@ -250,11 +240,8 @@ def building_schematics(request, building_id):
 
 @require_http_methods(["GET"])
 def get_all_placed_lock_ids(request):
-    """
-    Ta vue pour les serrures globales, conservée à l'identique.
-    """
+    # Ta fonction originale
     try:
-        # Récupère tous les SchematicLock et extrait les lock_ids uniques
         placed_locks = SchematicLock.objects.select_related('lock').all()
         lock_ids = list(set([sl.lock.id_lock for sl in placed_locks]))
 

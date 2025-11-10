@@ -5,9 +5,10 @@ import CustomSnackbar from "./CustomSnackbar";
 
 interface HeaderProps {
   onNavigate: (page: string) => void;
+  onOpenMonitoring: () => void; 
 }
 
-const Header: React.FC<HeaderProps> = ({ onNavigate }) => {
+const Header: React.FC<HeaderProps> = ({ onNavigate, onOpenMonitoring }) => {
   const theme = useTheme();
   const isSmall = useMediaQuery(theme.breakpoints.down('md'));
 
@@ -17,7 +18,7 @@ const Header: React.FC<HeaderProps> = ({ onNavigate }) => {
   const [snackbarText, setSnackbarText] = useState("");
 
   const logout = async () => {
-    await fetch(`${process.env.REACT_APP_BACKEND_URL}/auth/wlogout/`, {
+    await fetch(`http://localhost:8000/auth/wlogout/`, {
       method: "POST",
       credentials: "include",
       headers,
@@ -85,7 +86,13 @@ const Header: React.FC<HeaderProps> = ({ onNavigate }) => {
           {navItems.map((item) => (
             <Button
               key={item.label}
-              onClick={() => onNavigate(item.page)}
+              onClick={() => {
+                if (item.page === "monitoring") {
+                  onOpenMonitoring();
+                } else {
+                  onNavigate(item.page);
+                }
+              }}
               sx={{
                 color: "#666",
                 textTransform: "none",

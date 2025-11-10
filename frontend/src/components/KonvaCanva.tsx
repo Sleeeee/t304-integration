@@ -63,7 +63,7 @@ interface Schematic {
 
 interface KonvaCanvaProps {
   onNavigate: (page: string) => void;
-  schematicId: number;
+  schematicId: number | null;
 }
 
 const TransformableLine: React.FC<{
@@ -268,7 +268,7 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
   const [buildings, setBuildings] = React.useState<Building[]>([]);
   const [schematics, setSchematics] = React.useState<Schematic[]>([]);
   const [selectedBuildingId, setSelectedBuildingId] = React.useState<number | null>(null);
-  const [selectedSchematicId, setSelectedSchematicId] = React.useState<number>(schematicId);
+  const [selectedSchematicId, setSelectedSchematicId] = React.useState<number | null>(schematicId);
   const [showAddBuildingModal, setShowAddBuildingModal] = React.useState(false);
   const [showAddFloorModal, setShowAddFloorModal] = React.useState(false);
 
@@ -279,31 +279,9 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
 
   const linePoints = [0, 0, 0, 100];
 
-  const fetchAvailableLocks = React.useCallback(async () => {
-    try {
-      const csrfToken = getCookie('csrftoken');
-      const headers: HeadersInit = csrfToken ? { 'X-CSRFToken': csrfToken } : {};
-
-      const response = await fetch('http://localhost:8000/locks/', {
-        method: 'GET',
-        credentials: 'include',
-        headers,
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setAvailableLocks(data.locks || []);
-      } else {
-        console.error('Failed to fetch locks');
-      }
-    } catch (error) {
-      console.error('Error fetching locks:', error);
-    }
-  }, []);
-
   const fetchGlobalPlacedLockIds = React.useCallback(async () => {
     try {
-      const response = await fetch('http://localhost:8000/api/schematics/placed-locks/', {
+      const response = await fetch('http://localhost:8000/api/schematics/locks/placed_ids/', {
         method: 'GET',
         credentials: 'include',
       });
@@ -321,7 +299,7 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
 
   const fetchBuildings = React.useCallback(async () => {
     try {
-      const response = await fetch('http://localhost:8000/api/buildings/', {
+      const response = await fetch('http://localhost:8000/api/schematics/buildings/', {
         method: 'GET',
         credentials: 'include',
       });
@@ -339,7 +317,7 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
 
   const fetchSchematicsForBuilding = React.useCallback(async (buildingId: number) => {
     try {
-      const response = await fetch(`http://localhost:8000/api/buildings/${buildingId}/schematics/`, {
+      const response = await fetch(`http://localhost:8000/api/schematics/buildings/${buildingId}/schematics/`, {
         method: 'GET',
         credentials: 'include',
       });
@@ -372,6 +350,8 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
       if (response.ok) {
         const data = await response.json();
         setComponents(data.components || []);
+        // CETTE LIGNE EST CRUCIALE et correspond à notre nouveau views.py
+        setAvailableLocks(data.available_locks || []);
       } else {
         console.error('Failed to fetch schematic data');
         setComponents([]);
@@ -429,7 +409,7 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
         ...(csrfToken ? { 'X-CSRFToken': csrfToken } : {}),
       };
 
-      const response = await fetch('http://localhost:8000/api/buildings/', {
+      const response = await fetch('http://localhost:8000/api/schematics/buildings/', {
         method: 'POST',
         credentials: 'include',
         headers,
@@ -459,7 +439,7 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
         ...(csrfToken ? { 'X-CSRFToken': csrfToken } : {}),
       };
 
-      const response = await fetch(`http://localhost:8000/api/buildings/${buildingId}/schematics/`, {
+      const response = await fetch(`http://localhost:8000/api/schematics/buildings/${buildingId}/schematics/`, {
         method: 'POST',
         credentials: 'include',
         headers,
@@ -482,13 +462,12 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
   }, [fetchSchematicsForBuilding]);
 
   React.useEffect(() => {
-    fetchAvailableLocks();
     fetchBuildings();
     fetchGlobalPlacedLockIds();
-    if (schematicId && schematicId !== selectedSchematicId) {
+    if (schematicId !== selectedSchematicId) {
       setSelectedSchematicId(schematicId);
     }
-  }, [schematicId, fetchAvailableLocks, fetchBuildings, fetchGlobalPlacedLockIds]); 
+  }, [schematicId, fetchBuildings, fetchGlobalPlacedLockIds]);
 
   React.useEffect(() => {
     if (selectedBuildingId) {
@@ -522,6 +501,7 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
   const unplacedLocks = React.useMemo(() => {
     return availableLocks.filter(lock => !placedLockIds.has(lock.id_lock));
   }, [availableLocks, placedLockIds]);
+
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.key === 'Delete' || e.key === 'Backspace') && selectedId) {
@@ -563,7 +543,7 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
       display: 'flex',
       flexDirection: 'column',
       height: '100vh',
-      backgroundColor: '#f5f5f5',
+      backgroundColor: '#f5f5ff',
       padding: '20px',
       gap: '20px'
     }}>
@@ -850,7 +830,7 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
                     type: 'lock' as const,
                     id: `lock-${Date.now()}`,
                     lock_id: draggedLockId,
-                    lock_name: draggedLockName || undefined,
+                    lock_name: draggedLockName || '',
                     scaleX: 1,
                     scaleY: 1,
                     rotation: 0,
