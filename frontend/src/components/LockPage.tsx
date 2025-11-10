@@ -21,6 +21,7 @@ import { Lock } from "../types";
 
 interface LockPageProps {
   onNavigate: (page: string) => void;
+  onEditSchematic: (schematicId: number) => void;
 }
 
 const actionButtonStyle = {
@@ -32,7 +33,7 @@ const actionButtonStyle = {
   },
 };
 
-const LockPage: React.FC<LockPageProps> = ({ onNavigate }) => {
+const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [locks, setLocks] = useState<Lock[]>([]); 
   const [loading, setLoading] = useState<boolean>(true);

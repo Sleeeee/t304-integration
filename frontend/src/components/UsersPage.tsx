@@ -34,9 +34,10 @@ interface User {
 
 interface UsersPageProps {
   onNavigate: (page: string) => void;
+  onEditSchematic: (schematicId: number) => void;
 }
 
-const UsersPage: React.FC<UsersPageProps> = ({ onNavigate }) => {
+const UsersPage: React.FC<UsersPageProps> = ({ onNavigate, onEditSchematic }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);

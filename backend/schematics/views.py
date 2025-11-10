@@ -8,9 +8,14 @@ from locks.models import Lock
 
 @require_http_methods(["GET"])
 def get_schematic_data(request, schematic_id):
+    """
+    C'est la vue que nous avons modifiée.
+    Elle charge toutes les données nécessaires pour l'éditeur Konva.
+    """
     try:
         schematic = Schematic.objects.get(pk=schematic_id)
         
+        # --- Murs (Wall) ---
         walls = SchematicWall.objects.filter(schematic=schematic)
         walls_data = [
             {
@@ -20,26 +25,49 @@ def get_schematic_data(request, schematic_id):
                 "points": w.points,
                 "scaleX": w.scale_x,
                 "scaleY": w.scale_y,
-                "rotation": w.rotation
+                "rotation": w.rotation,
+                "type": "wall" # Ajout d'un type pour que le frontend sache ce que c'est
             } for w in walls
         ]
     
-        locks = SchematicLock.objects.filter(schematic=schematic)
+        # --- Serrures (Lock) ---
+        # .select_related('lock') est une optimisation pour éviter N+1 requêtes
+        locks = SchematicLock.objects.filter(schematic=schematic).select_related('lock')
         locks_data = [
             {
-                "id": f"lock-{l.id}",
+                "id": f"slock-{l.id}", # ID unique pour l'élément placé
                 "x": l.x,
                 "y": l.y,
                 "type": "lock",
-                "lock_id": l.lock.id_lock,
+                "lock_id": l.lock.id_lock, # L'ID de la serrure (modèle Lock)
                 "lock_name": l.lock.name,
                 "scaleX": l.scale_x,
                 "scaleY": l.scale_y,
-                "rotation": l.rotation
+                "rotation": l.rotation,
+                "color": l.color
             } for l in locks
         ]
         
-        return JsonResponse({"components": walls_data + locks_data})
+        # --- AJOUTÉ : Serrures disponibles (pour la barre latérale) ---
+        available_locks = Lock.objects.all()
+        available_locks_data = [
+            {
+                "id": l.id_lock, # L'ID du modèle Lock
+                "name": l.name,
+                # Ajoute ici tout autre champ dont la barre latérale aurait besoin
+            } for l in available_locks
+        ]
+        return JsonResponse({
+            "schematic": {
+                "id": schematic.id,
+                "name": schematic.name,
+                "width": schematic.width,
+                "height": schematic.height,
+                "background_color": schematic.background_color
+            },
+            "placed_components": walls_data + locks_data,
+            "available_locks": available_locks_data
+        })
 
     except Schematic.DoesNotExist:
         return JsonResponse({"error": "Schematic not found"}, status=404)
@@ -51,10 +79,14 @@ def get_schematic_data(request, schematic_id):
 @require_http_methods(["POST"])
 @transaction.atomic
 def save_schematic_data(request, schematic_id):
+    """
+    C'est ta fonction de sauvegarde. 
+    Elle est conservée telle quelle, elle est parfaite.
+    """
     try:
         schematic = Schematic.objects.get(pk=schematic_id)
         data = json.loads(request.body)
-        components = data.get('components', [])
+        components = data.get('components', []) 
         
         SchematicWall.objects.filter(schematic=schematic).delete()
         SchematicLock.objects.filter(schematic=schematic).delete()
@@ -63,7 +95,7 @@ def save_schematic_data(request, schematic_id):
         locks_to_create = []
 
         for item in components:
-            if 'points' in item: 
+            if 'points' in item or item.get('type') == 'wall': 
                 walls_to_create.append(
                     SchematicWall(
                         schematic=schematic,
@@ -86,7 +118,8 @@ def save_schematic_data(request, schematic_id):
                             y=item['y'],
                             scale_x=item.get('scaleX', 1),
                             scale_y=item.get('scaleY', 1),
-                            rotation=item.get('rotation', 0)
+                            rotation=item.get('rotation', 0),
+                            color=item.get('color', 'black')
                         )
                     )
                 except Lock.DoesNotExist:
@@ -106,6 +139,9 @@ def save_schematic_data(request, schematic_id):
 
 @csrf_exempt
 def buildings_list(request):
+    """
+    Ta vue pour la liste des bâtiments, conservée à l'identique.
+    """
     if request.method == "GET":
         try:
             buildings = Building.objects.all().order_by('-created_at')
@@ -154,6 +190,9 @@ def buildings_list(request):
 
 @csrf_exempt
 def building_schematics(request, building_id):
+    """
+    Ta vue pour les schémas d'un bâtiment, conservée à l'identique.
+    """
     if request.method == "GET":
         try:
             building = Building.objects.get(pk=building_id)
@@ -212,8 +251,7 @@ def building_schematics(request, building_id):
 @require_http_methods(["GET"])
 def get_all_placed_lock_ids(request):
     """
-    Retourne tous les lock_ids qui sont déjà placés dans tous les schémas
-    (globalement, tous bâtiments et étages confondus)
+    Ta vue pour les serrures globales, conservée à l'identique.
     """
     try:
         # Récupère tous les SchematicLock et extrait les lock_ids uniques
