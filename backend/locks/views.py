@@ -194,3 +194,19 @@ class DeleteLockGroupView(APIView):
             {"message": f"Le groupe '{group_name}' a été supprimé avec succès."},
             status=status.HTTP_204_NO_CONTENT
         )
+
+
+class ReservableLocksView(APIView):
+    """
+    GET: Renvoie uniquement la liste des serrures (salles) 
+    qui sont marquées comme 'réservables'.
+    Destinée au formulaire de réservation de l'utilisateur.
+    """
+    permission_classes = [IsAuthenticated] 
+
+    def get(self, request):
+        reservable_locks = Lock.objects.filter(is_reservable=True)
+        
+        serializer = LockSerializer(reservable_locks, many=True)
+        
+        return Response({"locks": serializer.data}, status=status.HTTP_200_OK)

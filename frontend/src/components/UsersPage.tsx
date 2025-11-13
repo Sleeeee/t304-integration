@@ -17,11 +17,7 @@ import {
 import getCookie from "../context/getCookie";
 import ManageUser from "./ManageUser";
 import DeleteUser from "./DeleteUser";
-
 import CustomSnackbar from "./CustomSnackbar";
-
-// 1. IMPORTER LE COMPOSANT DE LA LISTE DES GROUPES
-// (Assure-toi que le chemin d'importation est correct)
 import UserGroupsList from "./GroupsUser/UserGroupsList";
 
 interface User {
@@ -50,8 +46,6 @@ const UsersPage: React.FC<UsersPageProps> = ({ onNavigate, onEditSchematic }) =>
     text: "",
   });
 
-  // ... (Toutes tes fonctions : getUserRole, getRoleColor, etc. restent ici)
-  // Fonction pour déterminer le rôle d'un utilisateur
   const getUserRole = (user: User): string => {
     if (user.is_superuser && user.is_staff) {
       return "Admin";
@@ -62,7 +56,6 @@ const UsersPage: React.FC<UsersPageProps> = ({ onNavigate, onEditSchematic }) =>
     }
   };
 
-  // Fonction pour obtenir la couleur du chip selon le rôle
   const getRoleColor = (role: string): "error" | "warning" | "default" => {
     switch (role) {
       case "Admin":
@@ -75,7 +68,6 @@ const UsersPage: React.FC<UsersPageProps> = ({ onNavigate, onEditSchematic }) =>
   };
 
   const fetchUsers = async () => {
-    // ... (Ton code fetchUsers reste inchangé)
     const csrfToken = getCookie("csrftoken");
     const headers: HeadersInit = csrfToken ? { "X-CSRFToken": csrfToken } : {};
 
@@ -100,14 +92,11 @@ const UsersPage: React.FC<UsersPageProps> = ({ onNavigate, onEditSchematic }) =>
     }
   };
 
-  // Récupérer les utilisateurs depuis le backend
   useEffect(() => {
     fetchUsers();
   }, []);
 
-  // Filtrer les utilisateurs selon la recherche
   const filteredUsers = users.filter((user) => {
-    // ... (Ton code filteredUsers reste inchangé)
     const role = getUserRole(user);
     return (
       user.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -121,7 +110,6 @@ const UsersPage: React.FC<UsersPageProps> = ({ onNavigate, onEditSchematic }) =>
     }
   }
 
-  // Affiche le form en overlay
   const handleDialogOpen = (user: any) => {
     setIsDialogOpen(true);
     setSelectedUser(user);
@@ -135,7 +123,6 @@ const UsersPage: React.FC<UsersPageProps> = ({ onNavigate, onEditSchematic }) =>
         onClose={() => { setSnackbar({ isError: snackbar?.isError || false, text: "" }); }}
       />
 
-      {/* Titre principal de la page */}
       <Typography
         variant="h4"
         sx={{
@@ -147,7 +134,6 @@ const UsersPage: React.FC<UsersPageProps> = ({ onNavigate, onEditSchematic }) =>
         User Management
       </Typography>
 
-      {/* 2. NOUVELLE STRUCTURE EN DEUX COLONNES */}
       <Box
         sx={{
           display: 'flex',
@@ -155,22 +141,19 @@ const UsersPage: React.FC<UsersPageProps> = ({ onNavigate, onEditSchematic }) =>
           flexDirection: { xs: 'column', md: 'row' }
         }}
       >
-        {/* COLONNE DE GAUCHE : LISTE DES UTILISATEURS */}
         <Paper
           elevation={0}
           sx={{
             p: 3,
             borderRadius: 2,
             border: "1px solid #E0E0E0",
-            width: { xs: '100%', md: '50%' } // Largeur 50%
+            width: { xs: '100%', md: '50%' }
           }}
         >
-          {/* 3. TITRE AJOUTÉ POUR LA SYMÉTRIE */}
           <Typography variant="h5" sx={{ fontWeight: 600, color: '#333', mb: 3 }}>
             User List
           </Typography>
 
-          {/* Search Bar */}
           <Box sx={{ display: "flex", gap: 2, mb: 3, alignItems: "center" }}>
             <TextField
               placeholder="Name or role"
@@ -201,21 +184,18 @@ const UsersPage: React.FC<UsersPageProps> = ({ onNavigate, onEditSchematic }) =>
             </Button>
           </Box>
 
-          {/* Loading State */}
           {loading && (
             <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
               <CircularProgress />
             </Box>
           )}
 
-          {/* Error State */}
           {error && (
             <Typography color="error" sx={{ textAlign: "center", py: 2 }}>
               {error}
             </Typography>
           )}
 
-          {/* Table */}
           {!loading && !error && (
             <TableContainer>
               <Table>
@@ -312,22 +292,19 @@ const UsersPage: React.FC<UsersPageProps> = ({ onNavigate, onEditSchematic }) =>
           )}
         </Paper>
 
-        {/* COLONNE DE DROITE : LISTE DES GROUPES */}
         <Paper
           elevation={0}
           sx={{
             p: 3,
             borderRadius: 2,
             border: "1px solid #E0E0E0",
-            width: { xs: '100%', md: '50%' } // Largeur 50%
+            width: { xs: '100%', md: '50%' }
           }}
         >
-          {/* On insère le composant de la liste des groupes ici */}
           <UserGroupsList onNavigate={onNavigate} />
         </Paper>
       </Box>
 
-      {/* Le composant Modal/Dialog reste en dehors de la mise en page */}
       <ManageUser
         isDialogOpen={isDialogOpen}
         setIsDialogOpen={setIsDialogOpen}

@@ -13,9 +13,13 @@ class Lock(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='disconnected')
     last_connexion = models.DateTimeField(blank=True, null=True)
 
+    is_reservable = models.BooleanField(
+        default=False,
+        help_text="Indique si cette serrure (salle) peut être réservée par les utilisateurs."
+    )
+
     def __str__(self):
         return self.name
-
 
 class Lock_Group(models.Model):
     id_group = models.AutoField(primary_key=True)

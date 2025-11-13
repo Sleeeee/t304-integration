@@ -2,19 +2,17 @@ import React, { useState } from 'react';
 import './App.css';
 import { useAuth } from './context/AuthContext';
 import Auth from './components/Auth';
-import Header from './components/Header'; // L'en-tête de l'ADMIN
+import Header from './components/Header';
 import Register from './components/Register';
 import UsersPage from './components/UsersPage';
 import LockPage from './components/LockPage';
 import PermissionTable from './components/permissions/PermissionTable';
 import { Box, CircularProgress, Typography } from '@mui/material';
 import KonvaCanva from './components/KonvaCanva';
-
-// --- IMPORTS MODIFIÉS ---
 import UserDashboardPage from './components/UsersFront/UserDashboardPage'; 
-import UserHeader from './components/UsersFront/UsersHeader'; // <-- L'en-tête UTILISATEUR
+import UserHeader from './components/UsersFront/UsersHeader'; 
+import ReservationAdminPage from './components/ReservationAdminPage';
 
-// ... (getCookie et interfaces inchangés) ...
 const getCookie = (name: string): string | null => {
   const value = `; ${document.cookie}`;
   const parts = value.split(`; ${name}=`);
@@ -27,11 +25,12 @@ interface Schematic { id: number; name: string; }
 
 function App() {
   const { user, loading } = useAuth();
-  const [currentPage, setCurrentPage] = useState("dashboard"); 
+  
+  const [currentPage, setCurrentPage] = useState("users"); 
+  
   const [currentSchematicId, setCurrentSchematicId] = useState<number | null>(null);
   const [isOpeningDefault, setIsOpeningDefault] = useState(false);
 
-  // ... (handleNavigateToSchematic et handleOpenMonitoring inchangés) ...
   const handleNavigateToSchematic = (schematicId: number) => {
     setCurrentSchematicId(schematicId);
     setCurrentPage("monitoring");
@@ -98,20 +97,20 @@ function App() {
   
   if (!user) return <Auth />;
 
-  // --- LE "GARDIEN" (Monde Admin) ---
   if (user.is_staff) {
     
     const renderAdminPanel = () => {
       switch (currentPage) {
+        
         case "dashboard":
-          // Le Dashboard n'a plus son propre header
-          return <UserDashboardPage user={user} onNavigate={setCurrentPage} />;
+          return <ReservationAdminPage onNavigate={setCurrentPage} />;
           
-        // ... (tous tes autres cas restent inchangés) ...
         case "register":
           return <Register />;
+
         case "users":
           return <UsersPage onNavigate={setCurrentPage} onEditSchematic={handleNavigateToSchematic} />;
+        
         case "monitoring":
           return (
             <KonvaCanva 
@@ -121,19 +120,16 @@ function App() {
           );
         case "lock":
           return <LockPage onNavigate={setCurrentPage} onEditSchematic={handleNavigateToSchematic} />;
-        case "access":
-          return ( <Box sx={{ p: 4 }}> <h2>Access Page</h2> <p>Cette page sera développée prochainement</p> </Box> );
         case "access-control":
           return <PermissionTable />;
         case "settings":
           return ( <Box sx={{ p: 4 }}> <h2>Settings Page</h2> <p>Cette page sera développée prochainement</p> </Box> );
 
         default:
-          return <UserDashboardPage user={user} onNavigate={setCurrentPage} />;
+          return <UsersPage onNavigate={setCurrentPage} onEditSchematic={handleNavigateToSchematic} />;
       }
     };
 
-    // Affiche le "Monde Admin" (inchangé)
     return (
       <div className="App min-h-screen bg-gray-100">
         <Header onNavigate={setCurrentPage} onOpenMonitoring={handleOpenMonitoring} />
@@ -142,8 +138,6 @@ function App() {
     );
 
   } else {
-    // --- LE "MONDE UTILISATEUR" (MODIFIÉ) ---
-    // Affiche l'en-tête utilisateur + la page dashboard
     return (
       <div className="App min-h-screen bg-gray-100">
         <UserHeader />

@@ -28,13 +28,11 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, onOpenMonitoring }) => {
     setTimeout(() => { window.location.reload() }, 1000);
   };
 
-  // --- 1. AJOUT DU NOUVEAU BOUTON ICI ---
   const navItems = [
-    { label: "Reservations", icon: "📅", page: "dashboard" }, // <-- NOUVEAU
+    { label: "Reservations", icon: "📅", page: "dashboard" },
     { label: "Monitoring", icon: "📊", page: "monitoring" },
     { label: "Users", icon: "👥", page: "users" },
     { label: "Lock", icon: "🔒", page: "lock" },
-    { label: "Access", icon: "🔑", page: "access" },
     { label: "Access Control", icon: "🛡️", page: "access-control" },
     { label: "Settings", icon: "⚙️", page: "settings" },
   ];
@@ -72,8 +70,7 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, onOpenMonitoring }) => {
             flexShrink: 0,
             cursor: "pointer",
           }}
-          // --- 2. MODIFICATION DU ONCLICK ---
-          onClick={() => onNavigate("users")} // <-- MODIFIÉ (au lieu de "home")
+          onClick={() => onNavigate("users")}
         >
           Lares
         </Typography>
@@ -86,7 +83,6 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, onOpenMonitoring }) => {
             overflow: "hidden",
           }}
         >
-          {/* Le map() va automatiquement créer le nouveau bouton */}
           {navItems.map((item) => (
             <Button
               key={item.label}
@@ -118,7 +114,6 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, onOpenMonitoring }) => {
           ))}
         </Box>
 
-        {/* Le bouton Logout reste inchangé */}
         <Button
           variant="contained"
           onClick={logout}
