@@ -3,7 +3,7 @@ from django.shortcuts import get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import AllowAny # <-- 1. Import AllowAny
+from rest_framework.permissions import AllowAny  # <-- 1. Import AllowAny
 from locks.models import Lock
 from .serializers import UserSerializer
 from .utils import get_user_by_keypad_code, get_user_by_badge_code
@@ -39,7 +39,7 @@ class WebLoginView(APIView):
         if username is None or password is None:
             return Response({
                 "error": "Missing credentials"
-            }, status=401) # Use 400 for bad request
+            }, status=401)  # Use 400 for bad request
 
         user = authenticate(username=username, password=password)
         if user is not None:
@@ -82,7 +82,8 @@ class KeypadCodeLoginView(APIView):
         if not login_user:
             return Response({"error": "Access denied"}, status=401)
 
-        lock = get_object_or_404(Lock, pk=lock_id)
+        lock = get_object_or_404(
+            Lock, pk=lock_id, auth_methods__contains=["keypad"])
 
         if user_has_access_to_lock(login_user, lock):
             return Response({
@@ -97,7 +98,7 @@ class BadgeCodeLoginView(APIView):
     # --- CORRECTION ---
     # Allow requests from the hardware (which is not authenticated)
     permission_classes = [AllowAny]
-    
+
     def post(self, request):
         request_code = request.data.get("code")
         lock_id = request.data.get("lock")
@@ -109,7 +110,8 @@ class BadgeCodeLoginView(APIView):
         if not login_user:
             return Response({"error": "Access denied"}, status=401)
 
-        lock = get_object_or_404(Lock, pk=lock_id)
+        lock = get_object_or_404(
+            Lock, pk=lock_id, auth_methods__contains=["badge"])
 
         if user_has_access_to_lock(login_user, lock):
             return Response({
