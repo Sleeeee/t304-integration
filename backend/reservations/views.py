@@ -125,16 +125,25 @@ class AvailableLocksView(APIView):
             )
 
         try:
+            # --- CORRECTION ICI ---
             conflicting_reservations = Reservation.objects.filter(
                 date=date,
-                status='approved'
+                # On vérifie si c'est Approuvé OU En attente
+                # (Seules les "Rejected" libèrent la salle)
+                status__in=['approved', 'pending'] 
             ).filter(
+                # Cette logique est correcte :
+                # Une réservation existe SI :
+                # (Son début est AVANT ta fin) ET (Sa fin est APRÈS ton début)
                 Q(start_time__lt=end_time) & Q(end_time__gt=start_time)
             )
 
             conflicting_lock_ids = conflicting_reservations.values_list('lock_id', flat=True).distinct()
 
+            # On ne prend que les serrures 'réservables'
             available_locks = Lock.objects.filter(is_reservable=True)
+            
+            # On retire celles qui ont un conflit
             available_locks = available_locks.exclude(id_lock__in=conflicting_lock_ids)
 
             serializer = LockSerializer(available_locks, many=True)
