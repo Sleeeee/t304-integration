@@ -16,7 +16,8 @@ import {
 } from "@mui/material";
 import getCookie from "../context/getCookie";
 import ManageLock from "./ManageLock";
-import LockGroupManager from "./GroupsLock/LockGroupManager"; 
+import LockGroupManager from "./GroupsLock/LockGroupManager";
+import LogsDrawer from "./LogsDrawer";
 import { Lock } from "../types"; 
 
 interface LockPageProps {
@@ -40,6 +41,8 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
   const [error, setError] = useState<string>("");
   const [selectedLock, setSelectedLock] = useState<Lock | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
+  const [isLogsDrawerOpen, setIsLogsDrawerOpen] = useState<boolean>(false);
+  const [selectedLockForLogs, setSelectedLockForLogs] = useState<Lock | null>(null);
 
 
   const getLockStatusText = (status: string): string => {
@@ -141,9 +144,14 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
   }
   
 
-  const handleViewLogs = (lockId: number) => {
-    console.log("View history for lock:", lockId);
+  const handleViewLogs = (lock: Lock) => {
+    setSelectedLockForLogs(lock);
+    setIsLogsDrawerOpen(true);
+  };
 
+  const handleLogsDrawerClose = () => {
+    setIsLogsDrawerOpen(false);
+    setSelectedLockForLogs(null);
   };
 
   return (
@@ -251,7 +259,7 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
                             <TableCell>
                               <Button
                                 size="small"
-                                onClick={() => handleViewLogs(lock.id_lock)}
+                                onClick={() => handleViewLogs(lock)}
                                 sx={actionButtonStyle}
                               >
                                 View
@@ -294,6 +302,13 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
         isDialogOpen={isDialogOpen}
         onClose={handleModalClose}
         selectedLock={selectedLock}
+      />
+
+      <LogsDrawer
+        open={isLogsDrawerOpen}
+        onClose={handleLogsDrawerClose}
+        lockId={selectedLockForLogs?.id_lock}
+        lockName={selectedLockForLogs?.name}
       />
     </Box>
   );

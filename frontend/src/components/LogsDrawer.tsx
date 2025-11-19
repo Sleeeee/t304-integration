@@ -5,17 +5,23 @@ import LogsViewer from "./LogsViewer";
 interface LogsDrawerProps {
   open: boolean;
   onClose: () => void;
+  lockId?: number;
+  lockName?: string;
 }
 
-const LogsDrawer: React.FC<LogsDrawerProps> = ({ open, onClose }) => {
+const LogsDrawer: React.FC<LogsDrawerProps> = ({ open, onClose, lockId, lockName }) => {
+  const title = lockId && lockName
+    ? `Logs - ${lockName}`
+    : "Historique des Scans";
+
   return (
     <RightDrawer
       open={open}
       onClose={onClose}
-      title="Historique des Scans"
+      title={title}
       width={600}
     >
-      <LogsViewer />
+      <LogsViewer lockId={lockId} />
     </RightDrawer>
   );
 };

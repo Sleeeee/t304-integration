@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Box,
   Typography,
@@ -32,21 +32,22 @@ interface ScanLog {
   success: boolean;
 }
 
-const LogsViewer: React.FC = () => {
+interface LogsViewerProps {
+  lockId?: number;
+}
+
+const LogsViewer: React.FC<LogsViewerProps> = ({ lockId }) => {
   const [logs, setLogs] = useState<ScanLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>("");
 
-  useEffect(() => {
-    fetchLogs();
-    // Rafraîchir les logs toutes les 5 secondes
-    const interval = setInterval(fetchLogs, 5000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const fetchLogs = async () => {
+  const fetchLogs = useCallback(async () => {
     try {
-      const response = await fetch("http://localhost:8000/logs/", {
+      const url = lockId
+        ? `http://localhost:8000/logs/lock/${lockId}/`
+        : "http://localhost:8000/logs/";
+
+      const response = await fetch(url, {
         method: "GET",
         credentials: "include",
       });
@@ -56,14 +57,22 @@ const LogsViewer: React.FC = () => {
       }
 
       const data = await response.json();
-      setLogs(data);
+      // Si l'API retourne un objet avec "logs", extraire le tableau
+      setLogs(lockId && data.logs ? data.logs : data);
       setError("");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur inconnue");
     } finally {
       setLoading(false);
     }
-  };
+  }, [lockId]);
+
+  useEffect(() => {
+    fetchLogs();
+    // Rafraîchir les logs toutes les 5 secondes
+    const interval = setInterval(fetchLogs, 5000);
+    return () => clearInterval(interval);
+  }, [fetchLogs]);
 
   const formatDateTime = (dateString: string) => {
     const date = new Date(dateString);
