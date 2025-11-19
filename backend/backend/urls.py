@@ -24,4 +24,5 @@ urlpatterns = [
     path('locks/', include("locks.urls")),
     path('permissions/', include("permissions.urls")),
     path('api/schematics/', include("schematics.urls")),
+    path('logs/', include("logs.urls")),
 ]
