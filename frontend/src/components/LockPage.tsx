@@ -17,7 +17,7 @@ import {
 import getCookie from "../context/getCookie";
 import ManageLock from "./ManageLock";
 import LockGroupManager from "./GroupsLock/LockGroupManager"; 
-import { Lock } from "../types"; 
+import { Lock } from "../types"; // Assure-toi que cette interface a 'is_reservable'
 
 interface LockPageProps {
   onNavigate: (page: string) => void;
@@ -41,7 +41,7 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
   const [selectedLock, setSelectedLock] = useState<Lock | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
 
-
+  // ... (getLockStatusText, getStatusColor, formatDateTime sont inchangés) ...
   const getLockStatusText = (status: string): string => {
     switch (status) {
       case "connected":
@@ -54,7 +54,6 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
         return status;
     }
   };
-
   const getStatusColor = (status: string): "success" | "default" | "error" => {
     switch (status) {
       case "connected":
@@ -66,7 +65,6 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
         return "default";
     }
   };
-  
   const formatDateTime = (isoString: string | null): string => {
     if (!isoString) return 'Never';
     try {
@@ -79,19 +77,17 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
     }
   };
 
-
+  // fetchLocks est inchangé (le serializer renvoie déjà le champ)
   const fetchLocks = useCallback(async () => {
     setLoading(true);
     const csrfToken = getCookie("csrftoken");
     const headers: HeadersInit = csrfToken ? { "X-CSRFToken": csrfToken } : {};
-
     try {
       const response = await fetch("http://localhost:8000/locks/", {
         method: "GET",
         credentials: "include",
         headers,
       });
-
       if (response.ok) {
         const data = await response.json();
         setLocks(data.locks || []); 
@@ -111,7 +107,7 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
     fetchLocks();
   }, [fetchLocks]);
 
-
+  // ... (filteredLocks, handleDialogOpen, handleAddClick, handleModalClose, handleViewLogs sont inchangés) ...
   const filteredLocks: Lock[] = locks.filter((lock) => {
     return (
       lock.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -119,19 +115,14 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
         lock.description.toLowerCase().includes(searchQuery.toLowerCase()))
     );
   });
-
-
   const handleDialogOpen = (lock: Lock) => {
     setSelectedLock(lock);
     setIsDialogOpen(true);
   };
-
-
   const handleAddClick = () => {
     setSelectedLock(null); 
     setIsDialogOpen(true);
   };
-  
   const handleModalClose = (shouldUpdate: boolean) => {
     setIsDialogOpen(false);
     setSelectedLock(null);
@@ -139,11 +130,8 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
       fetchLocks();
     }
   }
-  
-
   const handleViewLogs = (lockId: number) => {
     console.log("View history for lock:", lockId);
-
   };
 
   return (
@@ -151,7 +139,6 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
       <Typography variant="h4" sx={{ fontWeight: 700, mb: 3, color: "#333" }}>
         Locks Management
       </Typography>
-
 
       <Box
         sx={{
@@ -161,13 +148,13 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
         }}
       >
         
-
         <Box sx={{ width: { xs: '100%', md: '50%' } }}>
           <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: "#444" }}>
             All Locks
           </Typography>
           <Paper elevation={0} sx={{ p: 3, borderRadius: 2, border: "1px solid #E0E0E0" }}>
             
+            {/* ... (Barre de recherche et bouton ADD LOCK inchangés) ... */}
             <Box sx={{ display: "flex", gap: 2, mb: 3, alignItems: "center" }}>
               <TextField
                 placeholder="Name or description"
@@ -180,7 +167,6 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
                   backgroundColor: "white",
                 }}
               />
-
               <Button
                 variant="contained"
                 onClick={handleAddClick}
@@ -193,12 +179,12 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
               </Button>
             </Box>
 
+            {/* ... (Loading et Error inchangés) ... */}
             {loading && (
               <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
                 <CircularProgress />
               </Box>
             )}
-
             {error && (
               <Typography color="error" sx={{ textAlign: "center", py: 2 }}>
                 {error}
@@ -213,6 +199,8 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
                       <TableCell sx={{ fontWeight: 600, color: "#666" }}>Name</TableCell>
                       <TableCell sx={{ fontWeight: 600, color: "#666" }}>Description</TableCell>
                       <TableCell sx={{ fontWeight: 600, color: "#666" }}>Status</TableCell>
+                      {/* --- NOUVELLE COLONNE "RESERVABLE" --- */}
+                      <TableCell sx={{ fontWeight: 600, color: "#666" }}>Reservable</TableCell>
                       <TableCell sx={{ fontWeight: 600, color: "#666" }}>Last Connection</TableCell>
                       <TableCell sx={{ fontWeight: 600, color: "#666" }}>History</TableCell>
                       <TableCell></TableCell>
@@ -221,7 +209,8 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
                   <TableBody>
                     {filteredLocks.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={6} sx={{ textAlign: "center", py: 4 }}>
+                        {/* --- Colspan mis à 7 --- */}
+                        <TableCell colSpan={7} sx={{ textAlign: "center", py: 4 }}>
                           No locks found
                         </TableCell>
                       </TableRow>
@@ -243,6 +232,16 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
                                 color={getStatusColor(lock.status)}
                                 size="small"
                                 sx={{ fontWeight: 600 }}
+                              />
+                            </TableCell>
+                            {/* --- NOUVELLE CELLULE "RESERVABLE" --- */}
+                            <TableCell>
+                              <Chip
+                                label={lock.is_reservable ? "Yes" : "No"}
+                                color={lock.is_reservable ? "success" : "default"}
+                                variant="outlined"
+                                size="small"
+                                sx={{ fontWeight: 500 }}
                               />
                             </TableCell>
                             <TableCell>
@@ -277,7 +276,7 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
           </Paper>
         </Box>
 
-
+        {/* ... (LockGroupManager reste inchangé) ... */}
         <Box sx={{ width: { xs: '100%', md: '50%' } }}>
           <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: "#444" }}>
             Lock Groups
@@ -289,7 +288,7 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
 
       </Box> 
       
-
+      {/* Ce composant doit maintenant gérer 'is_reservable' */}
       <ManageLock
         isDialogOpen={isDialogOpen}
         onClose={handleModalClose}

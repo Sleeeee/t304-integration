@@ -9,9 +9,11 @@ import {
   Box,
   CircularProgress,
   Typography,
+  FormControlLabel, // <-- 1. Import
+  Switch, // <-- 2. Import
 } from '@mui/material';
 import getCookie from '../context/getCookie';
-import { Lock } from '../types/index';
+import { Lock } from '../types/index'; // Make sure this type includes 'is_reservable: boolean'
 
 
 interface ManageLockProps {
@@ -23,6 +25,8 @@ interface ManageLockProps {
 const ManageLock: React.FC<ManageLockProps> = ({ isDialogOpen, onClose, selectedLock }) => {
   const [name, setName] = useState<string>('');
   const [description, setDescription] = useState<string>('');
+  // --- 3. Add state for the new field ---
+  const [isReservable, setIsReservable] = useState<boolean>(false); 
   
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
@@ -34,9 +38,14 @@ const ManageLock: React.FC<ManageLockProps> = ({ isDialogOpen, onClose, selected
       if (isEditMode && selectedLock) {
         setName(selectedLock.name);
         setDescription(selectedLock.description || '');
+        // --- 4. Populate the switch state on edit ---
+        setIsReservable(selectedLock.is_reservable || false); 
       } else {
+        // Reset for "Add" mode
         setName('');
         setDescription('');
+        // --- 4. Reset the switch state ---
+        setIsReservable(false);
       }
       setError('');
     }
@@ -54,7 +63,13 @@ const ManageLock: React.FC<ManageLockProps> = ({ isDialogOpen, onClose, selected
     const method = isEditMode ? 'PUT' : 'POST';
     const url = 'http://localhost:8000/locks/';
       
-    let bodyData: any = { name, description };
+    // --- 5. Add the new field to the request body ---
+    let bodyData: any = { 
+      name, 
+      description, 
+      is_reservable: isReservable 
+    };
+    
     if (isEditMode && selectedLock) {
       bodyData.id_lock = selectedLock.id_lock;
     }
@@ -84,18 +99,14 @@ const ManageLock: React.FC<ManageLockProps> = ({ isDialogOpen, onClose, selected
   };
 
   const handleDelete = async () => {
+    // ... (This function remains unchanged) ...
     if (!isEditMode || !selectedLock) return;
-    
-
     if (!window.confirm(`Are you sure you want to delete the lock "${selectedLock.name}"?`)) {
       return;
     }
-    
     setIsLoading(true);
     setError('');
-    
     const csrfToken = getCookie("csrftoken");
-
     try {
       const response = await fetch('http://localhost:8000/locks/', {
         method: 'DELETE',
@@ -106,7 +117,6 @@ const ManageLock: React.FC<ManageLockProps> = ({ isDialogOpen, onClose, selected
         },
         body: JSON.stringify({ id_lock: selectedLock.id_lock }),
       });
-
       if (response.ok) {
         handleClose(true); 
       } else {
@@ -145,6 +155,20 @@ const ManageLock: React.FC<ManageLockProps> = ({ isDialogOpen, onClose, selected
             value={description}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDescription(e.target.value)}
             disabled={isLoading}
+          />
+          
+          {/* --- 6. Add the Switch to the UI --- */}
+          <FormControlLabel
+            control={
+              <Switch
+                checked={isReservable}
+                onChange={(e) => setIsReservable(e.target.checked)}
+                color="primary"
+                disabled={isLoading}
+              />
+            }
+            label="Reservable (Can be booked by users)"
+            sx={{ mt: 1 }}
           />
           
           {error && (

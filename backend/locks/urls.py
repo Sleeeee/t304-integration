@@ -5,11 +5,13 @@ from .views import (
     AddLocksToGroupView,
     GroupLocksView,
     RemoveLockFromGroupView,
-    DeleteLockGroupView
+    DeleteLockGroupView,
+    ReservableLocksView 
 )
 
 urlpatterns = [
     path('', LocksView.as_view(), name='locks'),
+    path('reservable/', ReservableLocksView.as_view(), name='reservable-locks'),
     path('groups/', LockGroupsView.as_view(), name='lock_groups'),
     path('groups/<int:group_id>/add_lock/',
          AddLocksToGroupView.as_view(), name='add_locks_to_group'),

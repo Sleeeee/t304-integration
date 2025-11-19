@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'users',
     'permissions',
     'schematics',
+    'reservations',
 ]
 
 MIDDLEWARE = [

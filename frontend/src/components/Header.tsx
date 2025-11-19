@@ -29,10 +29,10 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, onOpenMonitoring }) => {
   };
 
   const navItems = [
+    { label: "Reservations", icon: "📅", page: "dashboard" },
     { label: "Monitoring", icon: "📊", page: "monitoring" },
     { label: "Users", icon: "👥", page: "users" },
     { label: "Lock", icon: "🔒", page: "lock" },
-    { label: "Access", icon: "🔑", page: "access" },
     { label: "Access Control", icon: "🛡️", page: "access-control" },
     { label: "Settings", icon: "⚙️", page: "settings" },
   ];
@@ -70,7 +70,7 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, onOpenMonitoring }) => {
             flexShrink: 0,
             cursor: "pointer",
           }}
-          onClick={() => onNavigate("home")}
+          onClick={() => onNavigate("users")}
         >
           Lares
         </Typography>

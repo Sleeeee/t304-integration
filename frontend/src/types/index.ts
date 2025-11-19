@@ -4,6 +4,7 @@ export interface Lock {
   description: string | null;
   status: 'connected' | 'disconnected' | 'error' | string;
   last_connexion: string | null;
+  is_reservable: boolean;
 }
 
 export interface LockGroup {
