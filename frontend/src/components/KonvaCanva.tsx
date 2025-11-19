@@ -350,7 +350,6 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
       if (response.ok) {
         const data = await response.json();
         setComponents(data.components || []);
-        // CETTE LIGNE EST CRUCIALE et correspond à notre nouveau views.py
         setAvailableLocks(data.available_locks || []);
       } else {
         console.error('Failed to fetch schematic data');
@@ -555,7 +554,7 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
         minHeight: '150px'
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-          <h2 style={{ margin: 0, fontSize: '20px', fontWeight: '600' }}>Bâtiments et Étages</h2>
+          <h2 style={{ margin: 0, fontSize: '20px', fontWeight: '600' }}>Buildings and Floors</h2>
           <div style={{ display: 'flex', gap: '10px' }}>
             <button
               onClick={() => setShowAddBuildingModal(true)}
@@ -580,7 +579,7 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
                 e.currentTarget.style.transform = 'translateY(0)';
               }}
             >
-              + Ajouter Bâtiment
+              + Add Building
             </button>
             <button
               onClick={() => setShowAddFloorModal(true)}
@@ -610,7 +609,7 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
                 }
               }}
             >
-              + Ajouter Étage
+              + Add Floor
             </button>
           </div>
         </div>
@@ -618,7 +617,7 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
         <div style={{ display: 'flex', gap: '20px' }}>
           <div style={{ flex: 1 }}>
             <label style={{ fontSize: '12px', fontWeight: '600', color: '#666', marginBottom: '8px', display: 'block' }}>
-              Sélectionner un bâtiment
+              Select a building
             </label>
             <select
               value={selectedBuildingId || ''}
@@ -639,7 +638,7 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
                 outline: 'none'
               }}
             >
-              <option value="">-- Choisir un bâtiment --</option>
+              <option value="">-- Select a building --</option>
               {buildings.map((building) => (
                 <option key={building.id} value={building.id}>
                   {building.name} ({building.floor} étage{building.floor > 1 ? 's' : ''})
@@ -650,7 +649,7 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
 
           <div style={{ flex: 1 }}>
             <label style={{ fontSize: '12px', fontWeight: '600', color: '#666', marginBottom: '8px', display: 'block' }}>
-              Sélectionner un étage
+              Select a floor
             </label>
             <select
               value={selectedSchematicId || ''}
@@ -670,7 +669,7 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
                 outline: 'none'
               }}
             >
-              <option value="">-- Choisir un étage --</option>
+              <option value="">-- Select a floor --</option>
               {schematics.map((schematic) => (
                 <option key={schematic.id} value={schematic.id}>
                   {schematic.name}
@@ -746,7 +745,7 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
                 color: '#999',
                 fontSize: '12px'
               }}>
-                Toutes les serrures sont placées
+                All locks are in place.
               </div>
             )}
             {unplacedLocks.map((lock) => (
@@ -892,7 +891,7 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
               }
             }}
           >
-            {isSaving ? 'Sauvegarde...' : 'Sauvegarder'}
+            {isSaving ? 'Backup...' : 'Save'}
           </button>
           {saveMessage && (
             <div style={{
@@ -928,7 +927,7 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
               zIndex: 1000,
               whiteSpace: 'nowrap'
             }}>
-              Appuyez sur <strong>Delete</strong> ou <strong>Backspace</strong> pour supprimer
+              Press <strong>Delete</strong> or <strong>Backspace</strong> to delete
             </div>
           )}
 
@@ -951,7 +950,7 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
             >
               <Layer>
               {isLoading ? (
-                <Text text="Chargement du schéma..." fontSize={20} fill="#888" padding={20} />
+                <Text text="Loading diagram..." fontSize={20} fill="#888" padding={20} />
               ) : (
                 components.map((component, i) => {
                   if ('points' in component) {
@@ -1068,10 +1067,10 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
                       'unknown': '#9E9E9E'
                     };
                     const statusLabels: Record<string, string> = {
-                      'connected': 'Connecté',
-                      'disconnected': 'Déconnecté',
-                      'error': 'Erreur',
-                      'unknown': 'Inconnu'
+                      'connected': 'connected',
+                      'disconnected': 'disconnected',
+                      'error': 'Error',
+                      'unknown': 'Unknown'
                     };
                     return (
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
@@ -1083,7 +1082,7 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
                           display: 'inline-block'
                         }} />
                         <span style={{ fontSize: '11px' }}>
-                          {statusLabels[status] || 'Inconnu'}
+                          {statusLabels[status] || 'Unknown'}
                         </span>
                       </span>
                     );
@@ -1144,12 +1143,12 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
               if (success) {
                 setShowAddBuildingModal(false);
               } else {
-                alert('Erreur lors de la création du bâtiment');
+                alert('Error while creating the building');
               }
             }}>
               <div style={{ marginBottom: '15px' }}>
                 <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '5px' }}>
-                  Nom du bâtiment *
+                  Name of the building *
                 </label>
                 <input
                   type="text"
@@ -1163,7 +1162,7 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
                     borderRadius: '6px',
                     outline: 'none'
                   }}
-                  placeholder="Ex: Bâtiment A"
+                  placeholder="Example: Building A"
                 />
               </div>
               <div style={{ marginBottom: '15px' }}>
@@ -1182,12 +1181,12 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
                     outline: 'none',
                     resize: 'vertical'
                   }}
-                  placeholder="Description du bâtiment (optionnel)"
+                  placeholder="Description of the building (optional)"
                 />
               </div>
               <div style={{ marginBottom: '20px' }}>
                 <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '5px' }}>
-                  Nombre d'étages *
+                  Number of floors *
                 </label>
                 <input
                   type="number"
@@ -1220,7 +1219,7 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
                     fontWeight: '600'
                   }}
                 >
-                  Annuler
+                  Cancel
                 </button>
                 <button
                   type="submit"
@@ -1277,13 +1276,13 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
                 if (success) {
                   setShowAddFloorModal(false);
                 } else {
-                  alert('Erreur lors de la création de l\'étage');
+                  alert('Error while creating the floor');
                 }
               }
             }}>
               <div style={{ marginBottom: '15px' }}>
                 <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '5px' }}>
-                  Bâtiment
+                  Building
                 </label>
                 <input
                   type="text"
@@ -1302,7 +1301,7 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
               </div>
               <div style={{ marginBottom: '15px' }}>
                 <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '5px' }}>
-                  Nom de l'étage *
+                  Floor name *
                 </label>
                 <input
                   type="text"
@@ -1316,7 +1315,7 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
                     borderRadius: '6px',
                     outline: 'none'
                   }}
-                  placeholder="Ex: Étage 1, Rez-de-chaussée, etc."
+                  placeholder="Ex: First floor, Ground floor, etc."
                 />
               </div>
               <div style={{ marginBottom: '20px' }}>
@@ -1335,7 +1334,7 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
                     outline: 'none',
                     resize: 'vertical'
                   }}
-                  placeholder="Description de l'étage (optionnel)"
+                  placeholder="Description of the floor (optional)"
                 />
               </div>
               <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
@@ -1353,7 +1352,7 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
                     fontWeight: '600'
                   }}
                 >
-                  Annuler
+                  Cancel
                 </button>
                 <button
                   type="submit"
@@ -1368,7 +1367,7 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
                     fontWeight: '600'
                   }}
                 >
-                  Créer
+                  Create
                 </button>
               </div>
             </form>
