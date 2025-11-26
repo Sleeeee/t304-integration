@@ -49,6 +49,9 @@ class LockPermission(models.Model):
         related_name='permissions'
     )
 
+    start_date = models.DateTimeField(blank=True, null=True, default=None)
+    end_date = models.DateTimeField(blank=True, null=True, default=None)
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
