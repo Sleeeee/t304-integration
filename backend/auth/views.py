@@ -3,7 +3,7 @@ from django.shortcuts import get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import AllowAny  # <-- 1. Import AllowAny
+from rest_framework.permissions import AllowAny
 from locks.models import Lock
 from .serializers import UserSerializer
 from .utils import get_user_by_keypad_code, get_user_by_badge_code
