@@ -22,6 +22,7 @@ urlpatterns = [
     path('auth/', include("auth.urls")),
     path('users/', include("users.urls")),
     path('locks/', include("locks.urls")),
+    path("logs/", include("logs.urls")),
     path('permissions/', include("permissions.urls")),
     path('api/schematics/', include("schematics.urls")),
     path('reservations/', include('reservations.urls')),

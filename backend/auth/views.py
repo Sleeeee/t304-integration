@@ -8,6 +8,7 @@ from locks.models import Lock
 from .serializers import UserSerializer
 from .utils import get_user_by_keypad_code, get_user_by_badge_code
 from permissions.utils import user_has_access_to_lock
+from logs.utils import create_access_log
 
 
 class MeView(APIView):
@@ -67,31 +68,53 @@ class WebLogoutView(APIView):
 
 
 class KeypadCodeLoginView(APIView):
-    # --- CORRECTION ---
-    # Allow requests from the hardware (which is not authenticated)
     permission_classes = [AllowAny]
 
     def post(self, request):
-        request_code = int(request.data.get("code"))
+        request_code = request.data.get("code")
         lock_id = request.data.get("lock")
 
         if not (request_code and lock_id):
             return Response({"error": "Missing code or lock id"}, status=401)
 
         login_user = get_user_by_keypad_code(request_code)
-        if not login_user:
-            return Response({"error": "Access denied"}, status=401)
 
         lock = get_object_or_404(
-            Lock, pk=lock_id, auth_methods__contains=["keypad"])
+            Lock, pk=lock_id, auth_methods__contains=["keypad"]
+        )
 
-        if user_has_access_to_lock(login_user, lock):
+        success = False
+        fail_code = None
+
+        if not login_user:
+            # personne trouvée avec ce code
+            fail_code = request_code
+        elif not user_has_access_to_lock(login_user, lock):
+            # user existe mais n'a pas accès à cette serrure
+            fail_code = login_user.username
+        else:
+            success = True
+
+        # Log en base
+        from logs.utils import create_access_log
+        create_access_log(
+            method="keypad",
+            user=login_user if success else None,
+            failed_code=str(fail_code) if fail_code else "",
+            lock_id=str(lock_id),
+            lock_name=getattr(lock, "name", ""),
+            result="success" if success else "failed",
+        )
+
+        if success:
             return Response({
                 "message": "Access granted",
                 "user": UserSerializer(login_user).data
             }, status=200)
 
         return Response({"error": "Access denied"}, status=401)
+
+
 
 
 class BadgeCodeLoginView(APIView):
