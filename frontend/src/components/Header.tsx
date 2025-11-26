@@ -34,7 +34,6 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, onOpenMonitoring }) => {
     { label: "Users", icon: "👥", page: "users" },
     { label: "Lock", icon: "🔒", page: "lock" },
     { label: "Access Control", icon: "🛡️", page: "access-control" },
-    { label: "Settings", icon: "⚙️", page: "settings" },
   ];
 
   return (

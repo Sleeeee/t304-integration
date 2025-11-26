@@ -122,8 +122,6 @@ function App() {
           return <LockPage onNavigate={setCurrentPage} onEditSchematic={handleNavigateToSchematic} />;
         case "access-control":
           return <PermissionTable />;
-        case "settings":
-          return ( <Box sx={{ p: 4 }}> <h2>Settings Page</h2> <p>Cette page sera développée prochainement</p> </Box> );
 
         default:
           return <UsersPage onNavigate={setCurrentPage} onEditSchematic={handleNavigateToSchematic} />;

@@ -4,6 +4,8 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from django.shortcuts import get_object_or_404
 from django.db.models import Q # <-- 1. Import Q pour les requêtes
+from django.utils.timezone import make_aware # Pour gérer les fuseaux horaires
+from datetime import datetime # Pour combiner date et heure
 
 # --- 2. CORRECTION DES IMPORTS ---
 from .models import Reservation  # Lock n'est pas ici
@@ -12,6 +14,7 @@ from locks.serializers import LockSerializer # Importé pour la vue 'available'
 # -----------------------------------
 
 from .serializers import ReservationSerializer, CreateReservationSerializer
+from permissions.models import LockPermission
 
 
 class ReservationListView(APIView):
@@ -81,13 +84,14 @@ class UpdateReservationStatusView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
+        # 1. Logique si on APPROUVE
         if new_status == 'approved':
-            # --- 3. UTILISER id_lock ---
             lock_id = reservation.lock.id_lock
             date = reservation.date
             start_time = reservation.start_time
             end_time = reservation.end_time
             
+            # Vérification des conflits (inchangée)
             conflicts = Reservation.objects.filter(
                 lock_id=lock_id,
                 date=date,
@@ -102,6 +106,51 @@ class UpdateReservationStatusView(APIView):
                     status=status.HTTP_409_CONFLICT
                 )
 
+            # --- CRÉATION DE LA PERMISSION ---
+            try:
+                # On combine la date et l'heure pour créer un DateTime complet
+                start_datetime = datetime.combine(date, start_time)
+                end_datetime = datetime.combine(date, end_time)
+                
+                # On s'assure que le datetime est "conscient" du fuseau horaire (Aware)
+                # (Important si ton Django est configuré avec USE_TZ = True)
+                start_aware = make_aware(start_datetime)
+                end_aware = make_aware(end_datetime)
+
+                # On crée (ou met à jour) la permission
+                # On utilise get_or_create pour éviter les doublons si on clique 2x sur approve
+                LockPermission.objects.get_or_create(
+                    user=reservation.user,
+                    lock=reservation.lock,
+                    start_date=start_aware,
+                    end_date=end_aware,
+                    defaults={
+                        # Tu peux ajouter d'autres champs par défaut ici si nécessaire
+                    }
+                )
+            except Exception as e:
+                return Response(
+                    {"error": f"Failed to create lock permission: {str(e)}"},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+
+        # 2. Logique si on REFUSE (ou annule une approbation)
+        elif new_status == 'rejected':
+            # Si la réservation était déjà approuvée, il faut SUPPRIMER la permission existante
+            if reservation.status == 'approved':
+                start_datetime = datetime.combine(reservation.date, reservation.start_time)
+                end_datetime = datetime.combine(reservation.date, reservation.end_time)
+                start_aware = make_aware(start_datetime)
+                end_aware = make_aware(end_datetime)
+
+                LockPermission.objects.filter(
+                    user=reservation.user,
+                    lock=reservation.lock,
+                    start_date=start_aware,
+                    end_date=end_aware
+                ).delete()
+
+        # Sauvegarde du nouveau statut de la réservation
         reservation.status = new_status
         reservation.save()
         
