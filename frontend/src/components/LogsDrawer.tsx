@@ -12,7 +12,7 @@ interface LogsDrawerProps {
 const LogsDrawer: React.FC<LogsDrawerProps> = ({ open, onClose, lockId, lockName }) => {
   const title = lockId && lockName
     ? `Logs - ${lockName}`
-    : "Historique des Scans";
+    : "History of Scans";
 
   return (
     <RightDrawer

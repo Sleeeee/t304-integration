@@ -53,7 +53,7 @@ const LogsViewer: React.FC<LogsViewerProps> = ({ lockId }) => {
       });
 
       if (!response.ok) {
-        throw new Error("Erreur lors de la récupération des logs");
+        throw new Error("Error");
       }
 
       const data = await response.json();
@@ -61,7 +61,7 @@ const LogsViewer: React.FC<LogsViewerProps> = ({ lockId }) => {
       setLogs(lockId && data.logs ? data.logs : data);
       setError("");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erreur inconnue");
+      setError(err instanceof Error ? err.message : "Unknown Error");
     } finally {
       setLoading(false);
     }
@@ -143,7 +143,7 @@ const LogsViewer: React.FC<LogsViewerProps> = ({ lockId }) => {
                       <CancelIcon sx={{ color: "#F44336", fontSize: 20 }} />
                     )}
                     <Chip
-                      label={log.success ? "Réussi" : "Échoué"}
+                      label={log.success ? "Success" : "Error"}
                       size="small"
                       sx={{
                         backgroundColor: log.success ? "#E8F5E9" : "#FFEBEE",
