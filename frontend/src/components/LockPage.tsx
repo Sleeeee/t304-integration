@@ -12,280 +12,13 @@ import {
   TableHead,
   TableRow,
   Chip,
-  CircularProgress,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  FormControlLabel,
-  Switch,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  OutlinedInput,
-  Checkbox,
-  ListItemText,
-  SelectChangeEvent
+  CircularProgress
 } from "@mui/material";
-
-// --- 1. Self-Contained Helper Functions & Types ---
-
-function getCookie(name: string): string | null {
-  let cookieValue = null;
-  if (document.cookie && document.cookie !== '') {
-    const cookies = document.cookie.split(';');
-    for (let i = 0; i < cookies.length; i++) {
-      const cookie = cookies[i].trim();
-      if (cookie.substring(0, name.length + 1) === (name + '=')) {
-        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-        break;
-      }
-    }
-  }
-  return cookieValue;
-}
-
-interface Lock {
-  id_lock: number;
-  name: string;
-  description?: string | null;
-  status: string;
-  is_reservable: boolean;
-  last_connexion: string | null;
-  auth_methods?: string[];
-}
-
-// --- 2. ManageLock Component (Inline) ---
-
-const AUTH_OPTIONS = [
-  { value: 'badge', label: 'Badge' },
-  { value: 'keypad', label: 'Keypad' },
-];
-
-interface ManageLockProps {
-  isDialogOpen: boolean;
-  onClose: (shouldUpdate: boolean) => void;
-  selectedLock: Lock | null;
-}
-
-const ManageLock: React.FC<ManageLockProps> = ({ isDialogOpen, onClose, selectedLock }) => {
-  const [name, setName] = useState<string>('');
-  const [description, setDescription] = useState<string>('');
-  const [isReservable, setIsReservable] = useState<boolean>(false);
-  const [authMethods, setAuthMethods] = useState<string[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string>('');
-
-  const isEditMode = selectedLock !== null;
-
-  useEffect(() => {
-    if (isDialogOpen) {
-      if (isEditMode && selectedLock) {
-        setName(selectedLock.name);
-        setDescription(selectedLock.description || '');
-        setIsReservable(selectedLock.is_reservable || false);
-        setAuthMethods(selectedLock.auth_methods || []);
-      } else {
-        setName('');
-        setDescription('');
-        setIsReservable(false);
-        setAuthMethods([]);
-      }
-      setError('');
-    }
-  }, [selectedLock, isEditMode, isDialogOpen]);
-
-  const handleAuthMethodsChange = (event: SelectChangeEvent<typeof authMethods>) => {
-    const { target: { value } } = event;
-    setAuthMethods(typeof value === 'string' ? value.split(',') : value);
-  };
-
-  const handleSave = async () => {
-    setIsLoading(true);
-    setError('');
-    const csrfToken = getCookie("csrftoken");
-    const method = isEditMode ? 'PUT' : 'POST';
-    const url = 'http://localhost:8000/locks/';
-
-    let bodyData: any = {
-      name,
-      description,
-      is_reservable: isReservable,
-      auth_methods: authMethods
-    };
-
-    if (isEditMode && selectedLock) {
-      bodyData.id_lock = selectedLock.id_lock;
-    }
-
-    try {
-      // Simulating network request for preview purposes if fetch fails
-      // Remove this simulation block in production
-      /* await new Promise(resolve => setTimeout(resolve, 1000));
-      onClose(true);
-      return; 
-      */
-
-      const response = await fetch(url, {
-        method: method,
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRFToken': csrfToken || '',
-        },
-        body: JSON.stringify(bodyData),
-      });
-
-      if (response.ok) {
-        onClose(true);
-      } else {
-        const data = await response.json();
-        const errorMessage = data.auth_methods
-          ? `Auth Methods: ${data.auth_methods.join(', ')}`
-          : (data.error || 'Error saving lock');
-        setError(errorMessage);
-      }
-    } catch (err) {
-      // For the sake of this preview, we might want to allow it to "succeed" locally
-      // if there is no backend running.
-      console.warn("Backend unreachable, simulating success for UI demo.");
-      onClose(true);
-      // setError("Server connection error."); 
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleDelete = async () => {
-    if (!isEditMode || !selectedLock) return;
-    if (!window.confirm(`Are you sure you want to delete the lock "${selectedLock.name}"?`)) {
-      return;
-    }
-    setIsLoading(true);
-    try {
-      const csrfToken = getCookie("csrftoken");
-      const response = await fetch('http://localhost:8000/locks/', {
-        method: 'DELETE',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRFToken': csrfToken || '',
-        },
-        body: JSON.stringify({ id_lock: selectedLock.id_lock }),
-      });
-      if (response.ok) {
-        onClose(true);
-      } else {
-        setError("Error deleting lock.");
-      }
-    } catch (err) {
-      console.warn("Backend unreachable, simulating success for UI demo.");
-      onClose(true);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  return (
-    <Dialog open={isDialogOpen} onClose={() => onClose(false)} fullWidth maxWidth="xs">
-      <DialogTitle>{isEditMode ? 'Manage Lock' : 'Add Lock'}</DialogTitle>
-      <DialogContent>
-        <Box component="form" noValidate sx={{ mt: 1 }}>
-          <TextField
-            margin="normal"
-            required
-            fullWidth
-            label="Lock Name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            disabled={isLoading}
-          />
-          <TextField
-            margin="normal"
-            fullWidth
-            label="Description (optional)"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            disabled={isLoading}
-          />
-          <FormControl fullWidth margin="normal">
-            <InputLabel id="auth-methods-label">Auth Methods</InputLabel>
-            <Select
-              labelId="auth-methods-label"
-              multiple
-              value={authMethods}
-              onChange={handleAuthMethodsChange}
-              input={<OutlinedInput label="Auth Methods" />}
-              renderValue={(selected) => (
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                  {selected.map((value) => (
-                    <Chip key={value} label={value} size="small" />
-                  ))}
-                </Box>
-              )}
-              disabled={isLoading}
-            >
-              {AUTH_OPTIONS.map((option) => (
-                <MenuItem key={option.value} value={option.value}>
-                  <Checkbox checked={authMethods.indexOf(option.value) > -1} />
-                  <ListItemText primary={option.label} />
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <FormControlLabel
-            control={
-              <Switch
-                checked={isReservable}
-                onChange={(e) => setIsReservable(e.target.checked)}
-                color="primary"
-                disabled={isLoading}
-              />
-            }
-            label="Reservable (Can be booked)"
-            sx={{ mt: 1 }}
-          />
-          {error && (
-            <Typography color="error" variant="body2" sx={{ mt: 1 }}>
-              {error}
-            </Typography>
-          )}
-        </Box>
-      </DialogContent>
-      <DialogActions sx={{ p: 3, justifyContent: 'space-between' }}>
-        {isEditMode ? (
-          <Button onClick={handleDelete} color="error" disabled={isLoading}>
-            {isLoading ? <CircularProgress size={20} /> : 'Delete'}
-          </Button>
-        ) : <Box />}
-        <Box>
-          <Button onClick={() => onClose(false)} sx={{ mr: 1 }}>Cancel</Button>
-          <Button onClick={handleSave} variant="contained" disabled={isLoading}>
-            {isLoading ? <CircularProgress size={24} color="inherit" /> : 'Save'}
-          </Button>
-        </Box>
-      </DialogActions>
-    </Dialog>
-  );
-};
-
-// --- 3. LockGroupManager Placeholder (Inline) ---
-// Mocking this component since the original file is not available in this context
-const LockGroupManager: React.FC<{ allLocks: Lock[] }> = ({ allLocks }) => {
-  return (
-    <Paper elevation={0} sx={{ p: 3, borderRadius: 2, border: "1px solid #E0E0E0", minHeight: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
-      <Typography variant="body1" color="textSecondary">
-        Lock Group Manager Component
-      </Typography>
-      <Typography variant="caption" color="textSecondary">
-        ({allLocks.length} locks available for grouping)
-      </Typography>
-    </Paper>
-  );
-};
-
-// --- 4. Main LockPage Component ---
+import getCookie from "../context/getCookie";
+import ManageLock from "./ManageLock";
+import LockGroupManager from "./GroupsLock/LockGroupManager";
+import LogsDrawer from "./LogsDrawer";
+import { Lock } from "../types";
 
 interface LockPageProps {
   onNavigate?: (page: string) => void;
@@ -308,6 +41,8 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
   const [error, setError] = useState<string>("");
   const [selectedLock, setSelectedLock] = useState<Lock | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
+  const [isLogsDrawerOpen, setIsLogsDrawerOpen] = useState<boolean>(false);
+  const [selectedLockForLogs, setSelectedLockForLogs] = useState<Lock | null>(null);
 
   const getLockStatusText = (status: string): string => {
     switch (status) {
@@ -404,8 +139,14 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
     }
   }
 
-  const handleViewLogs = (lockId: number) => {
-    console.log("View history for lock:", lockId);
+  const handleViewLogs = (lock: Lock) => {
+    setSelectedLockForLogs(lock);
+    setIsLogsDrawerOpen(true);
+  };
+
+  const handleLogsDrawerClose = () => {
+    setIsLogsDrawerOpen(false);
+    setSelectedLockForLogs(null);
   };
 
   return (
@@ -533,7 +274,7 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
                           <TableCell>
                             <Button
                               size="small"
-                              onClick={() => handleViewLogs(lock.id_lock)}
+                              onClick={() => handleViewLogs(lock)}
                               sx={actionButtonStyle}
                             >
                               View
@@ -571,6 +312,13 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
         isDialogOpen={isDialogOpen}
         onClose={handleModalClose}
         selectedLock={selectedLock}
+      />
+
+      <LogsDrawer
+        open={isLogsDrawerOpen}
+        onClose={handleLogsDrawerClose}
+        lockId={selectedLockForLogs?.id_lock}
+        lockName={selectedLockForLogs?.name}
       />
     </Box>
   );
