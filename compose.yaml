@@ -37,6 +37,28 @@ services:
     volumes:
       - ./frontend:/app
       - /app/node_modules
+ 
+  e2e:
+    build: 
+      context: ./e2e
+      dockerfile: Dockerfile
+    container_name: integration-e2e
+    environment:
+      - BASE_URL=http://frontend:3000
+      - CI=true
+    volumes:
+      - ./e2e:/app
+      - /app/node_modules
+
+    ipc: host
+
+    depends_on:
+      - frontend
+      - backend
+
+    command: tail -f /dev/null # Keep alive to run tests manually
+
+    profiles: ["testing"]
 
 volumes:
   postgres_data:
