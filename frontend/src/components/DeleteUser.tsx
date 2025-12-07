@@ -1,9 +1,8 @@
 import React, { useState } from "react";
-import {
-	IconButton,
-} from "@mui/material";
+import { IconButton } from "@mui/material";
 import DeleteIcon from '@mui/icons-material/Delete'; 
 import ConfirmDeleteDialog from "./GroupsUser/ConfirmDeleteDialog";
+import getCookie from "../context/getCookie"; 
 
 interface User {
   id: number;
@@ -19,13 +18,6 @@ interface DeleteUserProps {
   refresh: any;
   snackbar: any;
   setSnackbar: any;
-}
-
-function getCSRFToken(): string {
-  const cookie = document.cookie
-    .split("; ")
-    .find(row => row.startsWith("csrftoken="));
-  return cookie ? cookie.split("=")[1] : "";
 }
 
 function DeleteUser({ selectedUser, onUserDeleted, refresh, snackbar, setSnackbar }: DeleteUserProps): React.ReactElement | null {
@@ -44,13 +36,14 @@ function DeleteUser({ selectedUser, onUserDeleted, refresh, snackbar, setSnackba
 
   const handleConfirmDelete = async () => {
     setIsDeleting(true);
+    const csrfToken = getCookie("csrftoken"); // Utilisation du helper partagé
 
     try {
       const response = await fetch("http://localhost:8000/users/", {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
-          "X-CSRFToken": getCSRFToken(),
+          "X-CSRFToken": csrfToken || "",
         },
         credentials: "include",
         body: JSON.stringify({ user_id: selectedUser.id }),
@@ -59,15 +52,15 @@ function DeleteUser({ selectedUser, onUserDeleted, refresh, snackbar, setSnackba
       const data = await response.json();
 
       if (data.error) {
-		  setSnackbar({isError: true, text: data.error})
+        setSnackbar({isError: true, text: data.error})
       } else {
-			setSnackbar({isError: false, text: `${selectedUser.username} as been deleted`})
-        	onUserDeleted();
-        	setIsDialogOpen(false);
-			refresh(true)
+        setSnackbar({isError: false, text: `${selectedUser.username} has been deleted`})
+        onUserDeleted();
+        setIsDialogOpen(false);
+        refresh(true)
       }
     } catch (error) {
-		setSnackbar({isError: true, text: error})
+      setSnackbar({isError: true, text: "Server connection error"})
     } finally {
       setIsDeleting(false);
     }
@@ -77,10 +70,11 @@ function DeleteUser({ selectedUser, onUserDeleted, refresh, snackbar, setSnackba
     <>
       <IconButton
         onClick={handleOpen}
-        disabled={!selectedUser}
-		color="error"
-		size="small"
-		aria-label="delete user"
+        disabled={!selectedUser || isDeleting}
+        color="error"
+        size="small"
+        // ACCESSIBILITÉ: Label dynamique pour savoir QUI on supprime
+        aria-label={`Delete user ${selectedUser.username}`}
       >
         <DeleteIcon />
       </IconButton>
@@ -96,7 +90,6 @@ function DeleteUser({ selectedUser, onUserDeleted, refresh, snackbar, setSnackba
             : `Are you sure you want to delete "${selectedUser.username}"? This action cannot be undone.`
         }
       />
-
     </>
   );
 }

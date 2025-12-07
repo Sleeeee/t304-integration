@@ -10,8 +10,8 @@ import {
 
 type ConfirmDeleteDialogProps = {
   open: boolean;
-  onClose: () => void; // Pour fermer la pop-up
-  onConfirm: () => void; // Ce qu'il faut faire si on clique sur "Delete"
+  onClose: () => void; 
+  onConfirm: () => void; 
   title: string;
   message: string;
 };
@@ -29,6 +29,8 @@ const ConfirmDeleteDialog: React.FC<ConfirmDeleteDialogProps> = ({
       onClose={onClose}
       aria-labelledby="alert-dialog-title"
       aria-describedby="alert-dialog-description"
+      // ACCESSIBILITÉ: Indique qu'il s'agit d'une demande de confirmation bloquante
+      role="alertdialog"
     >
       <DialogTitle id="alert-dialog-title" sx={{ fontWeight: 600 }}>
         {title}
@@ -39,14 +41,19 @@ const ConfirmDeleteDialog: React.FC<ConfirmDeleteDialogProps> = ({
         </DialogContentText>
       </DialogContent>
       <DialogActions sx={{ p: '16px 24px' }}>
-        <Button onClick={onClose} color="inherit">
+        <Button 
+          onClick={onClose} 
+          color="inherit"
+          sx={{ fontWeight: 600 }}
+        >
           Cancel
         </Button>
         <Button 
           onClick={onConfirm} 
-          color="error" // Met le bouton en rouge
+          color="error" 
           variant="contained" 
           autoFocus
+          sx={{ fontWeight: 600 }}
         >
           Delete
         </Button>

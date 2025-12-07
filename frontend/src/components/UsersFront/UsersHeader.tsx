@@ -1,19 +1,20 @@
 import React from "react";
-import { useAuth } from '../../context/AuthContext'; // Pour la déconnexion
+import { useAuth } from '../../context/AuthContext'; 
 import {
   AppBar,
   Toolbar,
   Typography,
   Button,
-  useMediaQuery, // <-- 1. Importer
-  useTheme      // <-- 2. Importer
+  useMediaQuery, 
+  useTheme      
 } from "@mui/material";
 
-// Ce header est UNIQUEMENT pour les utilisateurs normaux
-const UserHeader: React.FC = () => {
-  const { logout } = useAuth(); // Récupère la fonction logout
+// Couleur accessible (Contrast > 4.5:1)
+const ACCESSIBLE_BLUE = "#2A4AE5";
 
-  // --- 3. Ajouter la logique responsive ---
+const UserHeader: React.FC = () => {
+  const { logout } = useAuth(); 
+
   const theme = useTheme();
   const isSmall = useMediaQuery(theme.breakpoints.down('md'));
 
@@ -21,56 +22,55 @@ const UserHeader: React.FC = () => {
     <AppBar
       position="static"
       elevation={0}
+      component="nav" // ACCESSIBILITÉ: Balise sémantique
       sx={{
         backgroundColor: "white",
         borderBottom: "1px solid #E0E0E0"
       }}
     >
-      {/* --- 4. Copier les styles du Toolbar de Header.tsx --- */}
       <Toolbar 
         sx={{ 
           justifyContent: "space-between", 
-          px: { xs: 2, sm: 3, md: 4, lg: 6 }, // Style copié
-          minHeight: { xs: 56, sm: 64 },      // Style copié (la clé de la hauteur)
+          px: { xs: 2, sm: 3, md: 4, lg: 6 }, 
+          minHeight: { xs: 56, sm: 64 },      
         }}
       >
-        {/* --- 5. Copier les styles du Titre de Header.tsx --- */}
         <Typography
-          variant={isSmall ? "h5" : "h4"} // Style copié
+          variant={isSmall ? "h5" : "h4"} 
           component="div"
           sx={{
             fontWeight: 700,
-            color: "#3B5CFF",
-            letterSpacing: "-0.5px", // Style copié
-            mr: { xs: 1, sm: 2, md: 3, lg: 4 }, // Style copié
+            color: ACCESSIBLE_BLUE, // Couleur contrastée
+            letterSpacing: "-0.5px", 
+            mr: { xs: 1, sm: 2, md: 3, lg: 4 }, 
             flexShrink: 0,
           }}
         >
           Lares
         </Typography>
         
-        {/* --- 6. Copier les styles du Bouton de Header.tsx --- */}
         <Button 
           variant="contained" 
           onClick={logout}
+          // ACCESSIBILITÉ: Label explicite
+          aria-label="Log out"
           sx={{
-            backgroundColor: "#3B5CFF",
+            backgroundColor: ACCESSIBLE_BLUE, // Couleur contrastée
             textTransform: "none",
             fontWeight: 600,
-            px: { xs: 2, sm: 3, md: 4 }, // Style copié
-            py: 1, // Style copié
-            borderRadius: 2, // Style copié
+            px: { xs: 2, sm: 3, md: 4 }, 
+            py: 1, 
+            borderRadius: 2, 
             boxShadow: "none",
-            ml: { xs: 1, sm: 2, md: 3, lg: 4 }, // Style copié
-            fontSize: { xs: "0.75rem", sm: "0.875rem", md: "1rem" }, // Style copié
+            ml: { xs: 1, sm: 2, md: 3, lg: 4 }, 
+            fontSize: { xs: "0.75rem", sm: "0.875rem", md: "1rem" }, 
             flexShrink: 0,
             "&:hover": { 
-              backgroundColor: "#2A4AE5",
-              boxShadow: "0px 4px 12px rgba(59, 92, 255, 0.3)", // Style copié
+              backgroundColor: "#1A3AC0", // Version plus sombre pour le survol
+              boxShadow: "0px 4px 12px rgba(59, 92, 255, 0.3)", 
             },
           }}
         >
-          {/* Style copié */}
           {isSmall ? "OUT" : "LOG OUT"}
         </Button>
       </Toolbar>

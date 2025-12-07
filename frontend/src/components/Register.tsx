@@ -119,12 +119,15 @@ function Register() {
   ];
 
   return (
-    <div className="max-w-2xl mx-auto p-6">
-      <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+    <div className="max-w-2xl mx-auto p-6" role="main">
+      <h1 className="sr-only">Create New User</h1> {/* Titre caché pour lecteurs d'écran */}
+      
+      <form onSubmit={handleSubmit} className="flex flex-col gap-6" noValidate>
         {message.text && message.type !== "" && (
           <Alert
             severity={message.type as "success" | "info" | "warning" | "error"}
             onClose={() => setMessage({ type: "", text: "" })}
+            role="alert" // Annonce immédiate
           >
             {message.text}
           </Alert>
@@ -137,6 +140,7 @@ function Register() {
 
           <div className="flex flex-col gap-4 mt-4">
             <TextField
+              id="username"
               label="Username"
               name="username"
               value={formData.username}
@@ -144,9 +148,12 @@ function Register() {
               variant="outlined"
               fullWidth
               required
+              // Accessibilité
+              inputProps={{ "aria-required": "true" }}
             />
 
             <TextField
+              id="email"
               label="Email"
               name="email"
               type="email"
@@ -155,9 +162,11 @@ function Register() {
               variant="outlined"
               fullWidth
               required
+              inputProps={{ "aria-required": "true" }}
             />
 
             <TextField
+              id="password"
               label="Password"
               name="password"
               type="password"
@@ -166,41 +175,42 @@ function Register() {
               variant="outlined"
               fullWidth
               required
+              inputProps={{ "aria-required": "true" }}
             />
 
-            {/* Keypad Checkbox */}
-            <div
+            {/* Keypad Checkbox - Accessible */}
+            <label
               className={`flex items-center gap-4 p-4 rounded-xl cursor-pointer transition-all border-2 mt-2 ${keypad
                 ? "bg-blue-100 border-blue-500"
                 : "bg-gray-50 hover:bg-blue-50 border-transparent"
                 }`}
-              onClick={() => setKeypad(!keypad)}
             >
               <input
                 type="checkbox"
                 checked={keypad}
                 onChange={(e) => setKeypad(e.target.checked)}
-                className="w-6 h-6 cursor-pointer accent-blue-600"
+                className="w-6 h-6 cursor-pointer accent-blue-600 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                aria-label="Generate a keypad code"
               />
               <span className="font-bold text-gray-800">Generate a keypad code</span>
-            </div>
+            </label>
 
-            {/* Badge Checkbox */}
-            <div
+            {/* Badge Checkbox - Accessible */}
+            <label
               className={`flex items-center gap-4 p-4 rounded-xl cursor-pointer transition-all border-2 ${badge
                 ? "bg-blue-100 border-blue-500"
                 : "bg-gray-50 hover:bg-blue-50 border-transparent"
                 }`}
-              onClick={() => setBadge(!badge)}
             >
               <input
                 type="checkbox"
                 checked={badge}
                 onChange={(e) => setBadge(e.target.checked)}
-                className="w-6 h-6 cursor-pointer accent-blue-600"
+                className="w-6 h-6 cursor-pointer accent-blue-600 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                aria-label="Generate a badge code"
               />
               <span className="font-bold text-gray-800">Generate a badge code</span>
-            </div>
+            </label>
 
           </div>
         </fieldset>
@@ -210,27 +220,28 @@ function Register() {
             Role
           </legend>
 
-          <div className="flex flex-col gap-3 mt-4">
+          <div className="flex flex-col gap-3 mt-4" role="radiogroup" aria-label="Select user role">
             {roles.map((role) => (
-              <div
+              <label
                 key={role.value}
                 className={`flex items-start gap-4 p-4 rounded-xl cursor-pointer transition-all ${selectedRole === role.value
                   ? "bg-blue-100 border-2 border-blue-500"
                   : "bg-gray-50 hover:bg-blue-50 border-2 border-transparent"
                   }`}
-                onClick={() => handleRoleChange(role.value)}
               >
                 <input
                   type="radio"
+                  name="role" // Important pour grouper les radios
+                  value={role.value}
                   checked={selectedRole === role.value}
                   onChange={() => handleRoleChange(role.value)}
-                  className="w-6 h-6 cursor-pointer accent-blue-600 mt-1"
+                  className="w-6 h-6 cursor-pointer accent-blue-600 mt-1 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 />
                 <div className="flex flex-col">
                   <span className="font-bold text-gray-800">{role.label}</span>
                   <span className="text-sm text-gray-600">{role.description}</span>
                 </div>
-              </div>
+              </label>
             ))}
           </div>
         </fieldset>
@@ -243,6 +254,11 @@ function Register() {
           size="large"
           disabled={loading}
           className="!py-4 !text-lg !font-bold !rounded-2xl"
+          sx={{
+            // Ratio de contraste WCAG AA (>4.5:1)
+            backgroundColor: "#2A4AE5", 
+            "&:hover": { backgroundColor: "#1A3AC0" }
+          }}
         >
           {loading ? "Creating user..." : "CREATE USER"}
         </Button>

@@ -3,6 +3,7 @@ import {
   TextField,
   Button,
   Dialog,
+  DialogTitle, // Ajouté pour l'accessibilité (titre de la modale)
   DialogContent,
   DialogActions,
   IconButton,
@@ -10,7 +11,7 @@ import {
   FormControlLabel,
 } from "@mui/material";
 import CloseIcon from '@mui/icons-material/Close';
-import { Key, KeyOff, Badge } from '@mui/icons-material'; // Added Badge icon
+import { Key, KeyOff, Badge } from '@mui/icons-material'; 
 import getCookie from "../context/getCookie";
 
 type ManageUserProps = {
@@ -30,7 +31,7 @@ interface User {
   is_staff: boolean;
   is_superuser: boolean;
   has_keypad_code?: boolean;
-  has_badge_code?: boolean; // Added has_badge_code to interface
+  has_badge_code?: boolean; 
 }
 
 type UserRole = "user" | "moderator" | "admin";
@@ -48,9 +49,8 @@ function ManageUser({ isDialogOpen, setIsDialogOpen, selectedUser, setSelectedUs
   };
 
   const [selectedRole, setSelectedRole] = useState<UserRole>("user");
-  // State for Generate/Regenerate checkboxes
   const [generateKeypad, setGenerateKeypad] = useState(false);
-  const [generateBadge, setGenerateBadge] = useState(false); // New state for badge
+  const [generateBadge, setGenerateBadge] = useState(false); 
 
   const csrfToken = getCookie("csrftoken");
   const headers: HeadersInit = csrfToken
@@ -120,9 +120,8 @@ function ManageUser({ isDialogOpen, setIsDialogOpen, selectedUser, setSelectedUs
           user_id: selectedUser.id,
           ...formData,
           ...rolePermissions,
-          // Send instructions to generate/regenerate codes
           keypad: generateKeypad,
-          badge: generateBadge // Added badge to payload
+          badge: generateBadge 
         })
       });
       const data = await response.json();
@@ -152,7 +151,6 @@ function ManageUser({ isDialogOpen, setIsDialogOpen, selectedUser, setSelectedUs
         ...formData,
         username: selectedUser.username
       });
-      // Reset checkboxes when dialog opens
       setGenerateKeypad(false);
       setGenerateBadge(false);
     }
@@ -165,15 +163,25 @@ function ManageUser({ isDialogOpen, setIsDialogOpen, selectedUser, setSelectedUs
       onClose={handleDialogClose}
       fullWidth={true}
       maxWidth="sm"
+      // ACCESSIBILITÉ: Liens ARIA pour la modale
+      aria-labelledby="manage-user-title"
     >
-      <DialogContent>
-        <DialogActions>
-          <IconButton onClick={() => handleDialogClose()}>
-            <CloseIcon />
-          </IconButton>
-        </DialogActions>
+      {/* ACCESSIBILITÉ: Titre visible qui sera lu à l'ouverture */}
+      <DialogTitle id="manage-user-title" sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        Manage User: {selectedUser?.username}
+        <IconButton 
+          onClick={() => handleDialogClose()} 
+          // ACCESSIBILITÉ: Label explicite pour le bouton fermer
+          aria-label="Close dialog"
+        >
+          <CloseIcon />
+        </IconButton>
+      </DialogTitle>
+
+      <DialogContent dividers>
         <form onSubmit={handleSubmit}>
-          <fieldset className="border-2 border-gray-300 rounded-2xl p-6">
+          
+          <fieldset className="border-2 border-gray-300 rounded-2xl p-6 mb-6">
             <legend className="px-4 text-xl font-bold text-gray-800">
               Informations
             </legend>
@@ -187,6 +195,8 @@ function ManageUser({ isDialogOpen, setIsDialogOpen, selectedUser, setSelectedUs
                 variant="outlined"
                 fullWidth
                 required
+                // ACCESSIBILITÉ
+                inputProps={{ "aria-required": "true" }}
               />
 
               <TextField
@@ -198,18 +208,22 @@ function ManageUser({ isDialogOpen, setIsDialogOpen, selectedUser, setSelectedUs
                 variant="outlined"
                 fullWidth
                 required
+                inputProps={{ "aria-required": "true" }}
               />
 
-              {/* Keypad Management Row */}
-              <div className={`flex items-center justify-between p-3 rounded-xl border-2 transition-colors ${selectedUser.has_keypad_code
-                ? "bg-blue-50 border-blue-100"
-                : "bg-gray-50 border-gray-200"
-                }`}>
+              {/* Keypad Management Row - Accessible */}
+              <div 
+                className={`flex items-center justify-between p-3 rounded-xl border-2 transition-colors ${selectedUser.has_keypad_code
+                  ? "bg-blue-50 border-blue-100"
+                  : "bg-gray-50 border-gray-200"
+                }`}
+                // Pour que la div entière ne soit pas lue bizarrement, on laisse les contrôles internes gérer le focus
+              >
                 <div className="flex items-center gap-3">
                   {selectedUser.has_keypad_code ? (
-                    <Key className="text-blue-500" />
+                    <Key className="text-blue-500" aria-hidden="true" />
                   ) : (
-                    <KeyOff className="text-gray-400" />
+                    <KeyOff className="text-gray-400" aria-hidden="true" />
                   )}
                   <span className={`font-medium ${selectedUser.has_keypad_code ? "text-blue-900" : "text-gray-600"}`}>
                     {selectedUser.has_keypad_code ? "Keypad code set up" : "No existing keypad code"}
@@ -222,8 +236,10 @@ function ManageUser({ isDialogOpen, setIsDialogOpen, selectedUser, setSelectedUs
                       checked={generateKeypad}
                       onChange={(e) => setGenerateKeypad(e.target.checked)}
                       sx={{
-                        '&.Mui-checked': { color: "#3B5CFF" },
+                        '&.Mui-checked': { color: "#2A4AE5" }, // Bleu contrasté
                       }}
+                      // ACCESSIBILITÉ: Label explicite pour le lecteur d'écran
+                      inputProps={{ 'aria-label': selectedUser.has_keypad_code ? "Regenerate keypad code" : "Generate keypad code" }}
                     />
                   }
                   label={
@@ -234,14 +250,13 @@ function ManageUser({ isDialogOpen, setIsDialogOpen, selectedUser, setSelectedUs
                 />
               </div>
 
-              {/* Badge Management Row */}
+              {/* Badge Management Row - Accessible */}
               <div className={`flex items-center justify-between p-3 rounded-xl border-2 transition-colors ${selectedUser.has_badge_code
                 ? "bg-blue-50 border-blue-100"
                 : "bg-gray-50 border-gray-200"
                 }`}>
                 <div className="flex items-center gap-3">
-                  {/* Using Badge icon here, you might want a different one if preferred, e.g. BadgeOutlined if available or similar from MUI icons */}
-                  <Badge className={selectedUser.has_badge_code ? "text-blue-500" : "text-gray-400"} />
+                  <Badge className={selectedUser.has_badge_code ? "text-blue-500" : "text-gray-400"} aria-hidden="true" />
                   <span className={`font-medium ${selectedUser.has_badge_code ? "text-blue-900" : "text-gray-600"}`}>
                     {selectedUser.has_badge_code ? "Badge code set up" : "No existing badge code"}
                   </span>
@@ -253,8 +268,9 @@ function ManageUser({ isDialogOpen, setIsDialogOpen, selectedUser, setSelectedUs
                       checked={generateBadge}
                       onChange={(e) => setGenerateBadge(e.target.checked)}
                       sx={{
-                        '&.Mui-checked': { color: "#3B5CFF" },
+                        '&.Mui-checked': { color: "#2A4AE5" }, // Bleu contrasté
                       }}
+                      inputProps={{ 'aria-label': selectedUser.has_badge_code ? "Regenerate badge code" : "Generate badge code" }}
                     />
                   }
                   label={
@@ -268,45 +284,57 @@ function ManageUser({ isDialogOpen, setIsDialogOpen, selectedUser, setSelectedUs
             </div>
           </fieldset>
 
-          <fieldset className="border-2 border-gray-300 rounded-2xl p-6 mt-6">
+          <fieldset className="border-2 border-gray-300 rounded-2xl p-6">
             <legend className="px-4 text-xl font-bold text-gray-800">
               Role
             </legend>
 
-            <div className="flex flex-col gap-3 mt-4">
+            {/* ACCESSIBILITÉ: Rôle radiogroup pour regrouper les options */}
+            <div className="flex flex-col gap-3 mt-4" role="radiogroup" aria-label="Select user role">
               {roles.map((role) => (
-                <div
+                // ACCESSIBILITÉ: Utilisation de <label> pour rendre toute la zone cliquable
+                <label
                   key={role.value}
                   className={`flex items-start gap-4 p-4 rounded-xl cursor-pointer transition-all ${selectedRole === role.value
                     ? "bg-blue-100 border-2 border-blue-500"
                     : "bg-gray-50 hover:bg-blue-50 border-2 border-transparent"
                     }`}
-                  onClick={() => handleRoleChange(role.value)}
                 >
                   <input
                     type="radio"
+                    name="userRole" // Important pour grouper les radios
+                    value={role.value}
                     checked={selectedRole === role.value}
                     onChange={() => handleRoleChange(role.value)}
-                    className="w-6 h-6 cursor-pointer accent-blue-600 mt-1"
+                    className="w-6 h-6 cursor-pointer accent-blue-600 mt-1 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   />
                   <div className="flex flex-col">
                     <span className="font-bold text-gray-800">{role.label}</span>
                     <span className="text-sm text-gray-600">{role.description}</span>
                   </div>
-                </div>
+                </label>
               ))}
             </div>
           </fieldset>
-          <DialogActions>
+          
+          <DialogActions sx={{ pt: 3 }}>
+            <Button 
+              onClick={() => handleDialogClose()} 
+              color="inherit"
+              sx={{ fontWeight: 600 }}
+            >
+              Cancel
+            </Button>
             <Button
               type="submit"
               variant="contained"
               sx={{
-                backgroundColor: "#3B5CFF",
-                '&:hover': { backgroundColor: "#2A4AE5" }
+                backgroundColor: "#2A4AE5", // Bleu contrasté
+                fontWeight: 600,
+                '&:hover': { backgroundColor: "#1A3AC0" }
               }}
             >
-              Submit
+              Save Changes
             </Button>
           </DialogActions>
         </form>

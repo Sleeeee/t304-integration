@@ -33,6 +33,9 @@ interface UsersPageProps {
   onEditSchematic: (schematicId: number) => void;
 }
 
+// Couleur accessible (Ratio > 4.5:1 sur blanc)
+const ACCESSIBLE_BLUE = "#2A4AE5"; 
+
 const UsersPage: React.FC<UsersPageProps> = ({ onNavigate, onEditSchematic }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [users, setUsers] = useState<User[]>([]);
@@ -125,6 +128,7 @@ const UsersPage: React.FC<UsersPageProps> = ({ onNavigate, onEditSchematic }) =>
 
       <Typography
         variant="h4"
+        component="h1"
         sx={{
           fontWeight: 700,
           mb: 3,
@@ -150,7 +154,7 @@ const UsersPage: React.FC<UsersPageProps> = ({ onNavigate, onEditSchematic }) =>
             width: { xs: '100%', md: '50%' }
           }}
         >
-          <Typography variant="h5" sx={{ fontWeight: 600, color: '#333', mb: 3 }}>
+          <Typography variant="h5" component="h2" sx={{ fontWeight: 600, color: '#333', mb: 3 }}>
             User List
           </Typography>
 
@@ -160,6 +164,7 @@ const UsersPage: React.FC<UsersPageProps> = ({ onNavigate, onEditSchematic }) =>
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               size="small"
+              inputProps={{ "aria-label": "Search users by name or role" }}
               sx={{
                 flexGrow: 1,
                 maxWidth: 300,
@@ -170,13 +175,13 @@ const UsersPage: React.FC<UsersPageProps> = ({ onNavigate, onEditSchematic }) =>
               variant="contained"
               onClick={() => onNavigate("register")}
               sx={{
-                backgroundColor: "#3B5CFF",
+                backgroundColor: ACCESSIBLE_BLUE,
                 textTransform: "none",
                 fontWeight: 600,
                 boxShadow: "none",
                 ml: "auto",
                 "&:hover": {
-                  backgroundColor: "#2A4AE5",
+                  backgroundColor: "#1A3AC0",
                 },
               }}
             >
@@ -186,12 +191,12 @@ const UsersPage: React.FC<UsersPageProps> = ({ onNavigate, onEditSchematic }) =>
 
           {loading && (
             <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
-              <CircularProgress />
+              <CircularProgress aria-label="Loading users..." />
             </Box>
           )}
 
           {error && (
-            <Typography color="error" sx={{ textAlign: "center", py: 2 }}>
+            <Typography color="error" sx={{ textAlign: "center", py: 2 }} role="alert">
               {error}
             </Typography>
           )}
@@ -201,16 +206,16 @@ const UsersPage: React.FC<UsersPageProps> = ({ onNavigate, onEditSchematic }) =>
               <Table>
                 <TableHead>
                   <TableRow>
-                    <TableCell sx={{ fontWeight: 600, color: "#666" }}>
+                    <TableCell scope="col" sx={{ fontWeight: 600, color: "#444" }}>
                       Username
                     </TableCell>
-                    <TableCell sx={{ fontWeight: 600, color: "#666" }}>
+                    <TableCell scope="col" sx={{ fontWeight: 600, color: "#444" }}>
                       Role
                     </TableCell>
-                    <TableCell sx={{ fontWeight: 600, color: "#666" }}>
+                    <TableCell scope="col" sx={{ fontWeight: 600, color: "#444" }}>
                       Logs
                     </TableCell>
-                    <TableCell></TableCell>
+                    <TableCell scope="col" aria-label="Actions"></TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -233,7 +238,9 @@ const UsersPage: React.FC<UsersPageProps> = ({ onNavigate, onEditSchematic }) =>
                             },
                           }}
                         >
-                          <TableCell>{user.username}</TableCell>
+                          <TableCell component="th" scope="row">
+                            {user.username}
+                          </TableCell>
                           <TableCell>
                             <Chip
                               label={role}
@@ -245,10 +252,11 @@ const UsersPage: React.FC<UsersPageProps> = ({ onNavigate, onEditSchematic }) =>
                           <TableCell>
                             <Button
                               size="small"
+                              aria-label={`View logs for ${user.username}`}
                               sx={{
-                                color: "#3B5CFF",
+                                color: ACCESSIBLE_BLUE,
                                 textTransform: "none",
-                                fontWeight: 500,
+                                fontWeight: 600,
                                 "&:hover": {
                                   backgroundColor: "#F5F7FF",
                                 },
@@ -261,10 +269,11 @@ const UsersPage: React.FC<UsersPageProps> = ({ onNavigate, onEditSchematic }) =>
                             <Button
                               size="small"
                               onClick={() => handleDialogOpen(user)}
+                              aria-label={`Manage user ${user.username}`}
                               sx={{
-                                color: "#3B5CF",
+                                color: ACCESSIBLE_BLUE,
                                 textTransform: "none",
-                                fontWeight: 500,
+                                fontWeight: 600,
                                 "&:hover": {
                                   backgroundColor: "#F5F7FF",
                                 },
@@ -272,16 +281,16 @@ const UsersPage: React.FC<UsersPageProps> = ({ onNavigate, onEditSchematic }) =>
                             >
                               Manage
                             </Button>
-							<DeleteUser
-							  selectedUser={user}
-							  onUserDeleted={() => {
-								setSelectedUser("null");
-							  }}
-							  refresh={refreshList}
-							  snackbar={snackbar}
-							  setSnackbar={setSnackbar}
-							/>
-						  </TableCell>
+                            <DeleteUser
+                              selectedUser={user}
+                              onUserDeleted={() => {
+                                setSelectedUser("null");
+                              }}
+                              refresh={refreshList}
+                              snackbar={snackbar}
+                              setSnackbar={setSnackbar}
+                            />
+                          </TableCell>
                         </TableRow>
                       );
                     })

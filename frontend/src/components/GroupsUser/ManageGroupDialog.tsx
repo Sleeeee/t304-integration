@@ -19,7 +19,9 @@ import CloseIcon from '@mui/icons-material/Close';
 import SaveIcon from '@mui/icons-material/Save';
 import getCookie from "../../context/getCookie"; 
 
-// Interfaces (tu peux les mettre dans un fichier partagé)
+// Couleur accessible
+const ACCESSIBLE_BLUE = "#2A4AE5";
+
 interface User {
   id: number;
   username: string;
@@ -33,17 +35,15 @@ interface Group {
 type ManageGroupDialogProps = {
   open: boolean;
   onClose: () => void;
-  group: Group | null; // Le groupe à modifier
-  onGroupUpdated: (updatedGroup: Group) => void; // Pour rafraîchir la liste
+  group: Group | null; 
+  onGroupUpdated: (updatedGroup: Group) => void; 
 };
 
 const ManageGroupDialog: React.FC<ManageGroupDialogProps> = ({ open, onClose, group, onGroupUpdated }) => {
-  // --- State pour le nom ---
   const [groupName, setGroupName] = useState("");
   const [nameLoading, setNameLoading] = useState(false);
   const [nameError, setNameError] = useState("");
 
-  // --- State pour les membres ---
   const [allUsers, setAllUsers] =useState<User[]>([]);
   const [initialMemberIds, setInitialMemberIds] = useState<number[]>([]);
   const [selectedUserIds, setSelectedUserIds] = useState<number[]>([]);
@@ -51,12 +51,9 @@ const ManageGroupDialog: React.FC<ManageGroupDialogProps> = ({ open, onClose, gr
   const [usersError, setUsersError] = useState("");
   const [userSearchQuery, setUserSearchQuery] = useState("");
   
-  // --- State global ---
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-
-  // Helper pour les headers
   const getHeaders = (withContentType = false) => {
     const csrfToken = getCookie("csrftoken");
     const headers: HeadersInit = { "X-CSRFToken": csrfToken || "" };
@@ -66,10 +63,8 @@ const ManageGroupDialog: React.FC<ManageGroupDialogProps> = ({ open, onClose, gr
     return headers;
   };
 
-  // --- Chargement des données à l'ouverture ---
   useEffect(() => {
     if (!open || !group) {
-      // Réinitialiser si fermé ou pas de groupe
       setGroupName("");
       setAllUsers([]);
       setInitialMemberIds([]);
@@ -81,11 +76,9 @@ const ManageGroupDialog: React.FC<ManageGroupDialogProps> = ({ open, onClose, gr
       return;
     }
 
-    // Pré-remplir le nom
     setGroupName(group.name);
     setUsersLoading(true);
 
-    // On lance 2 requêtes en parallèle
     const fetchAllUsers = fetch("http://localhost:8000/users/", { 
       method: "GET",
       credentials: "include",
@@ -109,8 +102,8 @@ const ManageGroupDialog: React.FC<ManageGroupDialogProps> = ({ open, onClose, gr
         const memberIds = membersData.members.map((user: User) => user.id);
         
         setAllUsers(usersData.users || []);
-        setInitialMemberIds(memberIds); // Sauvegarde l'état initial
-        setSelectedUserIds(memberIds); // L'état qui va changer
+        setInitialMemberIds(memberIds); 
+        setSelectedUserIds(memberIds); 
       })
       .catch(err => {
         setUsersError(err.message || "Failed to load data");
@@ -119,9 +112,8 @@ const ManageGroupDialog: React.FC<ManageGroupDialogProps> = ({ open, onClose, gr
         setUsersLoading(false);
       });
 
-  }, [open, group]); // Se relance si le groupe change ou si on ouvre
+  }, [open, group]); 
 
-  // --- Gère la mise à jour du NOM ---
   const handleUpdateName = async () => {
     if (!group || !groupName.trim()) {
       setNameError("Name cannot be empty");
@@ -133,7 +125,7 @@ const ManageGroupDialog: React.FC<ManageGroupDialogProps> = ({ open, onClose, gr
     
     try {
       const response = await fetch(`http://localhost:8000/users/groups/${group.id}/update/`, {
-        method: 'PATCH', // Utilise PATCH
+        method: 'PATCH', 
         credentials: 'include',
         headers: getHeaders(true),
         body: JSON.stringify({ name: groupName })
@@ -145,8 +137,8 @@ const ManageGroupDialog: React.FC<ManageGroupDialogProps> = ({ open, onClose, gr
       }
 
       const data = await response.json();
-      onGroupUpdated(data.group); // Renvoie le groupe mis à jour au parent
-      setNameError(""); // Succès ! (on pourrait afficher un snackbar)
+      onGroupUpdated(data.group); 
+      setNameError(""); 
       
     } catch (err: any) {
       setNameError(err.message);
@@ -155,22 +147,19 @@ const ManageGroupDialog: React.FC<ManageGroupDialogProps> = ({ open, onClose, gr
     }
   };
 
-  // --- Gère la mise à jour des MEMBRES ---
   const handleSubmitMembers = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!group) return; // Sécurité, s'assure que 'group' n'est pas null
+    if (!group) return; 
 
     setLoading(true);
     setError("");
 
-    // Calculer la différence
     const usersToAdd = selectedUserIds.filter(id => !initialMemberIds.includes(id));
     const usersToRemove = initialMemberIds.filter(id => !selectedUserIds.includes(id));
 
     try {
       const requests = [];
 
-      // 1. Requête pour ajouter
       if (usersToAdd.length > 0) {
         requests.push(
           fetch(`http://localhost:8000/users/groups/${group.id}/add_user/`, {
@@ -182,11 +171,10 @@ const ManageGroupDialog: React.FC<ManageGroupDialogProps> = ({ open, onClose, gr
         );
       }
 
-      // 2. Requête pour retirer
       if (usersToRemove.length > 0) {
         requests.push(
           fetch(`http://localhost:8000/users/groups/${group.id}/remove_user/`, {
-            method: "DELETE", // Ton backend attend DELETE avec un body
+            method: "DELETE", 
             credentials: "include",
             headers: getHeaders(true),
             body: JSON.stringify({ user_ids: usersToRemove }), 
@@ -196,17 +184,12 @@ const ManageGroupDialog: React.FC<ManageGroupDialogProps> = ({ open, onClose, gr
 
       const responses = await Promise.all(requests);
       
-      // Vérifier si une des requêtes a échoué
       for (const res of responses) {
         if (!res.ok) {
           throw new Error("Failed to update one or more member lists.");
         }
       }
       
-      // --- MODIFICATION ICI ---
-      // Au lieu de juste fermer, on appelle 'onGroupUpdated'.
-      // Le composant parent (UserGroupsList) va maintenant
-      // rafraîchir la liste et fermer la pop-up.
       onGroupUpdated(group); 
 
     } catch (err: any) {
@@ -216,8 +199,6 @@ const ManageGroupDialog: React.FC<ManageGroupDialogProps> = ({ open, onClose, gr
     }
   };
 
-
-  // Gère le cochage/décochage
   const handleCheckboxChange = (event: ChangeEvent<HTMLInputElement>, userId: number) => {
     if (event.target.checked) {
       setSelectedUserIds((prev) => [...prev, userId]);
@@ -226,31 +207,39 @@ const ManageGroupDialog: React.FC<ManageGroupDialogProps> = ({ open, onClose, gr
     }
   };
 
-  // Filtrer les utilisateurs
   const filteredUsers = allUsers.filter(user => 
     user.username.toLowerCase().includes(userSearchQuery.toLowerCase()) ||
     user.email.toLowerCase().includes(userSearchQuery.toLowerCase())
   );
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth={true} maxWidth="sm">
-      <DialogTitle sx={{ fontWeight: 600, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+    <Dialog 
+      open={open} 
+      onClose={onClose} 
+      fullWidth={true} 
+      maxWidth="sm"
+      // ACCESSIBILITÉ: Liens
+      aria-labelledby="manage-group-dialog-title"
+    >
+      <DialogTitle 
+        id="manage-group-dialog-title"
+        sx={{ fontWeight: 600, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+      >
         Manage Group: {group?.name}
-        <IconButton onClick={onClose}>
+        <IconButton onClick={onClose} aria-label="Close dialog">
           <CloseIcon />
         </IconButton>
       </DialogTitle>
       
-      {/* Le formulaire ne gère que les membres */}
       <form onSubmit={handleSubmitMembers}>
         <DialogContent>
           
-          {/* --- Section 1: Renommer --- */}
-          <Typography variant="h6" sx={{ fontWeight: 600 }}>
+          <Typography variant="h6" component="h2" sx={{ fontWeight: 600 }}>
             Rename Group
           </Typography>
           <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
             <TextField
+              id="group-name-input" // ID pour le label
               label="Group Name"
               value={groupName}
               onChange={(e) => setGroupName(e.target.value)}
@@ -261,22 +250,30 @@ const ManageGroupDialog: React.FC<ManageGroupDialogProps> = ({ open, onClose, gr
               error={!!nameError}
               helperText={nameError}
               sx={{ mt: 1 }}
+              // ACCESSIBILITÉ
+              inputProps={{ "aria-required": "true" }}
             />
             <Tooltip title="Save name">
               <span>
-                <IconButton onClick={handleUpdateName} disabled={nameLoading}>
-                  {nameLoading ? <CircularProgress size={24} /> : <SaveIcon />}
+                <IconButton 
+                  onClick={handleUpdateName} 
+                  disabled={nameLoading}
+                  // ACCESSIBILITÉ: Label explicite
+                  aria-label="Save group name"
+                >
+                  {nameLoading ? <CircularProgress size={24} aria-label="Saving..." /> : <SaveIcon />}
                 </IconButton>
               </span>
             </Tooltip>
           </Box>
           
-          {/* --- Section 2: Membres --- */}
-          <Typography variant="h6" sx={{ mt: 3, mb: 1, fontWeight: 600 }}>
+          <Typography variant="h6" component="h2" sx={{ mt: 3, mb: 1, fontWeight: 600 }}>
             Manage Members
           </Typography>
           
           <TextField
+            // ACCESSIBILITÉ: Label explicite (car visuellement caché)
+            inputProps={{ "aria-label": "Search for a user to add" }}
             placeholder="Search for a user..."
             value={userSearchQuery}
             onChange={(e) => setUserSearchQuery(e.target.value)}
@@ -288,14 +285,18 @@ const ManageGroupDialog: React.FC<ManageGroupDialogProps> = ({ open, onClose, gr
           
           {usersLoading ? (
             <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}>
-              <CircularProgress />
+              <CircularProgress aria-label="Loading users..." />
             </Box>
           ) : usersError ? (
-            <Typography color="error" sx={{ textAlign: 'center' }}>
+            <Typography color="error" sx={{ textAlign: 'center' }} role="alert">
               {usersError}
             </Typography>
           ) : (
-            <Box sx={{ maxHeight: 300, overflow: 'auto', border: '1px solid #E0E0E0', borderRadius: 1, p: 1 }}>
+            <Box 
+              sx={{ maxHeight: 300, overflow: 'auto', border: '1px solid #E0E0E0', borderRadius: 1, p: 1 }}
+              role="group" 
+              aria-label="Select group members"
+            >
               <FormGroup>
                 {filteredUsers.length === 0 ? (
                   <Typography sx={{ p: 2, textAlign: 'center', color: '#666' }}>
@@ -309,6 +310,11 @@ const ManageGroupDialog: React.FC<ManageGroupDialogProps> = ({ open, onClose, gr
                         <Checkbox
                           checked={selectedUserIds.includes(user.id)}
                           onChange={(e) => handleCheckboxChange(e, user.id)}
+                          // ACCESSIBILITÉ: Label explicite sur la checkbox
+                          inputProps={{ 'aria-label': `Select user ${user.username}` }}
+                          sx={{
+                            '&.Mui-checked': { color: ACCESSIBLE_BLUE },
+                          }}
                         />
                       }
                       label={`${user.username} (${user.email})`}
@@ -320,7 +326,7 @@ const ManageGroupDialog: React.FC<ManageGroupDialogProps> = ({ open, onClose, gr
           )}
           
           {error && (
-            <Typography color="error" sx={{ mt: 2, textAlign: 'center', fontWeight: 500 }}>
+            <Typography color="error" sx={{ mt: 2, textAlign: 'center', fontWeight: 500 }} role="alert">
               {error}
             </Typography>
           )}
@@ -333,13 +339,13 @@ const ManageGroupDialog: React.FC<ManageGroupDialogProps> = ({ open, onClose, gr
           <Button
             type="submit"
             variant="contained"
-            disabled={loading} // Désactivé si on sauvegarde les membres
+            disabled={loading} 
             sx={{ 
-              backgroundColor: "#3B5CFF",
-              '&:hover': { backgroundColor: "#2A4AE5" } 
+              backgroundColor: ACCESSIBLE_BLUE,
+              '&:hover': { backgroundColor: "#1A3AC0" } 
             }}
           >
-            {loading ? <CircularProgress size={24} color="inherit" /> : "Save Member Changes"}
+            {loading ? <CircularProgress size={24} color="inherit" aria-label="Saving members..." /> : "Save Member Changes"}
           </Button>
         </DialogActions>
       </form>

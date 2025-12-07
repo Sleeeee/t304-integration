@@ -15,7 +15,9 @@ import AddIcon from '@mui/icons-material/Add';
 import CreateReservationDialog from "./CreateReservationDialog";
 import getCookie from "../../context/getCookie"; 
 
-// --- Interfaces (mises à jour pour correspondre à l'API) ---
+// --- Couleur Accessible (Contrast > 4.5:1) ---
+const ACCESSIBLE_BLUE = "#2A4AE5";
+
 interface Lock {
   id_lock: number;
   name: string;
@@ -41,9 +43,8 @@ interface UserDashboardPageProps {
   onNavigate: (page: string) => void;
 }
 
-// Helpers (mis en anglais pour la cohérence)
 const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
-const formatTime = (time: string) => time.slice(0, 5); // "14:00:00" -> "14:00"
+const formatTime = (time: string) => time.slice(0, 5); 
 
 const UserDashboardPage: React.FC<UserDashboardPageProps> = ({ user, onNavigate }) => {
   const [reservations, setReservations] = useState<Reservation[]>([]);
@@ -88,24 +89,18 @@ const UserDashboardPage: React.FC<UserDashboardPageProps> = ({ user, onNavigate 
     if (status === 'rejected') return 'error.main';
     return 'text.secondary';
   };
-
-  // --- NOUVEAU: On utilise useMemo pour séparer les listes ---
-  // (C'est plus efficace que de filtrer dans le JSX)
   
-  // 1. Liste des demandes "En attente"
   const pendingReservations = useMemo(
     () => reservations.filter(r => r.status === 'pending'),
     [reservations]
   );
 
-  // 2. Liste de l'historique (Approuvé + Rejeté)
   const processedReservations = useMemo(
     () => reservations.filter(r => r.status === 'approved' || r.status === 'rejected')
-                      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()), // Trie du plus récent au plus ancien
+                      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()), 
     [reservations]
   );
 
-  // Composant interne pour la liste (pour éviter la duplication)
   const ReservationItem: React.FC<{res: Reservation}> = ({ res }) => (
     <React.Fragment>
       <ListItem disablePadding sx={{ py: 1.5 }}>
@@ -138,19 +133,24 @@ const UserDashboardPage: React.FC<UserDashboardPageProps> = ({ user, onNavigate 
   return (
     <Box sx={{ p: 4 }}>
       
-      {/* --- NOUVEL EN-TÊTE DE PAGE --- */}
+      {/* --- En-tête de Page --- */}
       <Box 
+        component="header" // Sémantique
         sx={{ 
           display: 'flex', 
           justifyContent: 'space-between', 
           alignItems: 'center', 
-          flexWrap: 'wrap', // Pour les petits écrans
-          gap: 2, // Espace entre le texte et le bouton
+          flexWrap: 'wrap', 
+          gap: 2, 
           mb: 4 
         }}
       >
         <Box>
-          <Typography variant="h4" sx={{ fontWeight: 700, color: "#333" }}>
+          <Typography 
+            variant="h4" 
+            component="h1" // Titre principal H1
+            sx={{ fontWeight: 700, color: "#333" }}
+          >
             Hello, {user.username}!
           </Typography>
           <Typography variant="h6" sx={{ color: "#555", fontWeight: 400 }}>
@@ -162,7 +162,7 @@ const UserDashboardPage: React.FC<UserDashboardPageProps> = ({ user, onNavigate 
           onClick={() => setIsCreateOpen(true)}
           startIcon={<AddIcon />}
           sx={{
-            backgroundColor: "#3B5CFF",
+            backgroundColor: ACCESSIBLE_BLUE, // Bleu accessible
             textTransform: "none",
             fontWeight: 600,
             boxShadow: "none",
@@ -170,7 +170,7 @@ const UserDashboardPage: React.FC<UserDashboardPageProps> = ({ user, onNavigate 
             px: 3,
             fontSize: '1rem',
             "&:hover": {
-              backgroundColor: "#2A4AE5",
+              backgroundColor: "#1A3AC0",
             },
           }}
         >
@@ -178,11 +178,17 @@ const UserDashboardPage: React.FC<UserDashboardPageProps> = ({ user, onNavigate 
         </Button>
       </Box>
       
-      {/* --- NOUVEAU LAYOUT À DEUX COLONNES --- */}
+      {/* --- Contenu Principal --- */}
       {loading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 5 }}><CircularProgress /></Box>
+        <Box 
+          sx={{ display: 'flex', justifyContent: 'center', py: 5 }} 
+          role="status" 
+          aria-label="Loading reservations"
+        >
+          <CircularProgress />
+        </Box>
       ) : error ? (
-        <Typography color="error" sx={{ textAlign: 'center' }}>
+        <Typography color="error" sx={{ textAlign: 'center' }} role="alert">
           {error}
         </Typography>
       ) : (
@@ -190,21 +196,28 @@ const UserDashboardPage: React.FC<UserDashboardPageProps> = ({ user, onNavigate 
           sx={{
             display: 'flex',
             gap: 4,
-            flexDirection: { xs: 'column', md: 'row' } // Colonne sur mobile, ligne sur PC
+            flexDirection: { xs: 'column', md: 'row' } 
           }}
         >
-          {/* --- COLONNE 1: DEMANDES EN ATTENTE --- */}
+          {/* --- COLONNE 1: PENDING --- */}
           <Paper
             elevation={0}
+            component="section" // Section sémantique
+            aria-labelledby="pending-heading"
             sx={{
               p: 3, borderRadius: 2, border: "1px solid #E0E0E0",
-              width: { xs: '100%', md: '50%' } // Prend 50% de la largeur
+              width: { xs: '100%', md: '50%' } 
             }}
           >
-            <Typography variant="h5" sx={{ fontWeight: 600, color: '#333', mb: 2 }}>
+            <Typography 
+              id="pending-heading" 
+              variant="h5" 
+              component="h2" // Sous-titre H2
+              sx={{ fontWeight: 600, color: '#333', mb: 2 }}
+            >
               Your Pending Requests
             </Typography>
-            <List disablePadding>
+            <List disablePadding aria-label="List of pending requests">
               {pendingReservations.length === 0 ? (
                 <Typography sx={{ textAlign: 'center', color: '#666', p: 2 }}>
                   You have no pending requests.
@@ -217,19 +230,26 @@ const UserDashboardPage: React.FC<UserDashboardPageProps> = ({ user, onNavigate 
             </List>
           </Paper>
 
-          {/* --- COLONNE 2: HISTORIQUE --- */}
+          {/* --- COLONNE 2: HISTORY --- */}
           <Paper
             elevation={0}
+            component="section"
+            aria-labelledby="history-heading"
             sx={{
               p: 3, borderRadius: 2, border: "1px solid #E0E0E0",
-              width: { xs: '100%', md: '50%' } // Prend 50% de la largeur
+              width: { xs: '100%', md: '50%' } 
             }}
           >
-            <Typography variant="h5" sx={{ fontWeight: 600, color: '#333', mb: 2 }}>
+            <Typography 
+              id="history-heading" 
+              variant="h5" 
+              component="h2" // Sous-titre H2
+              sx={{ fontWeight: 600, color: '#333', mb: 2 }}
+            >
               Your Reservation History
             </Typography>
-            <Box sx={{ maxHeight: 400, overflow: 'auto' }}> {/* Ajoute un scroll si l'historique est long */}
-              <List disablePadding>
+            <Box sx={{ maxHeight: 400, overflow: 'auto' }}> 
+              <List disablePadding aria-label="List of past reservations">
                 {processedReservations.length === 0 ? (
                   <Typography sx={{ textAlign: 'center', color: '#666', p: 2 }}>
                     No approved or rejected reservations found.
@@ -245,12 +265,10 @@ const UserDashboardPage: React.FC<UserDashboardPageProps> = ({ user, onNavigate 
         </Box>
       )}
 
-      {/* La pop-up (inchangée) */}
       <CreateReservationDialog
         open={isCreateOpen}
         onClose={() => setIsCreateOpen(false)}
         onReservationCreated={() => {
-          // On rafraîchit la liste complète
           fetchReservations(); 
         }}
       />

@@ -11,7 +11,6 @@ import {
   ListItemSecondaryAction,
   IconButton,
   CircularProgress,
-
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
@@ -19,6 +18,9 @@ import getCookie from '../../context/getCookie';
 import AddLocksToGroupModal from './AddLocksToGroupModal'; 
 import { Lock, LockGroup } from '../../types';
 import AddGroupModal from './AddGroupModal'; 
+
+// Couleur accessible
+const ACCESSIBLE_BLUE = "#2A4AE5";
 
 interface LockGroupManagerProps {
   allLocks: Lock[]; 
@@ -28,17 +30,13 @@ const LockGroupManager: React.FC<LockGroupManagerProps> = ({ allLocks }) => {
   const [groups, setGroups] = useState<LockGroup[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>('');
-
   
   const [searchQuery, setSearchQuery] = useState<string>("");
 
-
   const [isAddGroupModalOpen, setIsAddGroupModalOpen] = useState<boolean>(false);
-
 
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [selectedGroup, setSelectedGroup] = useState<LockGroup | null>(null);
-
 
   const fetchGroups = useCallback(async () => {
     setLoading(true);
@@ -66,7 +64,6 @@ const LockGroupManager: React.FC<LockGroupManagerProps> = ({ allLocks }) => {
   useEffect(() => {
     fetchGroups();
   }, [fetchGroups]);
-
 
   const handleDeleteGroup = async (groupId: number, groupName: string) => {
     if (!window.confirm(`Are you sure you want to delete the group "${groupName}"?`)) {
@@ -114,13 +111,14 @@ const LockGroupManager: React.FC<LockGroupManagerProps> = ({ allLocks }) => {
   return (
     <Paper elevation={0} sx={{ p: 3, borderRadius: 2, border: "1px solid #E0E0E0" }}>
       
-
       <Box sx={{ display: "flex", gap: 2, mb: 3, alignItems: "center" }}>
         <TextField
           placeholder="Search groups..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           size="small"
+          // ACCESSIBILITÉ: Label explicite
+          inputProps={{ "aria-label": "Search lock groups" }}
           sx={{
             flexGrow: 1, 
             maxWidth: 300, 
@@ -131,9 +129,12 @@ const LockGroupManager: React.FC<LockGroupManagerProps> = ({ allLocks }) => {
           variant="contained"
           onClick={() => setIsAddGroupModalOpen(true)} 
           sx={{
-            backgroundColor: "#3B5CFF", textTransform: "none", fontWeight: 600,
-            boxShadow: "none", ml: "auto", 
-            "&:hover": { backgroundColor: "#2A4AE5" },
+            backgroundColor: ACCESSIBLE_BLUE, // Bleu contrasté
+            textTransform: "none", 
+            fontWeight: 600,
+            boxShadow: "none", 
+            ml: "auto", 
+            "&:hover": { backgroundColor: "#1A3AC0" },
           }}
         >
           ADD GROUP 
@@ -141,18 +142,17 @@ const LockGroupManager: React.FC<LockGroupManagerProps> = ({ allLocks }) => {
       </Box>
 
       {error && (
-        <Typography color="error" variant="body2" sx={{ mb: 2, textAlign: 'center' }}>
+        <Typography color="error" variant="body2" sx={{ mb: 2, textAlign: 'center' }} role="alert">
           {error}
         </Typography>
       )}
 
-
       {loading ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
-          <CircularProgress />
+          <CircularProgress aria-label="Loading lock groups" />
         </Box>
       ) : (
-        <List dense sx={{ maxHeight: 400, overflowY: 'auto' }}>
+        <List dense sx={{ maxHeight: 400, overflowY: 'auto' }} aria-label="List of lock groups">
           {filteredGroups.length === 0 ? (
             <Typography sx={{ textAlign: 'center', color: '#666', py: 2 }}>
               {groups.length === 0 ? "No groups found." : "No group matches search."}
@@ -167,7 +167,8 @@ const LockGroupManager: React.FC<LockGroupManagerProps> = ({ allLocks }) => {
                 <ListItemSecondaryAction>
                   <IconButton
                     edge="end"
-                    aria-label="add"
+                    // ACCESSIBILITÉ: Label dynamique
+                    aria-label={`Add locks to group ${group.name}`}
                     title="Add locks"
                     onClick={() => handleOpenAddLocks(group)}
                   >
@@ -175,7 +176,8 @@ const LockGroupManager: React.FC<LockGroupManagerProps> = ({ allLocks }) => {
                   </IconButton>
                   <IconButton
                     edge="end"
-                    aria-label="delete"
+                    // ACCESSIBILITÉ: Label dynamique
+                    aria-label={`Delete group ${group.name}`}
                     title="Delete group"
                     sx={{ ml: 1 }}
                     onClick={() => handleDeleteGroup(group.id_group, group.name)}
@@ -189,7 +191,6 @@ const LockGroupManager: React.FC<LockGroupManagerProps> = ({ allLocks }) => {
         </List>
       )}
       
-
       {selectedGroup && (
         <AddLocksToGroupModal
           isDialogOpen={isModalOpen}
@@ -198,7 +199,6 @@ const LockGroupManager: React.FC<LockGroupManagerProps> = ({ allLocks }) => {
           allLocks={allLocks}
         />
       )}
-
 
       <AddGroupModal
         open={isAddGroupModalOpen}

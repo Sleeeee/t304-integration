@@ -384,7 +384,7 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
       });
 
       if (response.ok) {
-        setSaveMessage('Sauvegardé avec succès');
+        setSaveMessage('✅ Sauvegardé avec succès');
         
         await fetchGlobalPlacedLockIds();
 
@@ -558,6 +558,7 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
           <div style={{ display: 'flex', gap: '10px' }}>
             <button
               onClick={() => setShowAddBuildingModal(true)}
+              aria-label="Add a new building"
               style={{
                 padding: '8px 16px',
                 backgroundColor: '#2196F3',
@@ -584,6 +585,7 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
             <button
               onClick={() => setShowAddFloorModal(true)}
               disabled={!selectedBuildingId}
+              aria-label="Add a new floor to the selected building"
               style={{
                 padding: '8px 16px',
                 backgroundColor: selectedBuildingId ? '#4CAF50' : '#ccc',
@@ -616,10 +618,14 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
 
         <div style={{ display: 'flex', gap: '20px' }}>
           <div style={{ flex: 1 }}>
-            <label style={{ fontSize: '12px', fontWeight: '600', color: '#666', marginBottom: '8px', display: 'block' }}>
+            <label 
+              htmlFor="building-select" 
+              style={{ fontSize: '12px', fontWeight: '600', color: '#666', marginBottom: '8px', display: 'block' }}
+            >
               Select a building
             </label>
             <select
+              id="building-select"
               value={selectedBuildingId || ''}
               onChange={(e) => {
                 const buildingId = e.target.value ? parseInt(e.target.value) : null;
@@ -648,10 +654,14 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
           </div>
 
           <div style={{ flex: 1 }}>
-            <label style={{ fontSize: '12px', fontWeight: '600', color: '#666', marginBottom: '8px', display: 'block' }}>
+            <label 
+              htmlFor="floor-select"
+              style={{ fontSize: '12px', fontWeight: '600', color: '#666', marginBottom: '8px', display: 'block' }}
+            >
               Select a floor
             </label>
             <select
+              id="floor-select"
               value={selectedSchematicId || ''}
               onChange={(e) => {
                 const schematicId = e.target.value ? parseInt(e.target.value) : 0;
@@ -707,6 +717,9 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
             {/* Élément Mur */}
             <div
               draggable
+              tabIndex={0}
+              role="button"
+              aria-label="Drag a Wall component"
               style={{
                 padding: '15px',
                 border: draggedItemActive === 'line' ? '2px solid #4CAF50' : '2px solid #ddd',
@@ -729,7 +742,7 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
                 setDraggedItemActive(null);
               }}
             >
-              <svg width="50" height="60" viewBox="0 0 50 100">
+              <svg width="50" height="60" viewBox="0 0 50 100" role="img" aria-label="Wall icon">
                 <line x1="25" y1="0" x2="25" y2="100" stroke="black" strokeWidth="3" />
               </svg>
               <div style={{ fontSize: '11px', marginTop: '5px', color: '#666' }}>Mur</div>
@@ -752,6 +765,9 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
               <div
                 key={lock.id_lock}
                 draggable
+                tabIndex={0}
+                role="button"
+                aria-label={`Drag lock: ${lock.name}`}
                 style={{
                   padding: '12px',
                   border: draggedItemActive === `lock-${lock.id_lock}` ? '2px solid #4CAF50' : '2px solid #ddd',
@@ -775,7 +791,7 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
                   setDraggedItemActive(null);
                 }}
               >
-                <svg width="40" height="50" viewBox="-7.55 0 122.88 122.88" xmlns="http://www.w3.org/2000/svg">
+                <svg width="40" height="50" viewBox="-7.55 0 122.88 122.88" role="img" aria-label="Lock icon">
                   <g>
                     <path d="M40.92,53.31c0-1.25,1.01-2.26,2.26-2.26c1.25,0,2.26,1.01,2.26,2.26v46.84c0,6.25-2.56,11.93-6.67,16.05 c-4.12,4.12-9.8,6.67-16.05,6.67h0c-6.25,0-11.93-2.56-16.05-6.67C2.56,112.09,0,106.41,0,100.16V22.72 c0-6.25,2.56-11.93,6.67-16.05C10.79,2.56,16.47,0,22.72,0h0c4.04,0,7.85,1.08,11.16,2.96c3.42,1.94,6.29,4.75,8.32,8.12 c0.64,1.07,0.29,2.46-0.78,3.10c-1.07,0.64-2.46,0.29-3.10-0.78c-1.62-2.70-3.93-4.95-6.68-6.51c-2.64-1.50-5.69-2.35-8.93-2.35h0 c-5,0-9.55,2.05-12.85,5.35c-3.30,3.30-5.35,7.85-5.35,12.85v77.44c0,5,2.05,9.55,5.35,12.85c3.30,3.30,7.85,5.35,12.85,5.35h0 c5,0,9.55-2.05,12.85-5.35c3.30-3.30,5.35-7.85,5.35-12.85V53.31L40.92,53.31z M28.91,20.27H94.7c3.6,0,6.86,1.47,9.23,3.84 c2.37,2.37,3.84,5.63,3.84,9.23v0c0,3.6-1.47,6.86-3.84,9.23c-2.37,2.37-5.63,3.84-9.23,3.84H28.91c-3.6,0-6.86-1.47-9.23-3.84 c-2.37-2.37-3.84-5.63-3.84-9.23v0c0-3.6,1.47-6.86,3.84-9.23C22.05,21.74,25.32,20.27,28.91,20.27L28.91,20.27z M94.7,24.8H28.91 c-2.35,0-4.48,0.96-6.03,2.51c-1.55,1.55-2.51,3.68-2.51,6.03v0c0,2.35,0.96,4.48,2.51,6.03c1.55,1.55,3.68,2.51,6.03,2.51H94.7 c2.35,0,4.48-0.96,6.03-2.51c1.55-1.55,2.51-3.68,2.51-6.03v0c0-2.35-0.96-4.48-2.51-6.03C99.18,25.76,97.05,24.8,94.7,24.8 L94.7,24.8z M25.18,92.58v8.76c0,1.25-1.01,2.26-2.26,2.26c-1.25,0-2.26-1.01-2.26-2.26v-8.87c-1.17-0.39-2.22-1.04-3.07-1.89 c-1.41-1.41-2.29-3.37-2.29-5.52c0-2.16,0.87-4.11,2.29-5.52c1.41-1.41,3.37-2.29,5.52-2.29c2.16,0,4.11,0.87,5.52,2.29 c1.41,1.41,2.29,3.37,2.29,5.52c0,2.16-0.87,4.11-2.29,5.52C27.68,91.52,26.5,92.22,25.18,92.58L25.18,92.58z M25.42,82.73 c-0.59-0.59-1.41-0.96-2.32-0.96c-0.91,0-1.73,0.37-2.32,0.96c-0.59,0.59-0.96,1.41-0.96,2.32c0,0.91,0.37,1.73,0.96,2.32 c0.59,0.59,1.41,0.96,2.32,0.96c0.91,0,1.73-0.37,2.32-0.96c0.59-0.59,0.96-1.41,0.96-2.32C26.39,84.15,26.02,83.33,25.42,82.73 L25.42,82.73z"/>
                   </g>
@@ -794,6 +810,9 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
         {/* DROITE: Canvas Konva */}
         <div
           ref={canvasContainerRef}
+          tabIndex={0}
+          role="application"
+          aria-label="Schematic Editor Canvas"
           style={{
             flex: 1,
             position: 'relative',
@@ -860,6 +879,8 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
           <button
             onClick={saveSchematic}
             disabled={isSaving}
+            aria-busy={isSaving}
+            aria-label={isSaving ? "Saving schematic" : "Save schematic"}
             style={{
               position: 'absolute',
               top: '20px',
@@ -894,20 +915,23 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
             {isSaving ? 'Backup...' : 'Save'}
           </button>
           {saveMessage && (
-            <div style={{
-              position: 'absolute',
-              top: '70px',
-              right: '20px',
-              padding: '10px 20px',
-              backgroundColor: saveMessage.includes('✅') ? '#d4edda' : '#f8d7da',
-              color: saveMessage.includes('✅') ? '#155724' : '#721c24',
-              border: `1px solid ${saveMessage.includes('✅') ? '#c3e6cb' : '#f5c6cb'}`,
-              borderRadius: '6px',
-              fontSize: '14px',
-              fontWeight: '500',
-              zIndex: 1000,
-              animation: 'fadeIn 0.3s ease-in'
-            }}>
+            <div 
+              role="alert"
+              style={{
+                position: 'absolute',
+                top: '70px',
+                right: '20px',
+                padding: '10px 20px',
+                backgroundColor: saveMessage.includes('✅') ? '#d4edda' : '#f8d7da',
+                color: saveMessage.includes('✅') ? '#155724' : '#721c24',
+                border: `1px solid ${saveMessage.includes('✅') ? '#c3e6cb' : '#f5c6cb'}`,
+                borderRadius: '6px',
+                fontSize: '14px',
+                fontWeight: '500',
+                zIndex: 1000,
+                animation: 'fadeIn 0.3s ease-in'
+              }}
+            >
               {saveMessage}
             </div>
           )}
@@ -1025,6 +1049,7 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
                   setSelectedId(null);
                   setSelectedObjectDetails(null);
                 }}
+                aria-label="Close details"
                 style={{
                   background: 'none',
                   border: 'none',
@@ -1110,19 +1135,24 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
 
       {/* Modals pour Ajouter Bâtiment et Étage*/}
       {showAddBuildingModal && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 10000
-        }}
-        onClick={() => setShowAddBuildingModal(false)}>
+        <div 
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="add-building-title"
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 10000
+          }}
+          onClick={() => setShowAddBuildingModal(false)}
+        >
           <div style={{
             backgroundColor: 'white',
             borderRadius: '8px',
@@ -1131,7 +1161,7 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
             boxShadow: '0 4px 20px rgba(0,0,0,0.3)'
           }}
           onClick={(e) => e.stopPropagation()}>
-            <h3 style={{ margin: '0 0 20px 0', fontSize: '20px', fontWeight: '600' }}>Ajouter un nouveau bâtiment</h3>
+            <h3 id="add-building-title" style={{ margin: '0 0 20px 0', fontSize: '20px', fontWeight: '600' }}>Ajouter un nouveau bâtiment</h3>
             <form onSubmit={async (e) => {
               e.preventDefault();
               const formData = new FormData(e.currentTarget);
@@ -1147,10 +1177,11 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
               }
             }}>
               <div style={{ marginBottom: '15px' }}>
-                <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '5px' }}>
+                <label htmlFor="building-name" style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '5px' }}>
                   Name of the building *
                 </label>
                 <input
+                  id="building-name"
                   type="text"
                   name="name"
                   required
@@ -1166,10 +1197,11 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
                 />
               </div>
               <div style={{ marginBottom: '15px' }}>
-                <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '5px' }}>
+                <label htmlFor="building-desc" style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '5px' }}>
                   Description
                 </label>
                 <textarea
+                  id="building-desc"
                   name="description"
                   rows={3}
                   style={{
@@ -1185,10 +1217,11 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
                 />
               </div>
               <div style={{ marginBottom: '20px' }}>
-                <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '5px' }}>
+                <label htmlFor="building-floors" style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '5px' }}>
                   Number of floors *
                 </label>
                 <input
+                  id="building-floors"
                   type="number"
                   name="floor"
                   min="1"
@@ -1243,19 +1276,24 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
       )}
 
       {showAddFloorModal && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 10000
-        }}
-        onClick={() => setShowAddFloorModal(false)}>
+        <div 
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="add-floor-title"
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 10000
+          }}
+          onClick={() => setShowAddFloorModal(false)}
+        >
           <div style={{
             backgroundColor: 'white',
             borderRadius: '8px',
@@ -1264,7 +1302,7 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
             boxShadow: '0 4px 20px rgba(0,0,0,0.3)'
           }}
           onClick={(e) => e.stopPropagation()}>
-            <h3 style={{ margin: '0 0 20px 0', fontSize: '20px', fontWeight: '600' }}>Ajouter un nouvel étage</h3>
+            <h3 id="add-floor-title" style={{ margin: '0 0 20px 0', fontSize: '20px', fontWeight: '600' }}>Ajouter un nouvel étage</h3>
             <form onSubmit={async (e) => {
               e.preventDefault();
               const formData = new FormData(e.currentTarget);
@@ -1281,10 +1319,11 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
               }
             }}>
               <div style={{ marginBottom: '15px' }}>
-                <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '5px' }}>
+                <label htmlFor="floor-building" style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '5px' }}>
                   Building
                 </label>
                 <input
+                  id="floor-building"
                   type="text"
                   value={buildings.find(b => b.id === selectedBuildingId)?.name || ''}
                   disabled
@@ -1300,10 +1339,11 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
                 />
               </div>
               <div style={{ marginBottom: '15px' }}>
-                <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '5px' }}>
+                <label htmlFor="floor-name" style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '5px' }}>
                   Floor name *
                 </label>
                 <input
+                  id="floor-name"
                   type="text"
                   name="name"
                   required
@@ -1319,10 +1359,11 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
                 />
               </div>
               <div style={{ marginBottom: '20px' }}>
-                <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '5px' }}>
+                <label htmlFor="floor-desc" style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '5px' }}>
                   Description
                 </label>
                 <textarea
+                  id="floor-desc"
                   name="description"
                   rows={3}
                   style={{

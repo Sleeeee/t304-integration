@@ -7,7 +7,7 @@ import Register from './components/Register';
 import UsersPage from './components/UsersPage';
 import LockPage from './components/LockPage';
 import PermissionTable from './components/permissions/PermissionTable';
-import { Box, CircularProgress, Typography } from '@mui/material';
+import { Box, CircularProgress } from '@mui/material';
 import KonvaCanva from './components/KonvaCanva';
 import UserDashboardPage from './components/UsersFront/UserDashboardPage'; 
 import UserHeader from './components/UsersFront/UsersHeader'; 
@@ -90,7 +90,8 @@ function App() {
   if (loading || isOpeningDefault) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
-        <CircularProgress />
+        {/* ACCESSIBILITÉ: Label pour le chargement initial */}
+        <CircularProgress aria-label="Application loading, please wait..." />
       </Box>
     );
   }
@@ -101,16 +102,12 @@ function App() {
     
     const renderAdminPanel = () => {
       switch (currentPage) {
-        
         case "dashboard":
           return <ReservationAdminPage onNavigate={setCurrentPage} />;
-          
         case "register":
           return <Register />;
-
         case "users":
           return <UsersPage onNavigate={setCurrentPage} onEditSchematic={handleNavigateToSchematic} />;
-        
         case "monitoring":
           return (
             <KonvaCanva 
@@ -122,7 +119,6 @@ function App() {
           return <LockPage onNavigate={setCurrentPage} onEditSchematic={handleNavigateToSchematic} />;
         case "access-control":
           return <PermissionTable />;
-
         default:
           return <UsersPage onNavigate={setCurrentPage} onEditSchematic={handleNavigateToSchematic} />;
       }
@@ -130,8 +126,13 @@ function App() {
 
     return (
       <div className="App min-h-screen bg-gray-100">
+        {/* Header est une <nav> */}
         <Header onNavigate={setCurrentPage} onOpenMonitoring={handleOpenMonitoring} />
-        {renderAdminPanel()}
+        
+        {/* ACCESSIBILITÉ: <main> indique où commence le vrai contenu après le menu */}
+        <main role="main">
+          {renderAdminPanel()}
+        </main>
       </div>
     );
 
@@ -139,7 +140,10 @@ function App() {
     return (
       <div className="App min-h-screen bg-gray-100">
         <UserHeader />
-        <UserDashboardPage user={user} onNavigate={setCurrentPage} />
+        {/* ACCESSIBILITÉ: <main> */}
+        <main role="main">
+          <UserDashboardPage user={user} onNavigate={setCurrentPage} />
+        </main>
       </div>
     );
   }

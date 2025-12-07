@@ -5,6 +5,11 @@ import getCookie from '../../context/getCookie';
 import CustomSnackbar from '../CustomSnackbar';
 import PermissionRow from './PermissionRow';
 
+// --- Couleurs Accessibles (WCAG AA) ---
+const ACCESSIBLE_BLUE = "#2A4AE5";
+const ACCESSIBLE_GREEN = "#1B5E20"; // Vert foncé pour bon contraste sur blanc
+const ACCESSIBLE_ORANGE = "#E65100"; // Orange foncé
+const ACCESSIBLE_GRAY = "#757575";
 
 type Mode = 'locks' | 'users';
 type SelectionType = 'individual' | 'group';
@@ -36,7 +41,6 @@ interface PermissionChanges {
   toRemove: Permission[];
 }
 
-// Types for the dynamic data mapping
 type ItemCategory = 'individual' | 'group';
 type DataMap = {
   [key in Mode]: {
@@ -86,7 +90,6 @@ const PermissionTable: FC = () => {
 
   const [selectedGroupMembers, setSelectedGroupMembers] = useState<Entity[] | null>(null);
   const [loadingSelectedGroup, setLoadingSelectedGroup] = useState(false);
-  // NEW STATE: Control whether the selected group members are displayed
   const [isSelectedGroupExpanded, setIsSelectedGroupExpanded] = useState(false);
 
   const [permissionChanges, setPermissionChanges] = useState<PermissionChanges>({ toAdd: [], toRemove: [] });
@@ -110,13 +113,10 @@ const PermissionTable: FC = () => {
 
   const toggleMode = () => {
     setMode(prevMode => (prevMode === 'locks' ? 'users' : 'locks'));
-    // Reset selection state upon mode switch
     setSelected({ type: "group", index: 0 });
     setSelectedGroupMembers(null);
-    setIsSelectedGroupExpanded(false); // Reset expansion state
+    setIsSelectedGroupExpanded(false); 
   };
-
-  // --- CORE DATA FETCHING ---
 
   const fetchData = async () => {
     try {
@@ -166,21 +166,17 @@ const PermissionTable: FC = () => {
     fetchData();
   }, []);
 
-  // --- MANUAL MEMBER FETCHING FOR SELECTED GROUP (LEFT COLUMN) ---
-
   const toggleSelectedGroupMembers = async () => {
     const isCurrentlyExpanded = isSelectedGroupExpanded;
 
     if (!selectedItem || selected.type !== 'group') return;
 
-    // If currently expanded, just collapse (no fetch needed)
     if (isCurrentlyExpanded) {
       setIsSelectedGroupExpanded(false);
       return;
     }
 
-    // If collapsing is false, proceed to fetch and expand
-    const groupType = mode; // 'users' or 'locks'
+    const groupType = mode; 
     const groupItem = selectedItem;
     const groupId = groupType === 'locks' ? groupItem.id_group || groupItem.id : groupItem.id;
 
@@ -205,7 +201,7 @@ const PermissionTable: FC = () => {
           ...member,
           name: member.username,
         })) as User[];
-      } else { // groupType === 'locks'
+      } else { 
         members = (data.locks || []).map((member: any) => ({
           ...member,
           name: member.name || `Lock ${member.id_lock}`,
@@ -214,7 +210,7 @@ const PermissionTable: FC = () => {
       }
 
       setSelectedGroupMembers(members);
-      setIsSelectedGroupExpanded(true); // Set expanded only upon successful fetch
+      setIsSelectedGroupExpanded(true); 
 
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
@@ -226,14 +222,11 @@ const PermissionTable: FC = () => {
     }
   };
 
-  // Reset expansion state when selected item changes (without refetching)
   useEffect(() => {
     setIsSelectedGroupExpanded(false);
     setSelectedGroupMembers(null);
   }, [selected.type, selected.index, mode]);
 
-
-  // --- PERMISSION/PENDING STATUS HELPERS ---
 
   const getPermissionContext = (
     isSelectedEntity: boolean,
@@ -341,8 +334,6 @@ const PermissionTable: FC = () => {
     return permissionChanges.toAdd.some(isPending) || permissionChanges.toRemove.some(isPending);
   };
 
-  // --- ACTIONS ---
-
   const clearPermissionChanges = () => {
     setPermissionChanges({ toAdd: [], toRemove: [] });
   };
@@ -377,8 +368,6 @@ const PermissionTable: FC = () => {
       setSnackbar({ isError: true, text: `Error saving permissions: ${errorMessage}` });
     }
   };
-
-  // --- GROUP EXPANSION LOGIC FOR RIGHT COLUMN ---
 
   const fetchRightColumnGroupMembers = async (groupItem: Entity, groupType: Mode) => {
     const groupId = groupType === 'locks' ? groupItem.id_group || groupItem.id : groupItem.id;
@@ -415,7 +404,7 @@ const PermissionTable: FC = () => {
           ...member,
           name: member.username,
         })) as User[];
-      } else { // groupType === 'locks'
+      } else { 
         transformedMembers = (data.locks || []).map((member: any) => ({
           ...member,
           name: member.name || `Lock ${member.id_lock}`,
@@ -442,8 +431,8 @@ const PermissionTable: FC = () => {
   if (isLoadingOrInvalid) {
     return (
       <main className="px-8 py-8 max-w-7xl mx-auto flex flex-col justify-center items-center h-screen">
-        <CircularProgress />
-        <Typography variant="h5" className="mt-4">Loading data...</Typography>
+        <CircularProgress aria-label="Loading permission data" />
+        <Typography variant="h5" className="mt-4" role="status">Loading data...</Typography>
       </main>
     );
   }
@@ -460,6 +449,7 @@ const PermissionTable: FC = () => {
         <Button
           variant="outlined"
           onClick={toggleMode}
+          sx={{ fontWeight: 'bold' }}
         >
           SWITCH TO {otherMode.toUpperCase()} EDITING MODE
         </Button>
@@ -472,8 +462,10 @@ const PermissionTable: FC = () => {
             <h3 className="text-sm font-semibold text-slate-700 mb-4">
               {mode === 'locks' ? 'Select lock or group' : 'Select user or group'}
             </h3>
+            {/* ACCESSIBILITÉ: Label explicite */}
             <input
               type="text"
+              aria-label="Filter items by name or group"
               placeholder="Name, group, ..."
               className="w-full px-4 py-2 border border-slate-300 rounded mb-6 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
@@ -509,15 +501,17 @@ const PermissionTable: FC = () => {
                               onClick={() => {
                                 setSelected({ type: categoryKey as SelectionType, index });
                               }}
+                              // ACCESSIBILITÉ: Indique l'élément sélectionné
+                              aria-pressed={isCurrentSelection}
                               sx={{
                                 color: isCurrentSelection ? "primary.main" : "text.secondary",
                                 fontWeight: isCurrentSelection ? 700 : 500,
                                 justifyContent: "flex-start",
                                 textTransform: "none",
                                 paddingRight: 1,
-                                backgroundColor: isCurrentSelection ? "rgba(25, 118, 210, 0.04)" : "transparent",
+                                backgroundColor: isCurrentSelection ? "rgba(42, 74, 229, 0.08)" : "transparent",
                                 '&:hover': {
-                                  backgroundColor: isCurrentSelection ? "rgba(25, 118, 210, 0.08)" : "rgba(0, 0, 0, 0.04)"
+                                  backgroundColor: isCurrentSelection ? "rgba(42, 74, 229, 0.12)" : "rgba(0, 0, 0, 0.04)"
                                 }
                               }}
                               size="small"
@@ -527,7 +521,7 @@ const PermissionTable: FC = () => {
                                 <span className="truncate">{item.name}</span>
                                 {hasPending && (
                                   <Tooltip title="Pending changes">
-                                    <Warning sx={{ color: "orange", fontSize: 18, flexShrink: 0 }} />
+                                    <Warning sx={{ color: ACCESSIBLE_ORANGE, fontSize: 18, flexShrink: 0 }} aria-label="Pending changes" />
                                   </Tooltip>
                                 )}
                               </div>
@@ -559,6 +553,9 @@ const PermissionTable: FC = () => {
                     size="small"
                     onClick={toggleSelectedGroupMembers}
                     disabled={loadingSelectedGroup}
+                    // ACCESSIBILITÉ:
+                    aria-expanded={isSelectedGroupExpanded}
+                    aria-label={`${isSelectedGroupExpanded ? 'Hide' : 'Show'} group members`}
                   >
                     {loadingSelectedGroup ? (
                       <CircularProgress size={16} />
@@ -576,9 +573,9 @@ const PermissionTable: FC = () => {
               )}
             </div>
 
-            {/* Expanded members under the title (Conditional Display) */}
+            {/* Expanded members */}
             {selected.type === 'group' && isSelectedGroupExpanded && (
-              <div className="mb-6 pb-2 border-b border-slate-200">
+              <div className="mb-6 pb-2 border-b border-slate-200" role="region" aria-label="Group members">
                 {selectedGroupMembers && selectedGroupMembers.length > 0 && (
                   <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs mt-2">
                     <Typography variant="caption" className="font-bold text-slate-500 w-full mb-1">
@@ -598,7 +595,6 @@ const PermissionTable: FC = () => {
                 )}
               </div>
             )}
-            {/* End Expanded members under the title */}
 
 
             <div className="grid grid-cols-2 gap-8 mb-8">
@@ -629,6 +625,11 @@ const PermissionTable: FC = () => {
                     const isLoading = loadingGroups.has(groupKey);
                     const members = expandedGroups[groupKey] || [];
 
+                    // Calcul du label accessible pour le bouton d'action
+                    const actionLabel = isCurrentlyGranted
+                        ? `Revoke permission for ${item.name}`
+                        : `Grant permission for ${item.name}`;
+
                     return (
                       <div key={item.id}>
                         <div className="flex items-center justify-between mb-3 p-2 hover:bg-slate-50 rounded">
@@ -645,13 +646,16 @@ const PermissionTable: FC = () => {
                             }}
                             className="ml-auto hover:opacity-70 transition"
                             disabled={typeof entityId !== 'number' || typeof targetId !== 'number'}
+                            // ACCESSIBILITÉ: Label crucial pour savoir sur quoi on agit
+                            aria-label={actionLabel}
+                            aria-pressed={isCurrentlyGranted}
                           >
                             {(() => {
                               const status = isCurrentlyGranted ? (pendingStatus === 'remove' ? 'pending_remove' : 'granted') : (pendingStatus === 'add' ? 'pending_add' : 'revoked');
 
-                              if (status === 'pending_add') return <CheckCircle sx={{ color: 'blue', fontSize: 24 }} />;
-                              if (status === 'pending_remove') return <Cancel sx={{ color: 'blue', fontSize: 24 }} />;
-                              if (status === 'granted') return <CheckCircle sx={{ color: 'green', fontSize: 24 }} />;
+                              if (status === 'pending_add') return <CheckCircle sx={{ color: ACCESSIBLE_BLUE, fontSize: 24 }} />;
+                              if (status === 'pending_remove') return <Cancel sx={{ color: ACCESSIBLE_BLUE, fontSize: 24 }} />;
+                              if (status === 'granted') return <CheckCircle sx={{ color: ACCESSIBLE_GREEN, fontSize: 24 }} />;
                               return <Cancel sx={{ color: 'lightgray', fontSize: 24 }} />;
                             })()}
                           </button>
@@ -684,8 +688,13 @@ const PermissionTable: FC = () => {
                               const memberPendingStatus = isPermissionPending(memberEntityId, memberTargetId, memberEntityType, memberTargetType);
 
                               if (typeof memberEntityId !== 'number' || typeof memberTargetId !== 'number') {
-                                return <div key={member.id} className="text-red-500 p-2">Error: Missing ID for member check.</div>;
+                                return null; 
                               }
+
+                              // Accessible label for inner members
+                              const innerActionLabel = memberIsCurrentlyGranted
+                                  ? `Override: Revoke permission for member ${member.name}`
+                                  : `Override: Grant permission for member ${member.name}`;
 
                               return (
                                 <div key={member.id} className="flex items-center justify-between p-2 hover:bg-slate-50 rounded text-sm">
@@ -695,13 +704,14 @@ const PermissionTable: FC = () => {
                                       togglePermission(memberEntityId, memberTargetId, memberEntityType, memberTargetType, memberIsCurrentlyGranted);
                                     }}
                                     className="ml-auto hover:opacity-70 transition"
+                                    aria-label={innerActionLabel}
                                   >
                                     {(() => {
                                       const status = memberIsCurrentlyGranted ? (memberPendingStatus === 'remove' ? 'pending_remove' : 'granted') : (memberPendingStatus === 'add' ? 'pending_add' : 'revoked');
                                       let Icon, color, title;
-                                      if (status === 'pending_add') { Icon = CheckCircle; color = 'blue'; title = `${mode === 'locks' ? 'User' : 'Lock'} permission add pending (Individual override)`; }
-                                      else if (status === 'pending_remove') { Icon = Cancel; color = 'blue'; title = `${mode === 'locks' ? 'User' : 'Lock'} permission revoke pending (Individual override)`; }
-                                      else if (status === 'granted') { Icon = CheckCircle; color = 'green'; title = 'Explicit individual permission granted'; }
+                                      if (status === 'pending_add') { Icon = CheckCircle; color = ACCESSIBLE_BLUE; title = `${mode === 'locks' ? 'User' : 'Lock'} permission add pending (Individual override)`; }
+                                      else if (status === 'pending_remove') { Icon = Cancel; color = ACCESSIBLE_BLUE; title = `${mode === 'locks' ? 'User' : 'Lock'} permission revoke pending (Individual override)`; }
+                                      else if (status === 'granted') { Icon = CheckCircle; color = ACCESSIBLE_GREEN; title = 'Explicit individual permission granted'; }
                                       else {
                                         if (!memberIsCurrentlyGranted && !memberPendingStatus) return <div className="w-5 h-5" />;
                                         Icon = Cancel; color = 'lightgray'; title = 'No explicit individual permission';
@@ -727,17 +737,27 @@ const PermissionTable: FC = () => {
                 variant="outlined"
                 disabled={permissionChanges.toAdd.length + permissionChanges.toRemove.length === 0}
                 onClick={clearPermissionChanges}
+                sx={{ fontWeight: 'bold' }}
               >
                 CLEAR
               </Button>
-              <div className="flex items-center gap-10">
-                <span className="text-md text-blue-500 font-bold">
+              <div 
+                className="flex items-center gap-10"
+                // ACCESSIBILITÉ: Live Region
+                aria-live="polite"
+              >
+                <span className="text-md font-bold" style={{ color: ACCESSIBLE_BLUE }}>
                   {permissionChanges.toAdd.length + permissionChanges.toRemove.length} to update
                 </span>
                 <Button
                   variant="contained"
                   disabled={permissionChanges.toAdd.length + permissionChanges.toRemove.length === 0}
                   onClick={handlePermissionChanges}
+                  sx={{ 
+                    backgroundColor: ACCESSIBLE_BLUE,
+                    '&:hover': { backgroundColor: "#1A3AC0" },
+                    fontWeight: 'bold'
+                  }}
                 >
                   SAVE
                 </Button>

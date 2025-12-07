@@ -8,16 +8,12 @@ import {
   List,
   ListItem,
   ListItemText,
-  Divider,
-  // Grid, // On n'utilise plus Grid
-  IconButton,
 } from "@mui/material";
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
-import getCookie from "../context/getCookie"; // Ajuste le chemin
-import CustomSnackbar from "./CustomSnackbar"; // Ajuste le chemin
+import getCookie from "../context/getCookie"; 
+import CustomSnackbar from "./CustomSnackbar"; 
 
-// ... (Les interfaces User, Lock, Reservation, etc. sont inchangées) ...
 interface User {
   id: number;
   username: string;
@@ -44,9 +40,7 @@ interface ReservationAdminPageProps {
   onNavigate: (page: string) => void;
 }
 
-// Helper pour formater l'heure
 const formatTime = (time: string) => time.slice(0, 5);
-// Helper pour capitaliser
 const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 const ReservationAdminPage: React.FC<ReservationAdminPageProps> = ({ onNavigate }) => {
@@ -55,7 +49,6 @@ const ReservationAdminPage: React.FC<ReservationAdminPageProps> = ({ onNavigate 
   const [snackbarInfo, setSnackbarInfo] = useState<SnackbarInfo>({ text: "", isError: false });
   const [submittingId, setSubmittingId] = useState<number | null>(null);
 
-  // ... (Les fonctions fetchAllReservations, handleUpdateStatus, useMemo, etc. sont inchangées) ...
   const fetchAllReservations = async () => {
     setLoading(true);
     try {
@@ -158,26 +151,34 @@ const ReservationAdminPage: React.FC<ReservationAdminPageProps> = ({ onNavigate 
         onClose={() => setSnackbarInfo({ text: "", isError: false })}
       />
       
-      <Typography variant="h4" sx={{ fontWeight: 700, mb: 3, color: "#333" }}>
+      <Typography 
+        variant="h4" 
+        component="h1" 
+        sx={{ fontWeight: 700, mb: 3, color: "#333" }}
+      >
         Reservations Management
       </Typography>
 
       {loading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 5 }}><CircularProgress /></Box>
+        <Box 
+          sx={{ display: 'flex', justifyContent: 'center', py: 5 }} 
+          role="status" 
+          aria-label="Loading reservations"
+        >
+          <CircularProgress />
+        </Box>
       ) : (
-        // --- MODIFICATION ICI: On remplace <Grid container> par <Box> ---
         <Box
           sx={{
             display: 'flex',
-            gap: 4, // L'espacement entre les boîtes
-            flexDirection: { xs: 'column', md: 'row' } // Colonne sur mobile, ligne sur PC
+            gap: 4, 
+            flexDirection: { xs: 'column', md: 'row' } 
           }}
         >
-          {/* --- COLONNE DE DROITE (Pending) --- */}
-          {/* On remplace <Grid item> par <Box> avec une largeur de 50% */}
+          {/* Right Column: Pending */}
           <Box sx={{ width: { xs: '100%', md: '50%' } }}>
             <Paper elevation={0} sx={{ p: 3, borderRadius: 2, border: "1px solid #E0E0E0" }}>
-              <Typography variant="h5" sx={{ fontWeight: 600, color: '#333', mb: 2 }}>
+              <Typography variant="h5" component="h2" sx={{ fontWeight: 600, color: '#333', mb: 2 }}>
                 Pending Requests
               </Typography>
               <List disablePadding>
@@ -205,6 +206,7 @@ const ReservationAdminPage: React.FC<ReservationAdminPageProps> = ({ onNavigate 
                           startIcon={<CheckCircleIcon />}
                           disabled={submittingId === res.id}
                           onClick={() => handleUpdateStatus(res.id, 'approved')}
+                          aria-label={`Approve reservation for ${res.user.username}`}
                           sx={{ textTransform: 'none', flexGrow: 1 }}
                         >
                           Approve
@@ -215,6 +217,7 @@ const ReservationAdminPage: React.FC<ReservationAdminPageProps> = ({ onNavigate 
                           startIcon={<CancelIcon />}
                           disabled={submittingId === res.id}
                           onClick={() => handleUpdateStatus(res.id, 'rejected')}
+                          aria-label={`Reject reservation for ${res.user.username}`}
                           sx={{ textTransform: 'none', flexGrow: 1 }}
                         >
                           Reject
@@ -227,11 +230,10 @@ const ReservationAdminPage: React.FC<ReservationAdminPageProps> = ({ onNavigate 
             </Paper>
           </Box>
           
-          {/* --- COLONNE DE GAUCHE (History) --- */}
-          {/* On remplace <Grid item> par <Box> avec une largeur de 50% */}
+          {/* Left Column: History */}
           <Box sx={{ width: { xs: '100%', md: '50%' } }}>
             <Paper elevation={0} sx={{ p: 3, borderRadius: 2, border: "1px solid #E0E0E0" }}>
-              <Typography variant="h5" sx={{ fontWeight: 600, color: '#333', mb: 2 }}>
+              <Typography variant="h5" component="h2" sx={{ fontWeight: 600, color: '#333', mb: 2 }}>
                 Processed History
               </Typography>
               <Box sx={{ maxHeight: 600, overflow: 'auto' }}>
@@ -250,7 +252,6 @@ const ReservationAdminPage: React.FC<ReservationAdminPageProps> = ({ onNavigate 
             </Paper>
           </Box>
         </Box>
-        // --- FIN DE LA MODIFICATION ---
       )}
     </Box>
   );

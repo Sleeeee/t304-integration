@@ -53,7 +53,7 @@ interface Lock {
   status: string;
   is_reservable: boolean;
   last_connexion: string | null;
-  auth_methods?: string[];
+  auth_methods?: string[]; // Array of strings e.g. ["badge", "keypad"]
 }
 
 // --- 2. ManageLock Component (Inline) ---
@@ -74,6 +74,7 @@ const ManageLock: React.FC<ManageLockProps> = ({ isDialogOpen, onClose, selected
   const [description, setDescription] = useState<string>('');
   const [isReservable, setIsReservable] = useState<boolean>(false);
   const [authMethods, setAuthMethods] = useState<string[]>([]);
+  
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
 
@@ -120,13 +121,6 @@ const ManageLock: React.FC<ManageLockProps> = ({ isDialogOpen, onClose, selected
     }
 
     try {
-      // Simulating network request for preview purposes if fetch fails
-      // Remove this simulation block in production
-      /* await new Promise(resolve => setTimeout(resolve, 1000));
-      onClose(true);
-      return; 
-      */
-
       const response = await fetch(url, {
         method: method,
         credentials: 'include',
@@ -147,11 +141,7 @@ const ManageLock: React.FC<ManageLockProps> = ({ isDialogOpen, onClose, selected
         setError(errorMessage);
       }
     } catch (err) {
-      // For the sake of this preview, we might want to allow it to "succeed" locally
-      // if there is no backend running.
-      console.warn("Backend unreachable, simulating success for UI demo.");
-      onClose(true);
-      // setError("Server connection error."); 
+      setError("Server connection error.");
     } finally {
       setIsLoading(false);
     }
@@ -180,16 +170,24 @@ const ManageLock: React.FC<ManageLockProps> = ({ isDialogOpen, onClose, selected
         setError("Error deleting lock.");
       }
     } catch (err) {
-      console.warn("Backend unreachable, simulating success for UI demo.");
-      onClose(true);
+      setError("Server connection error.");
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <Dialog open={isDialogOpen} onClose={() => onClose(false)} fullWidth maxWidth="xs">
-      <DialogTitle>{isEditMode ? 'Manage Lock' : 'Add Lock'}</DialogTitle>
+    <Dialog 
+      open={isDialogOpen} 
+      onClose={() => onClose(false)} 
+      fullWidth 
+      maxWidth="xs"
+      aria-labelledby="manage-lock-title"
+    >
+      <DialogTitle id="manage-lock-title">
+        {isEditMode ? 'Manage Lock' : 'Add Lock'}
+      </DialogTitle>
+      
       <DialogContent>
         <Box component="form" noValidate sx={{ mt: 1 }}>
           <TextField
@@ -200,6 +198,7 @@ const ManageLock: React.FC<ManageLockProps> = ({ isDialogOpen, onClose, selected
             value={name}
             onChange={(e) => setName(e.target.value)}
             disabled={isLoading}
+            inputProps={{ "aria-required": "true" }}
           />
           <TextField
             margin="normal"
@@ -209,6 +208,7 @@ const ManageLock: React.FC<ManageLockProps> = ({ isDialogOpen, onClose, selected
             onChange={(e) => setDescription(e.target.value)}
             disabled={isLoading}
           />
+          
           <FormControl fullWidth margin="normal">
             <InputLabel id="auth-methods-label">Auth Methods</InputLabel>
             <Select
@@ -234,6 +234,7 @@ const ManageLock: React.FC<ManageLockProps> = ({ isDialogOpen, onClose, selected
               ))}
             </Select>
           </FormControl>
+
           <FormControlLabel
             control={
               <Switch
@@ -241,13 +242,15 @@ const ManageLock: React.FC<ManageLockProps> = ({ isDialogOpen, onClose, selected
                 onChange={(e) => setIsReservable(e.target.checked)}
                 color="primary"
                 disabled={isLoading}
+                inputProps={{ 'aria-label': 'Enable reservation for this lock' }}
               />
             }
             label="Reservable (Can be booked)"
             sx={{ mt: 1 }}
           />
+          
           {error && (
-            <Typography color="error" variant="body2" sx={{ mt: 1 }}>
+            <Typography color="error" variant="body2" sx={{ mt: 1 }} role="alert">
               {error}
             </Typography>
           )}
@@ -261,7 +264,12 @@ const ManageLock: React.FC<ManageLockProps> = ({ isDialogOpen, onClose, selected
         ) : <Box />}
         <Box>
           <Button onClick={() => onClose(false)} sx={{ mr: 1 }}>Cancel</Button>
-          <Button onClick={handleSave} variant="contained" disabled={isLoading}>
+          <Button 
+            onClick={handleSave} 
+            variant="contained" 
+            disabled={isLoading}
+            sx={{ backgroundColor: "#2A4AE5", '&:hover': { backgroundColor: "#1A3AC0" } }}
+          >
             {isLoading ? <CircularProgress size={24} color="inherit" /> : 'Save'}
           </Button>
         </Box>
@@ -270,8 +278,7 @@ const ManageLock: React.FC<ManageLockProps> = ({ isDialogOpen, onClose, selected
   );
 };
 
-// --- 3. LockGroupManager Placeholder (Inline) ---
-// Mocking this component since the original file is not available in this context
+// --- 3. LockGroupManager Placeholder (Simulation for completeness) ---
 const LockGroupManager: React.FC<{ allLocks: Lock[] }> = ({ allLocks }) => {
   return (
     <Paper elevation={0} sx={{ p: 3, borderRadius: 2, border: "1px solid #E0E0E0", minHeight: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
@@ -293,8 +300,8 @@ interface LockPageProps {
 }
 
 const actionButtonStyle = {
-  color: "#3B5CFF",
-  textTransform: "none",
+  color: "#2A4AE5", // Updated for contrast
+  textTransform: "none" as const,
   fontWeight: 500,
   "&:hover": {
     backgroundColor: "#F5F7FF",
@@ -309,6 +316,7 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
   const [selectedLock, setSelectedLock] = useState<Lock | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
 
+  // Status helpers
   const getLockStatusText = (status: string): string => {
     switch (status) {
       case "connected": return "Connected";
@@ -353,22 +361,10 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
         setLocks(data.locks || []);
         setError("");
       } else {
-        // If backend is not running, use mock data for preview
-        console.warn("Fetch failed, using mock data");
-        setLocks([
-          { id_lock: 1, name: "Main Entrance", description: "Front door", status: "connected", is_reservable: false, last_connexion: new Date().toISOString(), auth_methods: ["badge"] },
-          { id_lock: 2, name: "Lab 3", description: "Restricted area", status: "disconnected", is_reservable: true, last_connexion: null, auth_methods: ["badge", "keypad"] },
-        ]);
-        setError("");
+        setError("Error fetching locks");
       }
     } catch (err) {
-      // Fallback for demo/preview environment
-      console.warn("Network error, using mock data");
-      setLocks([
-        { id_lock: 1, name: "Main Entrance", description: "Front door", status: "connected", is_reservable: false, last_connexion: new Date().toISOString(), auth_methods: ["badge"] },
-        { id_lock: 2, name: "Lab 3", description: "Restricted area", status: "disconnected", is_reservable: true, last_connexion: null, auth_methods: ["badge", "keypad"] },
-      ]);
-      setError("");
+      setError("Server connection error");
     } finally {
       setLoading(false);
     }
@@ -410,14 +406,18 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
 
   return (
     <Box sx={{ p: 4, backgroundColor: "#F5F5F5", minHeight: "calc(100vh - 64px)" }}>
-      <Typography variant="h4" sx={{ fontWeight: 700, mb: 3, color: "#333" }}>
+      <Typography 
+        variant="h4" 
+        component="h1"
+        sx={{ fontWeight: 700, mb: 3, color: "#333" }}
+      >
         Locks Management
       </Typography>
 
       <Box sx={{ display: 'flex', gap: 3, flexDirection: { xs: 'column', md: 'row' } }}>
 
         <Box sx={{ width: { xs: '100%', md: '50%' } }}>
-          <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: "#444" }}>
+          <Typography variant="h6" component="h2" sx={{ fontWeight: 600, mb: 2, color: "#444" }}>
             All Locks
           </Typography>
           <Paper elevation={0} sx={{ p: 3, borderRadius: 2, border: "1px solid #E0E0E0" }}>
@@ -428,14 +428,19 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 size="small"
+                inputProps={{ "aria-label": "Search locks" }}
                 sx={{ flexGrow: 1, maxWidth: 300, backgroundColor: "white" }}
               />
               <Button
                 variant="contained"
                 onClick={handleAddClick}
                 sx={{
-                  backgroundColor: "#3B5CFF", textTransform: "none", fontWeight: 600,
-                  boxShadow: "none", ml: "auto", "&:hover": { backgroundColor: "#2A4AE5" },
+                  backgroundColor: "#2A4AE5", 
+                  textTransform: "none", 
+                  fontWeight: 600,
+                  boxShadow: "none", 
+                  ml: "auto", 
+                  "&:hover": { backgroundColor: "#1A3AC0" },
                 }}
               >
                 ADD LOCK
@@ -444,11 +449,11 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
 
             {loading && (
               <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
-                <CircularProgress />
+                <CircularProgress aria-label="Loading locks" />
               </Box>
             )}
             {error && (
-              <Typography color="error" sx={{ textAlign: "center", py: 2 }}>
+              <Typography color="error" sx={{ textAlign: "center", py: 2 }} role="alert">
                 {error}
               </Typography>
             )}
@@ -458,15 +463,15 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
                 <Table>
                   <TableHead>
                     <TableRow>
-                      <TableCell sx={{ fontWeight: 600, color: "#666" }}>Name</TableCell>
-                      <TableCell sx={{ fontWeight: 600, color: "#666" }}>Description</TableCell>
-                      <TableCell sx={{ fontWeight: 600, color: "#666" }}>Status</TableCell>
-                      <TableCell sx={{ fontWeight: 600, color: "#666" }}>Reservable</TableCell>
+                      <TableCell scope="col" sx={{ fontWeight: 600, color: "#444" }}>Name</TableCell>
+                      <TableCell scope="col" sx={{ fontWeight: 600, color: "#444" }}>Description</TableCell>
+                      <TableCell scope="col" sx={{ fontWeight: 600, color: "#444" }}>Status</TableCell>
+                      <TableCell scope="col" sx={{ fontWeight: 600, color: "#444" }}>Reservable</TableCell>
                       {/* --- Auth Methods Column --- */}
-                      <TableCell sx={{ fontWeight: 600, color: "#666" }}>Auth Methods</TableCell>
-                      <TableCell sx={{ fontWeight: 600, color: "#666" }}>Last Connection</TableCell>
-                      <TableCell sx={{ fontWeight: 600, color: "#666" }}>History</TableCell>
-                      <TableCell></TableCell>
+                      <TableCell scope="col" sx={{ fontWeight: 600, color: "#444" }}>Auth Methods</TableCell>
+                      <TableCell scope="col" sx={{ fontWeight: 600, color: "#444" }}>Last Connection</TableCell>
+                      <TableCell scope="col" sx={{ fontWeight: 600, color: "#444" }}>History</TableCell>
+                      <TableCell scope="col" aria-label="Actions"></TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -485,7 +490,7 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
                             "&:hover": { backgroundColor: "#F0F0F0" },
                           }}
                         >
-                          <TableCell>{lock.name}</TableCell>
+                          <TableCell component="th" scope="row">{lock.name}</TableCell>
                           <TableCell>{lock.description || 'N/A'}</TableCell>
                           <TableCell>
                             <Chip
@@ -512,7 +517,7 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
                                 {lock.auth_methods.map((method) => (
                                   <Chip
                                     key={method}
-                                    label={method}
+                                    label={method.charAt(0).toUpperCase() + method.slice(1)} // Capitalize
                                     size="small"
                                     variant="filled"
                                     sx={{
@@ -534,6 +539,7 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
                             <Button
                               size="small"
                               onClick={() => handleViewLogs(lock.id_lock)}
+                              aria-label={`View history for ${lock.name}`}
                               sx={actionButtonStyle}
                             >
                               View
@@ -543,6 +549,7 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
                             <Button
                               size="small"
                               onClick={() => handleDialogOpen(lock)}
+                              aria-label={`Manage lock ${lock.name}`}
                               sx={actionButtonStyle}
                             >
                               Manage
@@ -559,7 +566,7 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
         </Box>
 
         <Box sx={{ width: { xs: '100%', md: '50%' } }}>
-          <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: "#444" }}>
+          <Typography variant="h6" component="h2" sx={{ fontWeight: 600, mb: 2, color: "#444" }}>
             Lock Groups
           </Typography>
           <LockGroupManager allLocks={locks} />

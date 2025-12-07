@@ -190,8 +190,18 @@ const ManageLock: React.FC<ManageLockProps> = ({ isDialogOpen, onClose, selected
   };
 
   return (
-    <Dialog open={isDialogOpen} onClose={() => handleClose(false)} fullWidth maxWidth="xs">
-      <DialogTitle>{isEditMode ? 'Manage Lock' : 'Add Lock'}</DialogTitle>
+    <Dialog 
+      open={isDialogOpen} 
+      onClose={() => handleClose(false)} 
+      fullWidth 
+      maxWidth="xs"
+      // Accessibility
+      aria-labelledby="manage-lock-title"
+    >
+      <DialogTitle id="manage-lock-title">
+        {isEditMode ? 'Manage Lock' : 'Add Lock'}
+      </DialogTitle>
+      
       <DialogContent>
         <Box component="form" noValidate sx={{ mt: 1 }}>
           <TextField
@@ -204,6 +214,7 @@ const ManageLock: React.FC<ManageLockProps> = ({ isDialogOpen, onClose, selected
             value={name}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
             disabled={isLoading}
+            inputProps={{ "aria-required": "true" }}
           />
           <TextField
             margin="normal"
@@ -251,6 +262,7 @@ const ManageLock: React.FC<ManageLockProps> = ({ isDialogOpen, onClose, selected
                 onChange={(e) => setIsReservable(e.target.checked)}
                 color="primary"
                 disabled={isLoading}
+                inputProps={{ 'aria-label': 'Enable reservation for this lock' }}
               />
             }
             label="Reservable (Can be booked)"
@@ -258,7 +270,7 @@ const ManageLock: React.FC<ManageLockProps> = ({ isDialogOpen, onClose, selected
           />
 
           {error && (
-            <Typography color="error" variant="body2" sx={{ mt: 1 }}>
+            <Typography color="error" variant="body2" sx={{ mt: 1 }} role="alert">
               {error}
             </Typography>
           )}
@@ -282,6 +294,7 @@ const ManageLock: React.FC<ManageLockProps> = ({ isDialogOpen, onClose, selected
             onClick={handleSave}
             variant="contained"
             disabled={isLoading}
+            sx={{ backgroundColor: "#2A4AE5", '&:hover': { backgroundColor: "#1A3AC0" } }}
           >
             {isLoading ? <CircularProgress size={24} color="inherit" /> : 'Save'}
           </Button>

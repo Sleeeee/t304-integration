@@ -8,6 +8,9 @@ interface HeaderProps {
   onOpenMonitoring: () => void; 
 }
 
+// Couleur contrastée pour l'accessibilité
+const ACCESSIBLE_BLUE = "#2A4AE5";
+
 const Header: React.FC<HeaderProps> = ({ onNavigate, onOpenMonitoring }) => {
   const theme = useTheme();
   const isSmall = useMediaQuery(theme.breakpoints.down('md'));
@@ -18,14 +21,17 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, onOpenMonitoring }) => {
   const [snackbarText, setSnackbarText] = useState("");
 
   const logout = async () => {
-    await fetch(`http://localhost:8000/auth/wlogout/`, {
-      method: "POST",
-      credentials: "include",
-      headers,
-    });
-
-    setSnackbarText("Successfully logged out");
-    setTimeout(() => { window.location.reload() }, 1000);
+    try {
+      await fetch(`http://localhost:8000/auth/wlogout/`, {
+        method: "POST",
+        credentials: "include",
+        headers,
+      });
+      setSnackbarText("Successfully logged out");
+      setTimeout(() => { window.location.reload() }, 1000);
+    } catch (error) {
+      console.error("Logout failed", error);
+    }
   };
 
   const navItems = [
@@ -40,6 +46,7 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, onOpenMonitoring }) => {
     <AppBar
       position="static"
       elevation={0}
+      component="nav" // ACCESSIBILITÉ: Balise sémantique
       sx={{
         backgroundColor: "white",
         borderBottom: "1px solid #E0E0E0"
@@ -58,18 +65,30 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, onOpenMonitoring }) => {
           minHeight: { xs: 56, sm: 64 },
         }}
       >
+        {/* Logo accessible au clavier */}
         <Typography
           variant={isSmall ? "h5" : "h4"}
           component="div"
+          role="button" // Indique que c'est cliquable
+          tabIndex={0}  // Rend l'élément focusable via Tab
+          aria-label="Lares Home"
           sx={{
             fontWeight: 700,
-            color: "#3B5CFF",
+            color: ACCESSIBLE_BLUE,
             letterSpacing: "-0.5px",
             mr: { xs: 1, sm: 2, md: 3, lg: 4 },
             flexShrink: 0,
             cursor: "pointer",
+            outline: 'none',
+            '&:focus': { textDecoration: 'underline' } // Feedback visuel du focus
           }}
           onClick={() => onNavigate("users")}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              onNavigate("users");
+            }
+          }}
         >
           Lares
         </Typography>
@@ -81,10 +100,14 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, onOpenMonitoring }) => {
             alignItems: "center",
             overflow: "hidden",
           }}
+          role="menubar" // Indique une barre de menu
         >
           {navItems.map((item) => (
             <Button
               key={item.label}
+              role="menuitem"
+              // ACCESSIBILITÉ: Label explicite surtout quand le texte est caché sur mobile
+              aria-label={item.label}
               onClick={() => {
                 if (item.page === "monitoring") {
                   onOpenMonitoring();
@@ -103,12 +126,17 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, onOpenMonitoring }) => {
                 minWidth: "auto",
                 "&:hover": {
                   backgroundColor: "#F5F7FF",
-                  color: "#3B5CFF",
+                  color: ACCESSIBLE_BLUE,
                 },
+                "&:focus": { // Focus visible
+                  outline: `2px solid ${ACCESSIBLE_BLUE}`,
+                  outlineOffset: '2px'
+                }
               }}
             >
-              {!isSmall && <span style={{ marginRight: 8 }}>{item.icon}</span>}
-              {isSmall ? item.icon : item.label}
+              {/* Gestion des icônes pour les lecteurs d'écran */}
+              {!isSmall && <span aria-hidden="true" style={{ marginRight: 8 }}>{item.icon}</span>}
+              {isSmall ? <span aria-hidden="true">{item.icon}</span> : item.label}
             </Button>
           ))}
         </Box>
@@ -116,8 +144,9 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, onOpenMonitoring }) => {
         <Button
           variant="contained"
           onClick={logout}
+          aria-label="Log out"
           sx={{
-            backgroundColor: "#3B5CFF",
+            backgroundColor: ACCESSIBLE_BLUE,
             textTransform: "none",
             fontWeight: 600,
             px: { xs: 2, sm: 3, md: 4 },
@@ -128,7 +157,7 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, onOpenMonitoring }) => {
             fontSize: { xs: "0.75rem", sm: "0.875rem", md: "1rem" },
             flexShrink: 0,
             "&:hover": {
-              backgroundColor: "#2A4AE5",
+              backgroundColor: "#1A3AC0", // Version plus foncée
               boxShadow: "0px 4px 12px rgba(59, 92, 255, 0.3)",
             },
           }}

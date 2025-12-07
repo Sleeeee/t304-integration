@@ -21,16 +21,17 @@ import getCookie from "../../context/getCookie";
 import AddGroupDialog from "./AddGroupDialog"; 
 import ManageGroupDialog from "./ManageGroupDialog"; 
 import ConfirmDeleteDialog from "./ConfirmDeleteDialog"; 
-import CustomSnackbar from "../CustomSnackbar"; // <-- 1. IMPORTER LA SNACKBAR
+import CustomSnackbar from "../CustomSnackbar"; 
 
-// --- MODIFICATION 1: Mettre à jour l'interface ---
+// Couleur accessible
+const ACCESSIBLE_BLUE = "#2A4AE5";
+
 interface Group {
   id: number;
   name: string;
-  members_count: number; // <-- AJOUTER ÇA
+  members_count: number; 
 }
 
-// --- INTERFACE POUR L'ÉTAT DE LA SNACKBAR ---
 interface SnackbarInfo {
   text: string;
   isError: boolean;
@@ -47,14 +48,12 @@ const UserGroupsList: React.FC<UserGroupsListProps> = ({ onNavigate }) => {
   
   const [snackbarInfo, setSnackbarInfo] = useState<SnackbarInfo>({ text: "", isError: false });
   
-  // State pour les pop-ups
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isManageDialogOpen, setIsManageDialogOpen] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [groupToDelete, setGroupToDelete] = useState<Group | null>(null);
 
-  // Fonction pour récupérer les groupes
   const fetchGroups = async () => {
     setLoading(true);
     const csrfToken = getCookie("csrftoken");
@@ -67,8 +66,6 @@ const UserGroupsList: React.FC<UserGroupsListProps> = ({ onNavigate }) => {
       });
       if (response.ok) {
         const data = await response.json();
-        // Le `setGroups` fonctionnera directement car `data.groups`
-        // inclut maintenant `members_count`
         setGroups(data.groups || []);
       } else {
         const errData = await response.json().catch(() => ({}));
@@ -85,8 +82,6 @@ const UserGroupsList: React.FC<UserGroupsListProps> = ({ onNavigate }) => {
     fetchGroups();
   }, []);
 
-  // ... (Toutes les autres fonctions : handleConfirmDelete, handleOpenManageDialog, etc. sont inchangées) ...
-  // Logique de suppression
   const handleOpenDeleteDialog = (group: Group) => {
     setGroupToDelete(group);
     setIsDeleteDialogOpen(true);
@@ -118,7 +113,7 @@ const UserGroupsList: React.FC<UserGroupsListProps> = ({ onNavigate }) => {
       handleCloseDeleteDialog();
     }
   };
-  // Logique de modification
+
   const handleOpenManageDialog = (group: Group) => {
     setSelectedGroup(group);
     setIsManageDialogOpen(true);
@@ -128,7 +123,6 @@ const UserGroupsList: React.FC<UserGroupsListProps> = ({ onNavigate }) => {
     setSelectedGroup(null);
   };
 
-  // Filtrer les groupes (inchangée)
   const filteredGroups = groups.filter((group) =>
     group.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -141,17 +135,18 @@ const UserGroupsList: React.FC<UserGroupsListProps> = ({ onNavigate }) => {
         onClose={() => setSnackbarInfo({ text: "", isError: false })}
       />
     
-      <Typography variant="h5" sx={{ fontWeight: 600, color: '#333', mb: 3 }}>
+      <Typography variant="h5" component="h2" sx={{ fontWeight: 600, color: '#333', mb: 3 }}>
         User Groups
       </Typography>
 
-      {/* Barre de recherche et bouton ADD (inchangés) */}
       <Box sx={{ display: "flex", gap: 2, mb: 3, alignItems: "center" }}>
         <TextField
           placeholder="Filter groups..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           size="small"
+          // ACCESSIBILITÉ: Label explicite
+          inputProps={{ "aria-label": "Filter groups by name" }}
           sx={{ 
                 maxWidth: 300, 
                 backgroundColor: "white" 
@@ -161,40 +156,38 @@ const UserGroupsList: React.FC<UserGroupsListProps> = ({ onNavigate }) => {
           variant="contained"
           onClick={() => setIsAddDialogOpen(true)} 
           sx={{
-            backgroundColor: "#3B5CFF",
+            backgroundColor: ACCESSIBLE_BLUE, // Bleu contrasté
             textTransform: "none",
             fontWeight: 600,
             boxShadow: "none",
             flexShrink: 0, 
             ml: "auto", 
-            "&:hover": { backgroundColor: "#2A4AE5" },
+            "&:hover": { backgroundColor: "#1A3AC0" },
           }}
         >
           ADD GROUP
         </Button>
       </Box>
       
-      {/* Loading (inchangé) */}
       {loading && (
         <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
-          <CircularProgress />
+          <CircularProgress aria-label="Loading groups" />
         </Box>
       )}
 
-      {/* Tableau des groupes */}
       {!loading && (
         <TableContainer sx={{ maxHeight: 400 }}>
-          <Table stickyHeader>
+          <Table stickyHeader aria-label="User groups list">
             <TableHead>
               <TableRow>
-                {/* --- MODIFICATION 2: AJOUTER L'EN-TÊTE DE COLONNE --- */}
-                <TableCell sx={{ fontWeight: 600, color: "#666" }}>
+                {/* ACCESSIBILITÉ: scope="col" */}
+                <TableCell scope="col" sx={{ fontWeight: 600, color: "#666" }}>
                   Group Name
                 </TableCell>
-                <TableCell sx={{ fontWeight: 600, color: "#666", textAlign: 'center', width: '100px' }}>
+                <TableCell scope="col" sx={{ fontWeight: 600, color: "#666", textAlign: 'center', width: '100px' }}>
                   Members
                 </TableCell>
-                <TableCell sx={{ fontWeight: 600, color: "#666", textAlign: 'right', pr: 2 }}>
+                <TableCell scope="col" sx={{ fontWeight: 600, color: "#666", textAlign: 'right', pr: 2 }}>
                   Actions
                 </TableCell>
               </TableRow>
@@ -202,7 +195,6 @@ const UserGroupsList: React.FC<UserGroupsListProps> = ({ onNavigate }) => {
             <TableBody>
               {filteredGroups.length === 0 ? (
                 <TableRow>
-                  {/* --- MODIFICATION 3: METTRE À JOUR LE COLSPAN --- */}
                   <TableCell colSpan={3} sx={{ textAlign: "center", py: 4 }}>
                     {groups.length === 0 ? "No groups created" : "No group matches the filter"}
                   </TableCell>
@@ -216,9 +208,11 @@ const UserGroupsList: React.FC<UserGroupsListProps> = ({ onNavigate }) => {
                       "&:hover": { backgroundColor: "#F0F0F0" },
                     }}
                   >
-                    <TableCell>{group.name}</TableCell>
+                    {/* ACCESSIBILITÉ: Cellule d'en-tête de ligne */}
+                    <TableCell component="th" scope="row" sx={{ fontWeight: 500 }}>
+                        {group.name}
+                    </TableCell>
                     
-                    {/* --- MODIFICATION 4: AFFICHER LE COMPTE --- */}
                     <TableCell sx={{ textAlign: 'center' }}>
                       {group.members_count}
                     </TableCell>
@@ -228,8 +222,10 @@ const UserGroupsList: React.FC<UserGroupsListProps> = ({ onNavigate }) => {
                         size="small"
                         startIcon={<EditIcon />}
                         onClick={() => handleOpenManageDialog(group)}
+                        // ACCESSIBILITÉ: Label précis
+                        aria-label={`Manage group ${group.name}`}
                         sx={{
-                          color: "#3B5CFF",
+                          color: ACCESSIBLE_BLUE,
                           textTransform: "none",
                           fontWeight: 500,
                           mr: 0.5,
@@ -242,7 +238,8 @@ const UserGroupsList: React.FC<UserGroupsListProps> = ({ onNavigate }) => {
                         onClick={() => handleOpenDeleteDialog(group)} 
                         color="error"
                         size="small"
-                        aria-label="delete group"
+                        // ACCESSIBILITÉ: Label précis
+                        aria-label={`Delete group ${group.name}`}
                       >
                         <DeleteIcon />
                       </IconButton>
@@ -255,13 +252,11 @@ const UserGroupsList: React.FC<UserGroupsListProps> = ({ onNavigate }) => {
         </TableContainer>
       )}
       
-      {/* ... (Tous les Dialogs restent inchangés) ... */}
       <AddGroupDialog 
         open={isAddDialogOpen}
         onClose={() => setIsAddDialogOpen(false)}
         onGroupAdded={(newGroup) => {
-          // On met à jour l'état (on rafraîchit tout pour avoir le compte 0)
-          fetchGroups(); // On re-fetch pour être sûr d'avoir le compte
+          fetchGroups(); 
           setSnackbarInfo({ text: "Group created successfully", isError: false });
         }}
       />
@@ -271,10 +266,8 @@ const UserGroupsList: React.FC<UserGroupsListProps> = ({ onNavigate }) => {
         onClose={handleCloseManageDialog}
         group={selectedGroup}
         onGroupUpdated={(updatedGroup) => {
-          // On rafraîchit tout pour mettre à jour le compte des membres
           fetchGroups(); 
           setSnackbarInfo({ text: "Group updated successfully", isError: false });
-          // On ferme la pop-up
           handleCloseManageDialog();
         }}
       />

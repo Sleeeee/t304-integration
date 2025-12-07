@@ -13,7 +13,10 @@ import {
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import getCookie from '../../context/getCookie';
-import { LockGroup } from '../../types'; // Importer le type
+import { LockGroup } from '../../types'; 
+
+// Couleur accessible
+const ACCESSIBLE_BLUE = "#2A4AE5";
 
 interface AddGroupModalProps {
   open: boolean;
@@ -35,7 +38,7 @@ const AddGroupModal: React.FC<AddGroupModalProps> = ({ open, onClose, onGroupAdd
     }
   }, [open]);
 
-  // Logique de création (déplacée depuis LockGroupManager)
+  // Logique de création
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!groupName.trim()) {
@@ -60,7 +63,7 @@ const AddGroupModal: React.FC<AddGroupModalProps> = ({ open, onClose, onGroupAdd
 
       if (response.ok) {
         const newGroup = await response.json();
-        onGroupAdded(newGroup.lock_group); // Renvoie le nouveau groupe
+        onGroupAdded(newGroup.lock_group); 
       } else {
         const data = await response.json();
         setError(data.error || "Error creating group.");
@@ -73,10 +76,24 @@ const AddGroupModal: React.FC<AddGroupModalProps> = ({ open, onClose, onGroupAdd
   };
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs">
-      <DialogTitle sx={{ fontWeight: 600, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+    <Dialog 
+      open={open} 
+      onClose={onClose} 
+      fullWidth 
+      maxWidth="xs"
+      // ACCESSIBILITÉ: Liaison du titre
+      aria-labelledby="add-group-modal-title"
+    >
+      <DialogTitle 
+        id="add-group-modal-title" 
+        sx={{ fontWeight: 600, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+      >
         Create New Lock Group
-        <IconButton onClick={onClose}>
+        <IconButton 
+          onClick={onClose}
+          // ACCESSIBILITÉ: Label explicite
+          aria-label="Close dialog"
+        >
           <CloseIcon />
         </IconButton>
       </DialogTitle>
@@ -94,27 +111,32 @@ const AddGroupModal: React.FC<AddGroupModalProps> = ({ open, onClose, onGroupAdd
             value={groupName}
             onChange={(e) => setGroupName(e.target.value)}
             disabled={loading}
+            required
+            // ACCESSIBILITÉ: Indique que le champ est requis
+            inputProps={{ "aria-required": "true" }}
           />
           {error && (
-            <Typography color="error" variant="body2" sx={{ mt: 2, textAlign: 'center' }}>
+            // ACCESSIBILITÉ: Alerte vocale
+            <Typography color="error" variant="body2" sx={{ mt: 2, textAlign: 'center' }} role="alert">
               {error}
             </Typography>
           )}
         </DialogContent>
         <DialogActions sx={{ p: '16px 24px' }}>
-          <Button onClick={onClose} disabled={loading}>
+          <Button onClick={onClose} disabled={loading} color="inherit">
             Cancel
           </Button>
           <Button 
             type="submit" 
             variant="contained" 
             disabled={loading}
+            aria-busy={loading}
             sx={{
-              backgroundColor: "#3B5CFF",
-              '&:hover': { backgroundColor: "#2A4AE5" }
+              backgroundColor: ACCESSIBLE_BLUE,
+              '&:hover': { backgroundColor: "#1A3AC0" }
             }}
           >
-            {loading ? <CircularProgress size={24} color="inherit" /> : 'Create'}
+            {loading ? <CircularProgress size={24} color="inherit" aria-label="Creating group..." /> : 'Create'}
           </Button>
         </DialogActions>
       </Box>
