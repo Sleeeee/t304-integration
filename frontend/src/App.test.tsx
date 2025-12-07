@@ -3,16 +3,6 @@ import { render, screen } from '@testing-library/react';
 import App from './App';
 import { AuthProvider } from './context/AuthContext';
 
-// 1. Mock de Konva (pour éviter les erreurs de syntaxe)
-jest.mock('react-konva', () => ({
-  Stage: ({ children }: any) => <div data-testid="stage">{children}</div>,
-  Layer: ({ children }: any) => <div data-testid="layer">{children}</div>,
-  Line: () => <div />,
-  Path: () => <div />,
-  Transformer: () => <div />,
-  Text: () => <div />
-}));
-jest.mock('konva', () => ({}));
 
 // 2. Mock de Fetch Global
 global.fetch = jest.fn();
