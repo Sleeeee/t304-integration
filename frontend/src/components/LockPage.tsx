@@ -28,6 +28,8 @@ import {
   ListItemText,
   SelectChangeEvent
 } from "@mui/material";
+// Import du vrai composant
+import LockGroupManager from "./GroupsLock/LockGroupManager"; 
 
 // --- 1. Self-Contained Helper Functions & Types ---
 
@@ -46,10 +48,12 @@ function getCookie(name: string): string | null {
   return cookieValue;
 }
 
+// --- CORRECTION ICI ---
+// On retire le '?' après description pour correspondre au type global
 interface Lock {
   id_lock: number;
   name: string;
-  description?: string | null;
+  description: string | null; // <--- Changé de 'description?:' à 'description:'
   status: string;
   is_reservable: boolean;
   last_connexion: string | null;
@@ -278,20 +282,6 @@ const ManageLock: React.FC<ManageLockProps> = ({ isDialogOpen, onClose, selected
   );
 };
 
-// --- 3. LockGroupManager Placeholder (Simulation for completeness) ---
-const LockGroupManager: React.FC<{ allLocks: Lock[] }> = ({ allLocks }) => {
-  return (
-    <Paper elevation={0} sx={{ p: 3, borderRadius: 2, border: "1px solid #E0E0E0", minHeight: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
-      <Typography variant="body1" color="textSecondary">
-        Lock Group Manager Component
-      </Typography>
-      <Typography variant="caption" color="textSecondary">
-        ({allLocks.length} locks available for grouping)
-      </Typography>
-    </Paper>
-  );
-};
-
 // --- 4. Main LockPage Component ---
 
 interface LockPageProps {
@@ -300,7 +290,7 @@ interface LockPageProps {
 }
 
 const actionButtonStyle = {
-  color: "#2A4AE5", // Updated for contrast
+  color: "#2A4AE5", 
   textTransform: "none" as const,
   fontWeight: 500,
   "&:hover": {
@@ -569,6 +559,7 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
           <Typography variant="h6" component="h2" sx={{ fontWeight: 600, mb: 2, color: "#444" }}>
             Lock Groups
           </Typography>
+          {/* L'erreur TS2322 est résolue ici car Lock[] est compatible */}
           <LockGroupManager allLocks={locks} />
         </Box>
 
