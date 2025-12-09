@@ -18,64 +18,78 @@ import PersonIcon from "@mui/icons-material/Person";
 import LockIcon from "@mui/icons-material/Lock";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 
+
 interface ScanLog {
-  id_log: number;
-  lock: {
-    id_lock: number;
-    name: string;
-  };
-  user: {
-    id: number;
-    username: string;
-  };
-  scan_datetime: string;
-  success: boolean;
+  timestamp: string;
+  method: string;
+  user: string | null; 
+  failed_code: string | null;
+  lock_id: number;
+  lock_name: string; 
+  result: "success" | "failed"; 
 }
 
 interface LogsViewerProps {
   lockId?: number;
+  userId?: number;
 }
 
-const LogsViewer: React.FC<LogsViewerProps> = ({ lockId }) => {
-  const [logs, setLogs] = useState<ScanLog[]>([]);
+const LogsViewer: React.FC<LogsViewerProps> = ({ lockId, userId }) => {
+  const [logs, setLogs] = useState<ScanLog[]>([]); 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>("");
 
   const fetchLogs = useCallback(async () => {
     try {
-      const url = lockId
-        ? `http://localhost:8000/logs/lock/${lockId}/`
-        : "http://localhost:8000/logs/";
+      let url = "http://localhost:8000/logs/accesslogs/";
+      
+      const params = new URLSearchParams();
+      
+      if (lockId) {
+        params.append("lock_id", lockId.toString());
+      }
+      if (userId) {
+        params.append("user_id", userId.toString());
+      }
 
+      const queryString = params.toString();
+      if (queryString) {
+        url = `${url}?${queryString}`;
+      }
+      
       const response = await fetch(url, {
         method: "GET",
         credentials: "include",
       });
 
       if (!response.ok) {
-        throw new Error("Error");
+        throw new Error("Erreur lors du chargement des logs");
       }
 
       const data = await response.json();
-      // Si l'API retourne un objet avec "logs", extraire le tableau
-      setLogs(lockId && data.logs ? data.logs : data);
+      
+      setLogs(Array.isArray(data) ? data : (data.logs || []));
       setError("");
+
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unknown Error");
+      setError(err instanceof Error ? err.message : "Erreur inconnue");
     } finally {
       setLoading(false);
     }
-  }, [lockId]);
+  }, [lockId, userId]);
 
   useEffect(() => {
     fetchLogs();
-    // Rafraîchir les logs toutes les 5 secondes
     const interval = setInterval(fetchLogs, 5000);
     return () => clearInterval(interval);
   }, [fetchLogs]);
 
+
   const formatDateTime = (dateString: string) => {
     const date = new Date(dateString);
+    if (isNaN(date.getTime())) {
+        return "Date Invalide"; 
+    }
     return date.toLocaleString("fr-FR", {
       day: "2-digit",
       month: "2-digit",
@@ -119,67 +133,77 @@ const LogsViewer: React.FC<LogsViewerProps> = ({ lockId }) => {
         <Alert severity="info">Aucun log disponible</Alert>
       ) : (
         <List sx={{ width: "100%", bgcolor: "background.paper", p: 0 }}>
-          {logs.map((log, index) => (
-            <React.Fragment key={log.id_log}>
-              {index > 0 && <Divider />}
-              <Paper
-                elevation={0}
-                sx={{
-                  mb: 1,
-                  p: 2,
-                  border: "1px solid #E0E0E0",
-                  borderLeft: `4px solid ${log.success ? "#4CAF50" : "#F44336"}`,
-                  "&:hover": {
-                    backgroundColor: "#F5F7FF",
-                  },
-                }}
-              >
-                <Stack spacing={1.5}>
-                  {/* Status */}
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    {log.success ? (
-                      <CheckCircleIcon sx={{ color: "#4CAF50", fontSize: 20 }} />
-                    ) : (
-                      <CancelIcon sx={{ color: "#F44336", fontSize: 20 }} />
+          {logs.map((log, index) => {
+            const isSuccess = log.result === "success";
+            
+            return (
+              <React.Fragment key={index}>
+                {index > 0 && <Divider />}
+                <Paper
+                  elevation={0}
+                  sx={{
+                    mb: 1,
+                    p: 2,
+                    border: "1px solid #E0E0E0",
+                    borderLeft: `4px solid ${isSuccess ? "#4CAF50" : "#F44336"}`,
+                    "&:hover": {
+                      backgroundColor: "#F5F7FF",
+                    },
+                  }}
+                >
+                  <Stack spacing={1.5}>
+                    {/* Status */}
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      {isSuccess ? (
+                        <CheckCircleIcon sx={{ color: "#4CAF50", fontSize: 20 }} />
+                      ) : (
+                        <CancelIcon sx={{ color: "#F44336", fontSize: 20 }} />
+                      )}
+                      <Chip
+                        label={isSuccess ? "Success" : "Error"}
+                        size="small"
+                        sx={{
+                          backgroundColor: isSuccess ? "#E8F5E9" : "#FFEBEE",
+                          color: isSuccess ? "#2E7D32" : "#C62828",
+                          fontWeight: 600,
+                        }}
+                      />
+                    </Box>
+                    
+                    {!isSuccess && log.failed_code && log.failed_code !== "" && (
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <CancelIcon sx={{ color: "#F44336", fontSize: 18 }} />
+                        <Typography variant="body2" color="text.primary">
+                          <strong>Code d'échec:</strong> {log.failed_code}
+                        </Typography>
+                      </Box>
                     )}
-                    <Chip
-                      label={log.success ? "Success" : "Error"}
-                      size="small"
-                      sx={{
-                        backgroundColor: log.success ? "#E8F5E9" : "#FFEBEE",
-                        color: log.success ? "#2E7D32" : "#C62828",
-                        fontWeight: 600,
-                      }}
-                    />
-                  </Box>
 
-                  {/* User */}
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <PersonIcon sx={{ color: "#3B5CFF", fontSize: 18 }} />
-                    <Typography variant="body2" color="text.primary">
-                      <strong>Utilisateur:</strong> {log.user.username}
-                    </Typography>
-                  </Box>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <PersonIcon sx={{ color: "#3B5CFF", fontSize: 18 }} />
+                      <Typography variant="body2" color="text.primary">
+                        <strong>Utilisateur:</strong> {log.user || "Inconnu"}
+                      </Typography>
+                    </Box>
 
-                  {/* Lock */}
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <LockIcon sx={{ color: "#666", fontSize: 18 }} />
-                    <Typography variant="body2" color="text.primary">
-                      <strong>Serrure:</strong> {log.lock.name}
-                    </Typography>
-                  </Box>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <LockIcon sx={{ color: "#666", fontSize: 18 }} />
+                      <Typography variant="body2" color="text.primary">
+                        <strong>Serrure:</strong> {log.lock_name || `ID: ${log.lock_id}`}
+                      </Typography>
+                    </Box>
 
-                  {/* DateTime */}
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <AccessTimeIcon sx={{ color: "#999", fontSize: 18 }} />
-                    <Typography variant="body2" color="text.secondary">
-                      {formatDateTime(log.scan_datetime)}
-                    </Typography>
-                  </Box>
-                </Stack>
-              </Paper>
-            </React.Fragment>
-          ))}
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <AccessTimeIcon sx={{ color: "#999", fontSize: 18 }} />
+                      <Typography variant="body2" color="text.secondary">
+                        {formatDateTime(log.timestamp)}
+                      </Typography>
+                    </Box>
+                  </Stack>
+                </Paper>
+              </React.Fragment>
+            );
+          })}
         </List>
       )}
     </Box>
