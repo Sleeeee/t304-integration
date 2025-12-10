@@ -17,6 +17,7 @@ import CancelIcon from "@mui/icons-material/Cancel";
 import PersonIcon from "@mui/icons-material/Person";
 import LockIcon from "@mui/icons-material/Lock";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
+import VpnKeyIcon from "@mui/icons-material/VpnKey"; // Import de l'icône pour la méthode
 
 
 interface ScanLog {
@@ -170,6 +171,7 @@ const LogsViewer: React.FC<LogsViewerProps> = ({ lockId, userId }) => {
                       />
                     </Box>
                     
+                    {/* Failed Code */}
                     {!isSuccess && log.failed_code && log.failed_code !== "" && (
                       <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                         <CancelIcon sx={{ color: "#F44336", fontSize: 18 }} />
@@ -179,6 +181,15 @@ const LogsViewer: React.FC<LogsViewerProps> = ({ lockId, userId }) => {
                       </Box>
                     )}
 
+                    {/* Méthode (AJOUTÉ ICI) */}
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <VpnKeyIcon sx={{ color: "#555", fontSize: 18 }} />
+                      <Typography variant="body2" color="text.primary">
+                        <strong>Méthode:</strong> {log.method}
+                      </Typography>
+                    </Box>
+
+                    {/* User */}
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                       <PersonIcon sx={{ color: "#3B5CFF", fontSize: 18 }} />
                       <Typography variant="body2" color="text.primary">
@@ -186,6 +197,7 @@ const LogsViewer: React.FC<LogsViewerProps> = ({ lockId, userId }) => {
                       </Typography>
                     </Box>
 
+                    {/* Lock */}
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                       <LockIcon sx={{ color: "#666", fontSize: 18 }} />
                       <Typography variant="body2" color="text.primary">
@@ -193,6 +205,7 @@ const LogsViewer: React.FC<LogsViewerProps> = ({ lockId, userId }) => {
                       </Typography>
                     </Box>
 
+                    {/* Timestamp */}
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                       <AccessTimeIcon sx={{ color: "#999", fontSize: 18 }} />
                       <Typography variant="body2" color="text.secondary">
