@@ -1,7 +1,6 @@
 from django.contrib.auth.hashers import check_password
 from users.models import UserKeypadCode, UserBadgeCode
 
-
 def get_user_by_keypad_code(raw_code):
     int_code = int(raw_code)
     if not int_code:

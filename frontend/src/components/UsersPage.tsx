@@ -19,6 +19,7 @@ import ManageUser from "./ManageUser";
 import DeleteUser from "./DeleteUser";
 import CustomSnackbar from "./CustomSnackbar";
 import UserGroupsList from "./GroupsUser/UserGroupsList";
+import LogsDrawer from "./LogsDrawer";
 
 interface User {
   id: number;
@@ -35,14 +36,26 @@ interface UsersPageProps {
 
 // Couleur accessible (Ratio > 4.5:1 sur blanc)
 const ACCESSIBLE_BLUE = "#2A4AE5"; 
+const actionButtonStyle = {
+    color: "#3B5CFF",
+    textTransform: "none" as const, 
+    fontWeight: 500,
+    "&:hover": {
+      backgroundColor: "#F5F7FF",
+    },
+};
 
 const UsersPage: React.FC<UsersPageProps> = ({ onNavigate, onEditSchematic }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [selectedUser, setSelectedUser] = useState("none");
+  const [selectedUser, setSelectedUser] = useState<any>("none");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  
+  // Nouveaux états pour le LogsDrawer
+  const [isLogsDrawerOpen, setIsLogsDrawerOpen] = useState<boolean>(false);
+  const [selectedUserForLogs, setSelectedUserForLogs] = useState<User | null>(null);
 
   const [snackbar, setSnackbar] = useState({
     isError: false,
@@ -117,8 +130,21 @@ const UsersPage: React.FC<UsersPageProps> = ({ onNavigate, onEditSchematic }) =>
     setIsDialogOpen(true);
     setSelectedUser(user);
   };
+  
+  // Handlers pour le LogsDrawer
+  const handleViewLogs = (user: User) => {
+    setSelectedUserForLogs(user);
+    setIsLogsDrawerOpen(true);
+  };
+
+  const handleLogsDrawerClose = () => {
+    setIsLogsDrawerOpen(false);
+    setSelectedUserForLogs(null);
+  };
+
 
   return (
+    // Balise parente unique
     <Box sx={{ p: 4, backgroundColor: "#F5F5F5", minHeight: "calc(100vh - 64px)" }}>
       <CustomSnackbar
         isError={snackbar?.isError}
@@ -250,17 +276,12 @@ const UsersPage: React.FC<UsersPageProps> = ({ onNavigate, onEditSchematic }) =>
                             />
                           </TableCell>
                           <TableCell>
+                            
                             <Button
                               size="small"
                               aria-label={`View logs for ${user.username}`}
-                              sx={{
-                                color: ACCESSIBLE_BLUE,
-                                textTransform: "none",
-                                fontWeight: 600,
-                                "&:hover": {
-                                  backgroundColor: "#F5F7FF",
-                                },
-                              }}
+                              onClick={() => handleViewLogs(user)}
+                              sx={actionButtonStyle}
                             >
                               View
                             </Button>
@@ -322,6 +343,13 @@ const UsersPage: React.FC<UsersPageProps> = ({ onNavigate, onEditSchematic }) =>
         snackbar={snackbar}
         setSnackbar={setSnackbar}
         refresh={refreshList}
+      />
+      
+      <LogsDrawer
+        open={isLogsDrawerOpen}
+        onClose={handleLogsDrawerClose}
+        userId={selectedUserForLogs?.id} 
+        userName={selectedUserForLogs?.username} 
       />
     </Box>
   );

@@ -17,47 +17,32 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  FormControlLabel,
-  Switch,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
   OutlinedInput,
-  Checkbox,
+  FormControlLabel,
+  Switch,
   ListItemText,
-  SelectChangeEvent
+  Checkbox, 
+  SelectChangeEvent,
 } from "@mui/material";
-// Import du vrai composant
+
+// --- Imports externes déplacés en haut ---
+import getCookie from "../context/getCookie";
 import LockGroupManager from "./GroupsLock/LockGroupManager"; 
+import LogsDrawer from "./LogsDrawer";
 
-// --- 1. Self-Contained Helper Functions & Types ---
-
-function getCookie(name: string): string | null {
-  let cookieValue = null;
-  if (document.cookie && document.cookie !== '') {
-    const cookies = document.cookie.split(';');
-    for (let i = 0; i < cookies.length; i++) {
-      const cookie = cookies[i].trim();
-      if (cookie.substring(0, name.length + 1) === (name + '=')) {
-        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-        break;
-      }
-    }
-  }
-  return cookieValue;
-}
-
-// --- CORRECTION ICI ---
-// On retire le '?' après description pour correspondre au type global
+// --- 1. Lock Type (Global) ---
 interface Lock {
   id_lock: number;
   name: string;
-  description: string | null; // <--- Changé de 'description?:' à 'description:'
+  description: string | null;
   status: string;
   is_reservable: boolean;
   last_connexion: string | null;
-  auth_methods?: string[]; // Array of strings e.g. ["badge", "keypad"]
+  auth_methods?: string[]; 
 }
 
 // --- 2. ManageLock Component (Inline) ---
@@ -221,7 +206,7 @@ const ManageLock: React.FC<ManageLockProps> = ({ isDialogOpen, onClose, selected
               value={authMethods}
               onChange={handleAuthMethodsChange}
               input={<OutlinedInput label="Auth Methods" />}
-              renderValue={(selected) => (
+              renderValue={(selected: string[]) => (
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                   {selected.map((value) => (
                     <Chip key={value} label={value} size="small" />
@@ -243,7 +228,7 @@ const ManageLock: React.FC<ManageLockProps> = ({ isDialogOpen, onClose, selected
             control={
               <Switch
                 checked={isReservable}
-                onChange={(e) => setIsReservable(e.target.checked)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setIsReservable(e.target.checked)}
                 color="primary"
                 disabled={isLoading}
                 inputProps={{ 'aria-label': 'Enable reservation for this lock' }}
@@ -305,8 +290,10 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
   const [error, setError] = useState<string>("");
   const [selectedLock, setSelectedLock] = useState<Lock | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
+  const [isLogsDrawerOpen, setIsLogsDrawerOpen] = useState<boolean>(false);
+  const [selectedLockForLogs, setSelectedLockForLogs] = useState<Lock | null>(null);
 
-  // Status helpers
+
   const getLockStatusText = (status: string): string => {
     switch (status) {
       case "connected": return "Connected";
@@ -390,8 +377,14 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
     }
   }
 
-  const handleViewLogs = (lockId: number) => {
-    console.log("View history for lock:", lockId);
+  const handleViewLogs = (lock: Lock) => {
+    setSelectedLockForLogs(lock);
+    setIsLogsDrawerOpen(true);
+  };
+
+  const handleLogsDrawerClose = () => {
+    setIsLogsDrawerOpen(false);
+    setSelectedLockForLogs(null);
   };
 
   return (
@@ -457,7 +450,6 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
                       <TableCell scope="col" sx={{ fontWeight: 600, color: "#444" }}>Description</TableCell>
                       <TableCell scope="col" sx={{ fontWeight: 600, color: "#444" }}>Status</TableCell>
                       <TableCell scope="col" sx={{ fontWeight: 600, color: "#444" }}>Reservable</TableCell>
-                      {/* --- Auth Methods Column --- */}
                       <TableCell scope="col" sx={{ fontWeight: 600, color: "#444" }}>Auth Methods</TableCell>
                       <TableCell scope="col" sx={{ fontWeight: 600, color: "#444" }}>Last Connection</TableCell>
                       <TableCell scope="col" sx={{ fontWeight: 600, color: "#444" }}>History</TableCell>
@@ -507,7 +499,7 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
                                 {lock.auth_methods.map((method) => (
                                   <Chip
                                     key={method}
-                                    label={method.charAt(0).toUpperCase() + method.slice(1)} // Capitalize
+                                    label={method.charAt(0).toUpperCase() + method.slice(1)} 
                                     size="small"
                                     variant="filled"
                                     sx={{
@@ -528,7 +520,8 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
                           <TableCell>
                             <Button
                               size="small"
-                              onClick={() => handleViewLogs(lock.id_lock)}
+                              // Suppression du onClick dupliqué et correction du passage de l'objet lock
+                              onClick={() => handleViewLogs(lock)} 
                               aria-label={`View history for ${lock.name}`}
                               sx={actionButtonStyle}
                             >
@@ -559,7 +552,6 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
           <Typography variant="h6" component="h2" sx={{ fontWeight: 600, mb: 2, color: "#444" }}>
             Lock Groups
           </Typography>
-          {/* L'erreur TS2322 est résolue ici car Lock[] est compatible */}
           <LockGroupManager allLocks={locks} />
         </Box>
 
@@ -569,6 +561,13 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
         isDialogOpen={isDialogOpen}
         onClose={handleModalClose}
         selectedLock={selectedLock}
+      />
+
+      <LogsDrawer
+        open={isLogsDrawerOpen}
+        onClose={handleLogsDrawerClose}
+        lockId={selectedLockForLogs?.id_lock}
+        lockName={selectedLockForLogs?.name}
       />
     </Box>
   );
