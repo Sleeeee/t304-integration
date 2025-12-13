@@ -45,12 +45,12 @@ jobs:
     - name: Run Tests
       working-directory: ./backend
       env:
-        POSTGRES_DB: test_db
-        POSTGRES_USER: django_user
-        POSTGRES_PASSWORD: django_password
-        POSTGRES_HOST: localhost
-        POSTGRES_PORT: 5432
-        SECRET_KEY: "automated-test-secret-key" # Dummy key for testing
+        DB_NAME: test_db
+        DB_USER: django_user
+        DB_PASSWORD: django_password
+        DB_HOST: localhost
+        DB_PORT: 5432
+        DJANGO_SECRET_KEY: "automated-test-secret-key" # Dummy key for testing
         DEBUG: "True"
       run: |
         python manage.py test
