@@ -1,6 +1,6 @@
 services:
   db:
-    container_name: "integration-db"
+    container_name: "integration-db-prod"
     image: postgres:18.0-alpine
     env_file:
       - .env.db
@@ -15,50 +15,27 @@ services:
       retries: 5
 
   backend:
-    container_name: "integration-backend"
+    container_name: "integration-backend-prod"
     build: ./backend
     env_file:
       - .env.backend
-    ports:
-      - "8000:8000"
-    volumes:
-      - ./backend:/app
     depends_on:
       db:
         condition: service_healthy
 
   frontend:
-    container_name: "integration-frontend"
-    build: ./frontend
+    container_name: "integration-frontend-prod"
+    build:
+      context: ./frontend
+      args:
+        REACT_APP_BACKEND_URL: http://localhost/api
     env_file:
-      - .env.frontend
+      - .env.frontend.prod
+    
     ports:
-      - "3000:3000"
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
- 
-  e2e:
-    build: 
-      context: ./e2e
-      dockerfile: Dockerfile
-    container_name: integration-e2e
-    environment:
-      - BASE_URL=http://frontend:3000
-      - CI=true
-    volumes:
-      - ./e2e:/app
-      - /app/node_modules
-
-    ipc: host
-
+      - "80:80"
     depends_on:
-      - frontend
       - backend
-
-    command: tail -f /dev/null # Keep alive to run tests manually
-
-    profiles: ["testing"]
 
 volumes:
   postgres_data:

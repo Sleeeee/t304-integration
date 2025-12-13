@@ -116,7 +116,7 @@ const ManageLock: React.FC<ManageLockProps> = ({ isDialogOpen, onClose, selected
 
     const csrfToken = getCookie("csrftoken");
     const method = isEditMode ? 'PUT' : 'POST';
-    const url = 'http://localhost:8000/locks/';
+    const url = `${process.env.REACT_APP_BACKEND_URL}/locks/`;
 
     // Construct payload
     let bodyData: any = {
@@ -167,7 +167,7 @@ const ManageLock: React.FC<ManageLockProps> = ({ isDialogOpen, onClose, selected
     setError('');
     const csrfToken = getCookie("csrftoken");
     try {
-      const response = await fetch('http://localhost:8000/locks/', {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/locks/`, {
         method: 'DELETE',
         credentials: 'include',
         headers: {
@@ -190,10 +190,10 @@ const ManageLock: React.FC<ManageLockProps> = ({ isDialogOpen, onClose, selected
   };
 
   return (
-    <Dialog 
-      open={isDialogOpen} 
-      onClose={() => handleClose(false)} 
-      fullWidth 
+    <Dialog
+      open={isDialogOpen}
+      onClose={() => handleClose(false)}
+      fullWidth
       maxWidth="xs"
       // Accessibility
       aria-labelledby="manage-lock-title"
@@ -201,7 +201,7 @@ const ManageLock: React.FC<ManageLockProps> = ({ isDialogOpen, onClose, selected
       <DialogTitle id="manage-lock-title">
         {isEditMode ? 'Manage Lock' : 'Add Lock'}
       </DialogTitle>
-      
+
       <DialogContent>
         <Box component="form" noValidate sx={{ mt: 1 }}>
           <TextField

@@ -25,13 +25,13 @@ import {
   FormControlLabel,
   Switch,
   ListItemText,
-  Checkbox, 
+  Checkbox,
   SelectChangeEvent,
 } from "@mui/material";
 
 // --- Imports externes déplacés en haut ---
 import getCookie from "../context/getCookie";
-import LockGroupManager from "./GroupsLock/LockGroupManager"; 
+import LockGroupManager from "./GroupsLock/LockGroupManager";
 import LogsDrawer from "./LogsDrawer";
 
 // --- 1. Lock Type (Global) ---
@@ -42,7 +42,7 @@ interface Lock {
   status: string;
   is_reservable: boolean;
   last_connexion: string | null;
-  auth_methods?: string[]; 
+  auth_methods?: string[];
 }
 
 // --- 2. ManageLock Component (Inline) ---
@@ -63,7 +63,7 @@ const ManageLock: React.FC<ManageLockProps> = ({ isDialogOpen, onClose, selected
   const [description, setDescription] = useState<string>('');
   const [isReservable, setIsReservable] = useState<boolean>(false);
   const [authMethods, setAuthMethods] = useState<string[]>([]);
-  
+
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
 
@@ -96,7 +96,7 @@ const ManageLock: React.FC<ManageLockProps> = ({ isDialogOpen, onClose, selected
     setError('');
     const csrfToken = getCookie("csrftoken");
     const method = isEditMode ? 'PUT' : 'POST';
-    const url = 'http://localhost:8000/locks/';
+    const url = `${process.env.REACT_APP_BACKEND_URL}/locks/`;
 
     let bodyData: any = {
       name,
@@ -144,7 +144,7 @@ const ManageLock: React.FC<ManageLockProps> = ({ isDialogOpen, onClose, selected
     setIsLoading(true);
     try {
       const csrfToken = getCookie("csrftoken");
-      const response = await fetch('http://localhost:8000/locks/', {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/locks/`, {
         method: 'DELETE',
         credentials: 'include',
         headers: {
@@ -166,17 +166,17 @@ const ManageLock: React.FC<ManageLockProps> = ({ isDialogOpen, onClose, selected
   };
 
   return (
-    <Dialog 
-      open={isDialogOpen} 
-      onClose={() => onClose(false)} 
-      fullWidth 
+    <Dialog
+      open={isDialogOpen}
+      onClose={() => onClose(false)}
+      fullWidth
       maxWidth="xs"
       aria-labelledby="manage-lock-title"
     >
       <DialogTitle id="manage-lock-title">
         {isEditMode ? 'Manage Lock' : 'Add Lock'}
       </DialogTitle>
-      
+
       <DialogContent>
         <Box component="form" noValidate sx={{ mt: 1 }}>
           <TextField
@@ -197,7 +197,7 @@ const ManageLock: React.FC<ManageLockProps> = ({ isDialogOpen, onClose, selected
             onChange={(e) => setDescription(e.target.value)}
             disabled={isLoading}
           />
-          
+
           <FormControl fullWidth margin="normal">
             <InputLabel id="auth-methods-label">Auth Methods</InputLabel>
             <Select
@@ -237,7 +237,7 @@ const ManageLock: React.FC<ManageLockProps> = ({ isDialogOpen, onClose, selected
             label="Reservable (Can be booked)"
             sx={{ mt: 1 }}
           />
-          
+
           {error && (
             <Typography color="error" variant="body2" sx={{ mt: 1 }} role="alert">
               {error}
@@ -253,9 +253,9 @@ const ManageLock: React.FC<ManageLockProps> = ({ isDialogOpen, onClose, selected
         ) : <Box />}
         <Box>
           <Button onClick={() => onClose(false)} sx={{ mr: 1 }}>Cancel</Button>
-          <Button 
-            onClick={handleSave} 
-            variant="contained" 
+          <Button
+            onClick={handleSave}
+            variant="contained"
             disabled={isLoading}
             sx={{ backgroundColor: "#2A4AE5", '&:hover': { backgroundColor: "#1A3AC0" } }}
           >
@@ -275,7 +275,7 @@ interface LockPageProps {
 }
 
 const actionButtonStyle = {
-  color: "#2A4AE5", 
+  color: "#2A4AE5",
   textTransform: "none" as const,
   fontWeight: 500,
   "&:hover": {
@@ -328,7 +328,7 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
     const csrfToken = getCookie("csrftoken");
     const headers: HeadersInit = csrfToken ? { "X-CSRFToken": csrfToken } : {};
     try {
-      const response = await fetch("http://localhost:8000/locks/", {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/locks/`, {
         method: "GET",
         credentials: "include",
         headers,
@@ -389,8 +389,8 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
 
   return (
     <Box sx={{ p: 4, backgroundColor: "#F5F5F5", minHeight: "calc(100vh - 64px)" }}>
-      <Typography 
-        variant="h4" 
+      <Typography
+        variant="h4"
         component="h1"
         sx={{ fontWeight: 700, mb: 3, color: "#333" }}
       >
@@ -418,11 +418,11 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
                 variant="contained"
                 onClick={handleAddClick}
                 sx={{
-                  backgroundColor: "#2A4AE5", 
-                  textTransform: "none", 
+                  backgroundColor: "#2A4AE5",
+                  textTransform: "none",
                   fontWeight: 600,
-                  boxShadow: "none", 
-                  ml: "auto", 
+                  boxShadow: "none",
+                  ml: "auto",
                   "&:hover": { backgroundColor: "#1A3AC0" },
                 }}
               >
@@ -499,7 +499,7 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
                                 {lock.auth_methods.map((method) => (
                                   <Chip
                                     key={method}
-                                    label={method.charAt(0).toUpperCase() + method.slice(1)} 
+                                    label={method.charAt(0).toUpperCase() + method.slice(1)}
                                     size="small"
                                     variant="filled"
                                     sx={{
@@ -521,7 +521,7 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
                             <Button
                               size="small"
                               // Suppression du onClick dupliqué et correction du passage de l'objet lock
-                              onClick={() => handleViewLogs(lock)} 
+                              onClick={() => handleViewLogs(lock)}
                               aria-label={`View history for ${lock.name}`}
                               sx={actionButtonStyle}
                             >

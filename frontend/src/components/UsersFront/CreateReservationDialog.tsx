@@ -11,13 +11,13 @@ import {
   IconButton,
   TextField,
   MenuItem,
-  Select, 
-  FormControl, 
-  InputLabel, 
+  Select,
+  FormControl,
+  InputLabel,
   Divider,
 } from "@mui/material";
 import CloseIcon from '@mui/icons-material/Close';
-import getCookie from "../../context/getCookie"; 
+import getCookie from "../../context/getCookie";
 
 const hours: string[] = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
 const minutes: string[] = ["00", "15", "30", "45"];
@@ -40,7 +40,7 @@ interface ReservationFormData {
 type CreateReservationDialogProps = {
   open: boolean;
   onClose: () => void;
-  onReservationCreated: () => void; 
+  onReservationCreated: () => void;
 };
 
 const CreateReservationDialog: React.FC<CreateReservationDialogProps> = ({ open, onClose, onReservationCreated }) => {
@@ -49,13 +49,13 @@ const CreateReservationDialog: React.FC<CreateReservationDialogProps> = ({ open,
   const [startMinute, setStartMinute] = useState("");
   const [endHour, setEndHour] = useState("");
   const [endMinute, setEndMinute] = useState("");
-  
-  const [selectedLockId, setSelectedLockId] = useState(""); 
-  const [locks, setLocks] = useState<Lock[]>([]); 
-  const [loadingLocks, setLoadingLocks] = useState(false); 
-  const [hasSearched, setHasSearched] = useState(false); 
 
-  const [loadingSubmit, setLoadingSubmit] = useState(false); 
+  const [selectedLockId, setSelectedLockId] = useState("");
+  const [locks, setLocks] = useState<Lock[]>([]);
+  const [loadingLocks, setLoadingLocks] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
+
+  const [loadingSubmit, setLoadingSubmit] = useState(false);
   const [error, setError] = useState("");
 
   const getHeaders = (withContentType = false) => {
@@ -86,18 +86,18 @@ const CreateReservationDialog: React.FC<CreateReservationDialogProps> = ({ open,
       setError("Please select a date and time slot first.");
       return;
     }
-    
+
     setLoadingLocks(true);
     setError("");
     setHasSearched(false);
-    setSelectedLockId(""); 
+    setSelectedLockId("");
 
     const finalStartTime = `${startHour}:${startMinute}`;
     const finalEndTime = `${endHour}:${endMinute}`;
 
     try {
       const response = await fetch(
-        `http://localhost:8000/reservations/available/?date=${date}&start_time=${finalStartTime}&end_time=${finalEndTime}`, 
+        `${process.env.REACT_APP_BACKEND_URL}/reservations/available/?date=${date}&start_time=${finalStartTime}&end_time=${finalEndTime}`,
         {
           method: "GET",
           credentials: "include",
@@ -108,10 +108,10 @@ const CreateReservationDialog: React.FC<CreateReservationDialogProps> = ({ open,
       if (!response.ok) {
         throw new Error("Failed to check availability.");
       }
-      
+
       const data = await response.json();
-      setLocks(data.locks || []); 
-      setHasSearched(true); 
+      setLocks(data.locks || []);
+      setHasSearched(true);
 
     } catch (err) {
       setError("Failed to load rooms. Please try again.");
@@ -122,12 +122,12 @@ const CreateReservationDialog: React.FC<CreateReservationDialogProps> = ({ open,
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    
+
     if (!selectedLockId || !hasSearched) {
       setError("Please find and select an available room.");
       return;
     }
-    
+
     setLoadingSubmit(true);
     setError("");
 
@@ -143,7 +143,7 @@ const CreateReservationDialog: React.FC<CreateReservationDialogProps> = ({ open,
     });
 
     try {
-      const response = await fetch("http://localhost:8000/reservations/", {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/reservations/`, {
         method: "POST",
         credentials: "include",
         headers: getHeaders(true),
@@ -159,7 +159,7 @@ const CreateReservationDialog: React.FC<CreateReservationDialogProps> = ({ open,
       }
 
       onReservationCreated();
-      onClose(); 
+      onClose();
 
     } catch (err: any) {
       setError(err.message || "An error occurred.");
@@ -169,34 +169,34 @@ const CreateReservationDialog: React.FC<CreateReservationDialogProps> = ({ open,
   };
 
   return (
-    <Dialog 
-      open={open} 
-      onClose={onClose} 
-      fullWidth={true} 
+    <Dialog
+      open={open}
+      onClose={onClose}
+      fullWidth={true}
       maxWidth="sm"
       // ACCESSIBILITÉ: Lie le titre à la modale
       aria-labelledby="reservation-dialog-title"
     >
-      <DialogTitle 
+      <DialogTitle
         id="reservation-dialog-title" // Cible du aria-labelledby
         sx={{ fontWeight: 600, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
       >
         Request a new reservation
-        <IconButton 
-          onClick={onClose} 
+        <IconButton
+          onClick={onClose}
           // ACCESSIBILITÉ: Label explicite
           aria-label="Close reservation window"
         >
           <CloseIcon />
         </IconButton>
       </DialogTitle>
-      
+
       <form onSubmit={handleSubmit}>
         <DialogContent>
           <Typography sx={{ mb: 2, color: 'text.secondary' }}>
             Step 1: Choose your time slot.
           </Typography>
-          
+
           <TextField
             id="reservation-date" // ID unique pour le label
             label="Date"
@@ -209,18 +209,18 @@ const CreateReservationDialog: React.FC<CreateReservationDialogProps> = ({ open,
             InputLabelProps={{ shrink: true }}
             inputProps={{ "aria-required": "true" }}
           />
-          
+
           <Typography sx={{ fontWeight: 500, color: 'text.secondary', mb: 1 }}>
             Start Time*
           </Typography>
           <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
             <FormControl fullWidth required>
               <InputLabel id="start-hour-label">Hour</InputLabel>
-              <Select 
+              <Select
                 labelId="start-hour-label" // Liaison label-select
                 id="start-hour"
-                value={startHour} 
-                label="Hour" 
+                value={startHour}
+                label="Hour"
                 onChange={(e) => setStartHour(e.target.value)}
               >
                 {hours.map((hour) => (<MenuItem key={hour} value={hour}>{hour}</MenuItem>))}
@@ -228,29 +228,29 @@ const CreateReservationDialog: React.FC<CreateReservationDialogProps> = ({ open,
             </FormControl>
             <FormControl fullWidth required>
               <InputLabel id="start-minute-label">Minute</InputLabel>
-              <Select 
-                labelId="start-minute-label" 
+              <Select
+                labelId="start-minute-label"
                 id="start-minute"
-                value={startMinute} 
-                label="Minute" 
+                value={startMinute}
+                label="Minute"
                 onChange={(e) => setStartMinute(e.target.value)}
               >
                 {minutes.map((min) => (<MenuItem key={min} value={min}>{min}</MenuItem>))}
               </Select>
             </FormControl>
           </Box>
-          
+
           <Typography sx={{ fontWeight: 500, color: 'text.secondary', mb: 1 }}>
             End Time*
           </Typography>
           <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
             <FormControl fullWidth required>
               <InputLabel id="end-hour-label">Hour</InputLabel>
-              <Select 
-                labelId="end-hour-label" 
+              <Select
+                labelId="end-hour-label"
                 id="end-hour"
-                value={endHour} 
-                label="Hour" 
+                value={endHour}
+                label="Hour"
                 onChange={(e) => setEndHour(e.target.value)}
               >
                 {hours.map((hour) => (<MenuItem key={hour} value={hour}>{hour}</MenuItem>))}
@@ -258,18 +258,18 @@ const CreateReservationDialog: React.FC<CreateReservationDialogProps> = ({ open,
             </FormControl>
             <FormControl fullWidth required>
               <InputLabel id="end-minute-label">Minute</InputLabel>
-              <Select 
-                labelId="end-minute-label" 
+              <Select
+                labelId="end-minute-label"
                 id="end-minute"
-                value={endMinute} 
-                label="Minute" 
+                value={endMinute}
+                label="Minute"
                 onChange={(e) => setEndMinute(e.target.value)}
               >
                 {minutes.map((min) => (<MenuItem key={min} value={min}>{min}</MenuItem>))}
               </Select>
             </FormControl>
           </Box>
-          
+
           <Button
             onClick={handleFindAvailableLocks}
             variant="contained"
@@ -277,10 +277,10 @@ const CreateReservationDialog: React.FC<CreateReservationDialogProps> = ({ open,
             disabled={loadingLocks}
             // ACCESSIBILITÉ: Indique le chargement
             aria-busy={loadingLocks}
-            sx={{ 
-              my: 1, 
-              backgroundColor: "#555", 
-              '&:hover': { backgroundColor: "#333" } 
+            sx={{
+              my: 1,
+              backgroundColor: "#555",
+              '&:hover': { backgroundColor: "#333" }
             }}
           >
             {loadingLocks ? <CircularProgress size={24} color="inherit" aria-label="Searching for rooms" /> : "Find Available Rooms"}
@@ -293,19 +293,19 @@ const CreateReservationDialog: React.FC<CreateReservationDialogProps> = ({ open,
             <Typography sx={{ mb: 2, color: 'text.secondary' }}>
               Step 2: Select an available room.
             </Typography>
-            
+
             {loadingLocks ? (
               <Box sx={{ display: 'flex', justifyContent: 'center', my: 3 }}>
                 <CircularProgress aria-label="Loading rooms" />
               </Box>
             ) : !hasSearched ? (
-               <Typography sx={{ textAlign: 'center', color: '#999', p: 2 }}>
-                  Please find rooms to see the list.
-               </Typography>
+              <Typography sx={{ textAlign: 'center', color: '#999', p: 2 }}>
+                Please find rooms to see the list.
+              </Typography>
             ) : locks.length === 0 ? (
-               <Typography sx={{ textAlign: 'center', color: 'orange', p: 2, fontWeight: 500 }} role="status">
-                  No rooms are available for this time slot.
-               </Typography>
+              <Typography sx={{ textAlign: 'center', color: 'orange', p: 2, fontWeight: 500 }} role="status">
+                No rooms are available for this time slot.
+              </Typography>
             ) : (
               <FormControl fullWidth required>
                 <InputLabel id="lock-select-label">Available Rooms</InputLabel>
@@ -317,8 +317,8 @@ const CreateReservationDialog: React.FC<CreateReservationDialogProps> = ({ open,
                   onChange={(e) => setSelectedLockId(e.target.value)}
                 >
                   {locks.map((lock) => (
-                    <MenuItem 
-                      key={lock.id_lock} 
+                    <MenuItem
+                      key={lock.id_lock}
                       value={lock.id_lock.toString()}
                     >
                       {lock.name}
@@ -328,7 +328,7 @@ const CreateReservationDialog: React.FC<CreateReservationDialogProps> = ({ open,
               </FormControl>
             )}
           </Box>
-          
+
           {error && (
             // ACCESSIBILITÉ: role="alert" pour lecture immédiate
             <Typography color="error" sx={{ mt: 2, textAlign: 'center', fontWeight: 500 }} role="alert">
@@ -336,7 +336,7 @@ const CreateReservationDialog: React.FC<CreateReservationDialogProps> = ({ open,
             </Typography>
           )}
         </DialogContent>
-        
+
         <DialogActions sx={{ p: '16px 24px' }}>
           <Button onClick={onClose} color="inherit">
             Cancel
@@ -346,9 +346,9 @@ const CreateReservationDialog: React.FC<CreateReservationDialogProps> = ({ open,
             variant="contained"
             disabled={!selectedLockId || loadingLocks || loadingSubmit}
             aria-busy={loadingSubmit}
-            sx={{ 
+            sx={{
               backgroundColor: ACCESSIBLE_BLUE,
-              '&:hover': { backgroundColor: "#1A3AC0" } 
+              '&:hover': { backgroundColor: "#1A3AC0" }
             }}
           >
             {loadingSubmit ? <CircularProgress size={24} color="inherit" aria-label="Submitting request" /> : "Submit Request"}

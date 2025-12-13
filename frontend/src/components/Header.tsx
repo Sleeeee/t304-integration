@@ -5,7 +5,7 @@ import CustomSnackbar from "./CustomSnackbar";
 
 interface HeaderProps {
   onNavigate: (page: string) => void;
-  onOpenMonitoring: () => void; 
+  onOpenMonitoring: () => void;
 }
 
 // Couleur contrastée pour l'accessibilité
@@ -22,7 +22,7 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, onOpenMonitoring }) => {
 
   const logout = async () => {
     try {
-      await fetch(`http://localhost:8000/auth/wlogout/`, {
+      await fetch(`${process.env.REACT_APP_BACKEND_URL}/auth/wlogout/`, {
         method: "POST",
         credentials: "include",
         headers,

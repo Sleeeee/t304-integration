@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { IconButton } from "@mui/material";
-import DeleteIcon from '@mui/icons-material/Delete'; 
+import DeleteIcon from '@mui/icons-material/Delete';
 import ConfirmDeleteDialog from "./GroupsUser/ConfirmDeleteDialog";
-import getCookie from "../context/getCookie"; 
+import getCookie from "../context/getCookie";
 
 interface User {
   id: number;
@@ -39,7 +39,7 @@ function DeleteUser({ selectedUser, onUserDeleted, refresh, snackbar, setSnackba
     const csrfToken = getCookie("csrftoken"); // Utilisation du helper partagé
 
     try {
-      const response = await fetch("http://localhost:8000/users/", {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/users/`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
@@ -52,15 +52,15 @@ function DeleteUser({ selectedUser, onUserDeleted, refresh, snackbar, setSnackba
       const data = await response.json();
 
       if (data.error) {
-        setSnackbar({isError: true, text: data.error})
+        setSnackbar({ isError: true, text: data.error })
       } else {
-        setSnackbar({isError: false, text: `${selectedUser.username} has been deleted`})
+        setSnackbar({ isError: false, text: `${selectedUser.username} has been deleted` })
         onUserDeleted();
         setIsDialogOpen(false);
         refresh(true)
       }
     } catch (error) {
-      setSnackbar({isError: true, text: "Server connection error"})
+      setSnackbar({ isError: true, text: "Server connection error" })
     } finally {
       setIsDeleting(false);
     }

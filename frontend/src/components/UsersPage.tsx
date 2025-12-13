@@ -35,14 +35,14 @@ interface UsersPageProps {
 }
 
 // Couleur accessible (Ratio > 4.5:1 sur blanc)
-const ACCESSIBLE_BLUE = "#2A4AE5"; 
+const ACCESSIBLE_BLUE = "#2A4AE5";
 const actionButtonStyle = {
-    color: "#3B5CFF",
-    textTransform: "none" as const, 
-    fontWeight: 500,
-    "&:hover": {
-      backgroundColor: "#F5F7FF",
-    },
+  color: "#3B5CFF",
+  textTransform: "none" as const,
+  fontWeight: 500,
+  "&:hover": {
+    backgroundColor: "#F5F7FF",
+  },
 };
 
 const UsersPage: React.FC<UsersPageProps> = ({ onNavigate, onEditSchematic }) => {
@@ -52,7 +52,7 @@ const UsersPage: React.FC<UsersPageProps> = ({ onNavigate, onEditSchematic }) =>
   const [error, setError] = useState("");
   const [selectedUser, setSelectedUser] = useState<any>("none");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  
+
   // Nouveaux états pour le LogsDrawer
   const [isLogsDrawerOpen, setIsLogsDrawerOpen] = useState<boolean>(false);
   const [selectedUserForLogs, setSelectedUserForLogs] = useState<User | null>(null);
@@ -88,7 +88,7 @@ const UsersPage: React.FC<UsersPageProps> = ({ onNavigate, onEditSchematic }) =>
     const headers: HeadersInit = csrfToken ? { "X-CSRFToken": csrfToken } : {};
 
     try {
-      const response = await fetch("http://localhost:8000/users/", {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/users/`, {
         method: "GET",
         credentials: "include",
         headers,
@@ -130,7 +130,7 @@ const UsersPage: React.FC<UsersPageProps> = ({ onNavigate, onEditSchematic }) =>
     setIsDialogOpen(true);
     setSelectedUser(user);
   };
-  
+
   // Handlers pour le LogsDrawer
   const handleViewLogs = (user: User) => {
     setSelectedUserForLogs(user);
@@ -276,7 +276,7 @@ const UsersPage: React.FC<UsersPageProps> = ({ onNavigate, onEditSchematic }) =>
                             />
                           </TableCell>
                           <TableCell>
-                            
+
                             <Button
                               size="small"
                               aria-label={`View logs for ${user.username}`}
@@ -344,12 +344,12 @@ const UsersPage: React.FC<UsersPageProps> = ({ onNavigate, onEditSchematic }) =>
         setSnackbar={setSnackbar}
         refresh={refreshList}
       />
-      
+
       <LogsDrawer
         open={isLogsDrawerOpen}
         onClose={handleLogsDrawerClose}
-        userId={selectedUserForLogs?.id} 
-        userName={selectedUserForLogs?.username} 
+        userId={selectedUserForLogs?.id}
+        userName={selectedUserForLogs?.username}
       />
     </Box>
   );

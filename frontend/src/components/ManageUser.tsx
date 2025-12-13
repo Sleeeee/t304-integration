@@ -11,7 +11,7 @@ import {
   FormControlLabel,
 } from "@mui/material";
 import CloseIcon from '@mui/icons-material/Close';
-import { Key, KeyOff, Badge } from '@mui/icons-material'; 
+import { Key, KeyOff, Badge } from '@mui/icons-material';
 import getCookie from "../context/getCookie";
 
 type ManageUserProps = {
@@ -31,7 +31,7 @@ interface User {
   is_staff: boolean;
   is_superuser: boolean;
   has_keypad_code?: boolean;
-  has_badge_code?: boolean; 
+  has_badge_code?: boolean;
 }
 
 type UserRole = "user" | "moderator" | "admin";
@@ -50,7 +50,7 @@ function ManageUser({ isDialogOpen, setIsDialogOpen, selectedUser, setSelectedUs
 
   const [selectedRole, setSelectedRole] = useState<UserRole>("user");
   const [generateKeypad, setGenerateKeypad] = useState(false);
-  const [generateBadge, setGenerateBadge] = useState(false); 
+  const [generateBadge, setGenerateBadge] = useState(false);
 
   const csrfToken = getCookie("csrftoken");
   const headers: HeadersInit = csrfToken
@@ -112,7 +112,7 @@ function ManageUser({ isDialogOpen, setIsDialogOpen, selectedUser, setSelectedUs
     const rolePermissions = getRolePermissions(selectedRole);
 
     try {
-      const response = await fetch("http://localhost:8000/users/", {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/users/`, {
         method: "PATCH",
         headers,
         credentials: "include",
@@ -121,7 +121,7 @@ function ManageUser({ isDialogOpen, setIsDialogOpen, selectedUser, setSelectedUs
           ...formData,
           ...rolePermissions,
           keypad: generateKeypad,
-          badge: generateBadge 
+          badge: generateBadge
         })
       });
       const data = await response.json();
@@ -169,8 +169,8 @@ function ManageUser({ isDialogOpen, setIsDialogOpen, selectedUser, setSelectedUs
       {/* ACCESSIBILITÉ: Titre visible qui sera lu à l'ouverture */}
       <DialogTitle id="manage-user-title" sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         Manage User: {selectedUser?.username}
-        <IconButton 
-          onClick={() => handleDialogClose()} 
+        <IconButton
+          onClick={() => handleDialogClose()}
           // ACCESSIBILITÉ: Label explicite pour le bouton fermer
           aria-label="Close dialog"
         >
@@ -180,7 +180,7 @@ function ManageUser({ isDialogOpen, setIsDialogOpen, selectedUser, setSelectedUs
 
       <DialogContent dividers>
         <form onSubmit={handleSubmit}>
-          
+
           <fieldset className="border-2 border-gray-300 rounded-2xl p-6 mb-6">
             <legend className="px-4 text-xl font-bold text-gray-800">
               Informations
@@ -212,12 +212,12 @@ function ManageUser({ isDialogOpen, setIsDialogOpen, selectedUser, setSelectedUs
               />
 
               {/* Keypad Management Row - Accessible */}
-              <div 
+              <div
                 className={`flex items-center justify-between p-3 rounded-xl border-2 transition-colors ${selectedUser.has_keypad_code
                   ? "bg-blue-50 border-blue-100"
                   : "bg-gray-50 border-gray-200"
-                }`}
-                // Pour que la div entière ne soit pas lue bizarrement, on laisse les contrôles internes gérer le focus
+                  }`}
+              // Pour que la div entière ne soit pas lue bizarrement, on laisse les contrôles internes gérer le focus
               >
                 <div className="flex items-center gap-3">
                   {selectedUser.has_keypad_code ? (
@@ -316,10 +316,10 @@ function ManageUser({ isDialogOpen, setIsDialogOpen, selectedUser, setSelectedUs
               ))}
             </div>
           </fieldset>
-          
+
           <DialogActions sx={{ pt: 3 }}>
-            <Button 
-              onClick={() => handleDialogClose()} 
+            <Button
+              onClick={() => handleDialogClose()}
               color="inherit"
               sx={{ fontWeight: 600 }}
             >

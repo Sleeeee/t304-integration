@@ -23,11 +23,11 @@ import VpnKeyIcon from "@mui/icons-material/VpnKey"; // Import de l'icône pour 
 interface ScanLog {
   timestamp: string;
   method: string;
-  user: string | null; 
+  user: string | null;
   failed_code: string | null;
   lock_id: number;
-  lock_name: string; 
-  result: "success" | "failed"; 
+  lock_name: string;
+  result: "success" | "failed";
 }
 
 interface LogsViewerProps {
@@ -36,16 +36,16 @@ interface LogsViewerProps {
 }
 
 const LogsViewer: React.FC<LogsViewerProps> = ({ lockId, userId }) => {
-  const [logs, setLogs] = useState<ScanLog[]>([]); 
+  const [logs, setLogs] = useState<ScanLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>("");
 
   const fetchLogs = useCallback(async () => {
     try {
-      let url = "http://localhost:8000/logs/accesslogs/";
-      
+      let url = `${process.env.REACT_APP_BACKEND_URL}/logs/accesslogs/`;
+
       const params = new URLSearchParams();
-      
+
       if (lockId) {
         params.append("lock_id", lockId.toString());
       }
@@ -57,7 +57,7 @@ const LogsViewer: React.FC<LogsViewerProps> = ({ lockId, userId }) => {
       if (queryString) {
         url = `${url}?${queryString}`;
       }
-      
+
       const response = await fetch(url, {
         method: "GET",
         credentials: "include",
@@ -68,7 +68,7 @@ const LogsViewer: React.FC<LogsViewerProps> = ({ lockId, userId }) => {
       }
 
       const data = await response.json();
-      
+
       setLogs(Array.isArray(data) ? data : (data.logs || []));
       setError("");
 
@@ -89,7 +89,7 @@ const LogsViewer: React.FC<LogsViewerProps> = ({ lockId, userId }) => {
   const formatDateTime = (dateString: string) => {
     const date = new Date(dateString);
     if (isNaN(date.getTime())) {
-        return "Date Invalide"; 
+      return "Date Invalide";
     }
     return date.toLocaleString("fr-FR", {
       day: "2-digit",
@@ -136,7 +136,7 @@ const LogsViewer: React.FC<LogsViewerProps> = ({ lockId, userId }) => {
         <List sx={{ width: "100%", bgcolor: "background.paper", p: 0 }}>
           {logs.map((log, index) => {
             const isSuccess = log.result === "success";
-            
+
             return (
               <React.Fragment key={index}>
                 {index > 0 && <Divider />}
@@ -170,7 +170,7 @@ const LogsViewer: React.FC<LogsViewerProps> = ({ lockId, userId }) => {
                         }}
                       />
                     </Box>
-                    
+
                     {/* Failed Code */}
                     {!isSuccess && log.failed_code && log.failed_code !== "" && (
                       <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>

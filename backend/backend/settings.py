@@ -26,7 +26,7 @@ SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
 DEBUG = True
 
 ALLOWED_HOSTS = [
-    'localhost',
+    '*',
 ]
 
 
@@ -150,7 +150,7 @@ REST_FRAMEWORK = {
 
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
-    'http://localhost:3000',
+    'http://localhost',
 ]
 
 CSRF_TRUSTED_ORIGINS = [

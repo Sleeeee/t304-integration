@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import getCookie from './getCookie'; 
+import getCookie from './getCookie';
 
 interface User {
   id: number;
@@ -22,9 +22,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const csrfToken = getCookie("csrftoken"); 
+    const csrfToken = getCookie("csrftoken");
 
-    fetch("http://localhost:8000/auth/me/", {
+    fetch(`${process.env.REACT_APP_BACKEND_URL}/auth/me/`, {
       method: "GET",
       credentials: "include",
       headers: {
@@ -37,21 +37,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
       return res.json();
     }).then(data => {
-      setUser(data.user || data); 
+      setUser(data.user || data);
     }).catch(() => {
-      setUser(null); 
+      setUser(null);
     }).finally(() => {
       setLoading(false);
     });
   }, []);
 
   const logout = async () => {
-    setLoading(true); 
+    setLoading(true);
     const csrfToken = getCookie("csrftoken");
-    await fetch("http://localhost:8000/auth/wlogout/", {
-        method: "POST",
-        credentials: "include",
-        headers: { 'X-CSRFToken': csrfToken || "" }
+    await fetch(`${process.env.REACT_APP_BACKEND_URL}/auth/wlogout/`, {
+      method: "POST",
+      credentials: "include",
+      headers: { 'X-CSRFToken': csrfToken || "" }
     });
     setUser(null);
     setLoading(false);
@@ -59,7 +59,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{user, loading, logout}}>
+    <AuthContext.Provider value={{ user, loading, logout }}>
       {children}
     </AuthContext.Provider>
   );
