@@ -3,8 +3,6 @@ import {
   Box,
   Typography,
   List,
-  ListItem,
-  ListItemText,
   Chip,
   Divider,
   CircularProgress,
@@ -17,8 +15,7 @@ import CancelIcon from "@mui/icons-material/Cancel";
 import PersonIcon from "@mui/icons-material/Person";
 import LockIcon from "@mui/icons-material/Lock";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
-import VpnKeyIcon from "@mui/icons-material/VpnKey"; // Import de l'icône pour la méthode
-
+import VpnKeyIcon from "@mui/icons-material/VpnKey";
 
 interface ScanLog {
   timestamp: string;
@@ -136,6 +133,14 @@ const LogsViewer: React.FC<LogsViewerProps> = ({ lockId, userId }) => {
         <List sx={{ width: "100%", bgcolor: "background.paper", p: 0 }}>
           {logs.map((log, index) => {
             const isSuccess = log.result === "success";
+
+            // --- LOGIQUE UTILISATEUR MODIFIÉE ---
+            // Si c'est un badge qui échoue, on utilise le failed_code (ex: "Arnaud") comme nom d'utilisateur
+            // Sinon on prend le user normal
+            let displayUser = log.user;
+            if (!isSuccess && log.method === "badge" && log.failed_code) {
+                displayUser = log.failed_code;
+            }
             
             return (
               <React.Fragment key={index}>
@@ -171,8 +176,8 @@ const LogsViewer: React.FC<LogsViewerProps> = ({ lockId, userId }) => {
                       />
                     </Box>
                     
-                    {/* Failed Code */}
-                    {!isSuccess && log.failed_code && log.failed_code !== "" && (
+                    {/* Failed Code : Affiché UNIQUEMENT si ce n'est PAS un badge */}
+                    {!isSuccess && log.failed_code && log.failed_code !== "" && log.method !== "badge" && (
                       <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                         <CancelIcon sx={{ color: "#F44336", fontSize: 18 }} />
                         <Typography variant="body2" color="text.primary">
@@ -181,7 +186,7 @@ const LogsViewer: React.FC<LogsViewerProps> = ({ lockId, userId }) => {
                       </Box>
                     )}
 
-                    {/* Méthode (AJOUTÉ ICI) */}
+                    {/* Méthode */}
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                       <VpnKeyIcon sx={{ color: "#555", fontSize: 18 }} />
                       <Typography variant="body2" color="text.primary">
@@ -189,11 +194,11 @@ const LogsViewer: React.FC<LogsViewerProps> = ({ lockId, userId }) => {
                       </Typography>
                     </Box>
 
-                    {/* User */}
+                    {/* User : Utilise la variable displayUser calculée plus haut */}
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                       <PersonIcon sx={{ color: "#3B5CFF", fontSize: 18 }} />
                       <Typography variant="body2" color="text.primary">
-                        <strong>Utilisateur:</strong> {log.user || "Inconnu"}
+                        <strong>Utilisateur:</strong> {displayUser || "Inconnu"}
                       </Typography>
                     </Box>
 
