@@ -13,7 +13,7 @@ import {
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import getCookie from '../../context/getCookie';
-import { LockGroup } from '../../types'; 
+import { LockGroup } from '../../types';
 
 // Couleur accessible
 const ACCESSIBLE_BLUE = "#2A4AE5";
@@ -45,13 +45,13 @@ const AddGroupModal: React.FC<AddGroupModalProps> = ({ open, onClose, onGroupAdd
       setError("Group name cannot be empty.");
       return;
     }
-    
+
     setLoading(true);
     setError('');
     const csrfToken = getCookie("csrftoken");
 
     try {
-      const response = await fetch("http://localhost:8000/locks/groups/", {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/locks/groups/`, {
         method: 'POST',
         credentials: 'include',
         headers: {
@@ -63,7 +63,7 @@ const AddGroupModal: React.FC<AddGroupModalProps> = ({ open, onClose, onGroupAdd
 
       if (response.ok) {
         const newGroup = await response.json();
-        onGroupAdded(newGroup.lock_group); 
+        onGroupAdded(newGroup.lock_group);
       } else {
         const data = await response.json();
         setError(data.error || "Error creating group.");
@@ -76,20 +76,20 @@ const AddGroupModal: React.FC<AddGroupModalProps> = ({ open, onClose, onGroupAdd
   };
 
   return (
-    <Dialog 
-      open={open} 
-      onClose={onClose} 
-      fullWidth 
+    <Dialog
+      open={open}
+      onClose={onClose}
+      fullWidth
       maxWidth="xs"
       // ACCESSIBILITÉ: Liaison du titre
       aria-labelledby="add-group-modal-title"
     >
-      <DialogTitle 
-        id="add-group-modal-title" 
+      <DialogTitle
+        id="add-group-modal-title"
         sx={{ fontWeight: 600, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
       >
         Create New Lock Group
-        <IconButton 
+        <IconButton
           onClick={onClose}
           // ACCESSIBILITÉ: Label explicite
           aria-label="Close dialog"
@@ -97,7 +97,7 @@ const AddGroupModal: React.FC<AddGroupModalProps> = ({ open, onClose, onGroupAdd
           <CloseIcon />
         </IconButton>
       </DialogTitle>
-      
+
       <Box component="form" onSubmit={handleSubmit}>
         <DialogContent>
           <TextField
@@ -126,9 +126,9 @@ const AddGroupModal: React.FC<AddGroupModalProps> = ({ open, onClose, onGroupAdd
           <Button onClick={onClose} disabled={loading} color="inherit">
             Cancel
           </Button>
-          <Button 
-            type="submit" 
-            variant="contained" 
+          <Button
+            type="submit"
+            variant="contained"
             disabled={loading}
             aria-busy={loading}
             sx={{

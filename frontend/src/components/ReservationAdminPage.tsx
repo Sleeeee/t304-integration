@@ -11,8 +11,8 @@ import {
 } from "@mui/material";
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
-import getCookie from "../context/getCookie"; 
-import CustomSnackbar from "./CustomSnackbar"; 
+import getCookie from "../context/getCookie";
+import CustomSnackbar from "./CustomSnackbar";
 
 interface User {
   id: number;
@@ -54,7 +54,7 @@ const ReservationAdminPage: React.FC<ReservationAdminPageProps> = ({ onNavigate 
     try {
       const csrfToken = getCookie("csrftoken");
       const headers: HeadersInit = csrfToken ? { "X-CSRFToken": csrfToken } : {};
-      const response = await fetch("http://localhost:8000/reservations/all/", {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/reservations/all/`, {
         method: "GET",
         credentials: "include",
         headers: headers,
@@ -63,27 +63,27 @@ const ReservationAdminPage: React.FC<ReservationAdminPageProps> = ({ onNavigate 
         throw new Error("Failed to load reservations.");
       }
       const data: Reservation[] = await response.json();
-      setAllReservations(data); 
+      setAllReservations(data);
     } catch (err: any) {
       setSnackbarInfo({ text: err.message || "An unknown error occurred.", isError: true });
     } finally {
       setLoading(false);
     }
   };
-  
+
   useEffect(() => {
     fetchAllReservations();
   }, []);
 
   const handleUpdateStatus = async (reservationId: number, newStatus: 'approved' | 'rejected') => {
-    setSubmittingId(reservationId); 
+    setSubmittingId(reservationId);
     try {
       const csrfToken = getCookie("csrftoken");
       const headers: HeadersInit = {
         "X-CSRFToken": csrfToken || "",
         "Content-Type": "application/json"
       };
-      const response = await fetch(`http://localhost:8000/reservations/${reservationId}/status/`, {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/reservations/${reservationId}/status/`, {
         method: "PATCH",
         credentials: "include",
         headers: headers,
@@ -94,15 +94,15 @@ const ReservationAdminPage: React.FC<ReservationAdminPageProps> = ({ onNavigate 
         throw new Error(data.error || "Failed to update status.");
       }
       setAllReservations(currentReservations =>
-        currentReservations.map(r => 
-          (r.id === reservationId ? data : r) 
+        currentReservations.map(r =>
+          (r.id === reservationId ? data : r)
         )
       );
       setSnackbarInfo({ text: `Reservation ${newStatus}`, isError: false });
     } catch (err: any) {
       setSnackbarInfo({ text: err.message, isError: true });
     } finally {
-      setSubmittingId(null); 
+      setSubmittingId(null);
     }
   };
 
@@ -120,8 +120,8 @@ const ReservationAdminPage: React.FC<ReservationAdminPageProps> = ({ onNavigate 
     if (status === 'rejected') return 'error.main';
     return 'text.secondary';
   };
-  
-  const ReservationItem: React.FC<{res: Reservation}> = ({ res }) => (
+
+  const ReservationItem: React.FC<{ res: Reservation }> = ({ res }) => (
     <ListItem divider>
       <ListItemText
         primary={
@@ -134,7 +134,7 @@ const ReservationAdminPage: React.FC<ReservationAdminPageProps> = ({ onNavigate 
         }
       />
       {res.status !== 'pending' && (
-        <Typography 
+        <Typography
           sx={{ fontWeight: 600, color: getStatusColor(res.status), ml: 2 }}
         >
           {capitalize(res.status)}
@@ -150,19 +150,19 @@ const ReservationAdminPage: React.FC<ReservationAdminPageProps> = ({ onNavigate 
         isError={snackbarInfo.isError}
         onClose={() => setSnackbarInfo({ text: "", isError: false })}
       />
-      
-      <Typography 
-        variant="h4" 
-        component="h1" 
+
+      <Typography
+        variant="h4"
+        component="h1"
         sx={{ fontWeight: 700, mb: 3, color: "#333" }}
       >
         Reservations Management
       </Typography>
 
       {loading ? (
-        <Box 
-          sx={{ display: 'flex', justifyContent: 'center', py: 5 }} 
-          role="status" 
+        <Box
+          sx={{ display: 'flex', justifyContent: 'center', py: 5 }}
+          role="status"
           aria-label="Loading reservations"
         >
           <CircularProgress />
@@ -171,8 +171,8 @@ const ReservationAdminPage: React.FC<ReservationAdminPageProps> = ({ onNavigate 
         <Box
           sx={{
             display: 'flex',
-            gap: 4, 
-            flexDirection: { xs: 'column', md: 'row' } 
+            gap: 4,
+            flexDirection: { xs: 'column', md: 'row' }
           }}
         >
           {/* Right Column: Pending */}
@@ -229,7 +229,7 @@ const ReservationAdminPage: React.FC<ReservationAdminPageProps> = ({ onNavigate 
               </List>
             </Paper>
           </Box>
-          
+
           {/* Left Column: History */}
           <Box sx={{ width: { xs: '100%', md: '50%' } }}>
             <Paper elevation={0} sx={{ p: 3, borderRadius: 2, border: "1px solid #E0E0E0" }}>

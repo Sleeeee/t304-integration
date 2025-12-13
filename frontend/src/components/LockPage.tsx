@@ -25,11 +25,11 @@ import {
   FormControlLabel,
   Switch,
   ListItemText,
-  Checkbox, 
+  Checkbox,
   SelectChangeEvent,
   Tooltip
 } from "@mui/material";
-import KeyIcon from '@mui/icons-material/Key'; 
+import KeyIcon from '@mui/icons-material/Key';
 
 // --- Imports Icones Batterie ---
 import BatteryFullIcon from '@mui/icons-material/BatteryFull';
@@ -38,13 +38,13 @@ import Battery50Icon from '@mui/icons-material/Battery50';
 import Battery20Icon from '@mui/icons-material/Battery20';
 import BatteryAlertIcon from '@mui/icons-material/BatteryAlert';
 import BatteryUnknownIcon from '@mui/icons-material/BatteryUnknown';
-import SignalWifiOffIcon from '@mui/icons-material/SignalWifiOff'; 
+import SignalWifiOffIcon from '@mui/icons-material/SignalWifiOff';
 
 // --- Imports internes ---
 import getCookie from "../context/getCookie";
-import LockGroupManager from "./GroupsLock/LockGroupManager"; 
+import LockGroupManager from "./GroupsLock/LockGroupManager";
 import LogsDrawer from "./LogsDrawer";
-import CustomSnackbar from "./CustomSnackbar"; 
+import CustomSnackbar from "./CustomSnackbar";
 
 // --- Interfaces ---
 interface BatteryLevel {
@@ -62,7 +62,7 @@ interface Lock {
   status: string;
   is_reservable: boolean;
   last_connexion: string | null;
-  auth_methods?: string[]; 
+  auth_methods?: string[];
   remote_address?: string | null;
   battery_level?: BatteryLevel | null;
 }
@@ -85,7 +85,7 @@ const ManageLock: React.FC<ManageLockProps> = ({ isDialogOpen, onClose, selected
   const [description, setDescription] = useState<string>('');
   const [isReservable, setIsReservable] = useState<boolean>(false);
   const [authMethods, setAuthMethods] = useState<string[]>([]);
-  
+
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
 
@@ -118,7 +118,7 @@ const ManageLock: React.FC<ManageLockProps> = ({ isDialogOpen, onClose, selected
     setError('');
     const csrfToken = getCookie("csrftoken");
     const method = isEditMode ? 'PUT' : 'POST';
-    const url = 'http://localhost:8000/locks/';
+    const url = `${process.env.REACT_APP_BACKEND_URL}/locks/`;
 
     let bodyData: any = {
       name,
@@ -166,7 +166,7 @@ const ManageLock: React.FC<ManageLockProps> = ({ isDialogOpen, onClose, selected
     setIsLoading(true);
     try {
       const csrfToken = getCookie("csrftoken");
-      const response = await fetch('http://localhost:8000/locks/', {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/locks/`, {
         method: 'DELETE',
         credentials: 'include',
         headers: {
@@ -188,17 +188,17 @@ const ManageLock: React.FC<ManageLockProps> = ({ isDialogOpen, onClose, selected
   };
 
   return (
-    <Dialog 
-      open={isDialogOpen} 
-      onClose={() => onClose(false)} 
-      fullWidth 
+    <Dialog
+      open={isDialogOpen}
+      onClose={() => onClose(false)}
+      fullWidth
       maxWidth="xs"
       aria-labelledby="manage-lock-title"
     >
       <DialogTitle id="manage-lock-title">
         {isEditMode ? 'Manage Lock' : 'Add Lock'}
       </DialogTitle>
-      
+
       <DialogContent>
         <Box component="form" noValidate sx={{ mt: 1 }}>
           <TextField
@@ -219,7 +219,7 @@ const ManageLock: React.FC<ManageLockProps> = ({ isDialogOpen, onClose, selected
             onChange={(e) => setDescription(e.target.value)}
             disabled={isLoading}
           />
-          
+
           <FormControl fullWidth margin="normal">
             <InputLabel id="auth-methods-label">Auth Methods</InputLabel>
             <Select
@@ -259,7 +259,7 @@ const ManageLock: React.FC<ManageLockProps> = ({ isDialogOpen, onClose, selected
             label="Reservable (Can be booked)"
             sx={{ mt: 1 }}
           />
-          
+
           {error && (
             <Typography color="error" variant="body2" sx={{ mt: 1 }} role="alert">
               {error}
@@ -275,9 +275,9 @@ const ManageLock: React.FC<ManageLockProps> = ({ isDialogOpen, onClose, selected
         ) : <Box />}
         <Box>
           <Button onClick={() => onClose(false)} sx={{ mr: 1 }}>Cancel</Button>
-          <Button 
-            onClick={handleSave} 
-            variant="contained" 
+          <Button
+            onClick={handleSave}
+            variant="contained"
             disabled={isLoading}
             sx={{ backgroundColor: "#2A4AE5", '&:hover': { backgroundColor: "#1A3AC0" } }}
           >
@@ -297,7 +297,7 @@ interface LockPageProps {
 }
 
 const actionButtonStyle = {
-  color: "#2A4AE5", 
+  color: "#2A4AE5",
   textTransform: "none" as const,
   fontWeight: 500,
   "&:hover": {
@@ -314,7 +314,7 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
   const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
   const [isLogsDrawerOpen, setIsLogsDrawerOpen] = useState<boolean>(false);
   const [selectedLockForLogs, setSelectedLockForLogs] = useState<Lock | null>(null);
-  
+
   const [openingLockId, setOpeningLockId] = useState<number | null>(null);
 
   const [snackbarMessage, setSnackbarMessage] = useState("");
@@ -322,7 +322,7 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
 
   const getRelativeTime = (isoString: string | undefined | null): string => {
     if (!isoString) return 'Never';
-    
+
     const date = new Date(isoString);
     const now = new Date();
     const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
@@ -330,13 +330,13 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
     if (diffInSeconds < 0) return 'Just now';
 
     if (diffInSeconds < 60) return `${diffInSeconds} sec`;
-    
+
     const diffInMinutes = Math.floor(diffInSeconds / 60);
     if (diffInMinutes < 60) return `${diffInMinutes} min`;
-    
+
     const diffInHours = Math.floor(diffInMinutes / 60);
     if (diffInHours < 24) return `${diffInHours} h`;
-    
+
     const diffInDays = Math.floor(diffInHours / 24);
     return `${diffInDays} d`;
   };
@@ -373,7 +373,7 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
     const lastUpdate = new Date(timestamp);
     const now = new Date();
     const diffInSeconds = (now.getTime() - lastUpdate.getTime()) / 1000;
-    
+
     if (diffInSeconds > 1800) {
       return (
         <Tooltip title={`Connection lost! Last update: ${lastUpdate.toLocaleTimeString()} (${percent_approx}%)`}>
@@ -382,7 +382,7 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
             label="Unknown"
             size="small"
             variant="outlined"
-            color="default" 
+            color="default"
             sx={{ borderColor: '#ccc', color: '#666' }}
           />
         </Tooltip>
@@ -435,7 +435,7 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
     const csrfToken = getCookie("csrftoken");
     const headers: HeadersInit = csrfToken ? { "X-CSRFToken": csrfToken } : {};
     try {
-      const response = await fetch("http://localhost:8000/locks/", {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/locks/`, {
         method: "GET",
         credentials: "include",
         headers,
@@ -455,36 +455,36 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
   }, []);
 
   const handleCloseSnackbar = () => {
-    setSnackbarMessage(""); 
+    setSnackbarMessage("");
   };
 
   const handleRemoteOpen = async (lock: Lock) => {
     if (!lock.remote_address) return;
     setOpeningLockId(lock.id_lock);
     const csrfToken = getCookie("csrftoken");
-    
-    try {
-        const response = await fetch(`http://localhost:8000/locks/${lock.id_lock}/remote-open/`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "X-CSRFToken": csrfToken || "",
-            },
-        });
 
-        if (response.ok) {
-            setSnackbarMessage(`Signal sent to lock ${lock.name} (${lock.remote_address})`);
-            setIsSnackbarError(false);
-        } else {
-            const data = await response.json();
-            setSnackbarMessage(`Error: ${data.error || "Failed to open"}`);
-            setIsSnackbarError(true);
-        }
-    } catch (err) {
-        setSnackbarMessage("Connection error");
+    try {
+      const response = await fetch(`http://localhost:8000/locks/${lock.id_lock}/remote-open/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": csrfToken || "",
+        },
+      });
+
+      if (response.ok) {
+        setSnackbarMessage(`Signal sent to lock ${lock.name} (${lock.remote_address})`);
+        setIsSnackbarError(false);
+      } else {
+        const data = await response.json();
+        setSnackbarMessage(`Error: ${data.error || "Failed to open"}`);
         setIsSnackbarError(true);
+      }
+    } catch (err) {
+      setSnackbarMessage("Connection error");
+      setIsSnackbarError(true);
     } finally {
-        setOpeningLockId(null);
+      setOpeningLockId(null);
     }
   };
 
@@ -492,8 +492,8 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
     fetchLocks();
 
     const timer = setInterval(() => {
-        setLocks(currentLocks => [...currentLocks]); 
-    }, 10000); 
+      setLocks(currentLocks => [...currentLocks]);
+    }, 10000);
 
     return () => clearInterval(timer);
   }, [fetchLocks]);
@@ -536,8 +536,8 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
 
   return (
     <Box sx={{ p: 4, backgroundColor: "#F5F5F5", minHeight: "calc(100vh - 64px)" }}>
-      <Typography 
-        variant="h4" 
+      <Typography
+        variant="h4"
         component="h1"
         sx={{ fontWeight: 700, mb: 3, color: "#333" }}
       >
@@ -565,11 +565,11 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
                 variant="contained"
                 onClick={handleAddClick}
                 sx={{
-                  backgroundColor: "#2A4AE5", 
-                  textTransform: "none", 
+                  backgroundColor: "#2A4AE5",
+                  textTransform: "none",
                   fontWeight: 600,
-                  boxShadow: "none", 
-                  ml: "auto", 
+                  boxShadow: "none",
+                  ml: "auto",
                   "&:hover": { backgroundColor: "#1A3AC0" },
                 }}
               >
@@ -650,7 +650,7 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
                                 {lock.auth_methods.map((method) => (
                                   <Chip
                                     key={method}
-                                    label={method.charAt(0).toUpperCase() + method.slice(1)} 
+                                    label={method.charAt(0).toUpperCase() + method.slice(1)}
                                     size="small"
                                     variant="filled"
                                     sx={{
@@ -686,7 +686,7 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
 
                           <TableCell>
                             <Button
-                              size="small"
+                              size="small
                               onClick={() => handleViewLogs(lock)} 
                               aria-label={`View history for ${lock.name}`}
                               sx={actionButtonStyle}
@@ -761,7 +761,7 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
         onClose={handleCloseSnackbar}
       />
 
-    </Box>
+    </Box >
   );
 };
 

@@ -20,11 +20,11 @@ import VpnKeyIcon from "@mui/icons-material/VpnKey";
 interface ScanLog {
   timestamp: string;
   method: string;
-  user: string | null; 
+  user: string | null;
   failed_code: string | null;
   lock_id: number;
-  lock_name: string; 
-  result: "success" | "failed"; 
+  lock_name: string;
+  result: "success" | "failed";
 }
 
 interface LogsViewerProps {
@@ -33,16 +33,16 @@ interface LogsViewerProps {
 }
 
 const LogsViewer: React.FC<LogsViewerProps> = ({ lockId, userId }) => {
-  const [logs, setLogs] = useState<ScanLog[]>([]); 
+  const [logs, setLogs] = useState<ScanLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>("");
 
   const fetchLogs = useCallback(async () => {
     try {
-      let url = "http://localhost:8000/logs/accesslogs/";
-      
+      let url = `${process.env.REACT_APP_BACKEND_URL}/logs/accesslogs/`;
+
       const params = new URLSearchParams();
-      
+
       if (lockId) {
         params.append("lock_id", lockId.toString());
       }
@@ -54,7 +54,7 @@ const LogsViewer: React.FC<LogsViewerProps> = ({ lockId, userId }) => {
       if (queryString) {
         url = `${url}?${queryString}`;
       }
-      
+
       const response = await fetch(url, {
         method: "GET",
         credentials: "include",
@@ -65,7 +65,7 @@ const LogsViewer: React.FC<LogsViewerProps> = ({ lockId, userId }) => {
       }
 
       const data = await response.json();
-      
+
       setLogs(Array.isArray(data) ? data : (data.logs || []));
       setError("");
 
@@ -86,7 +86,7 @@ const LogsViewer: React.FC<LogsViewerProps> = ({ lockId, userId }) => {
   const formatDateTime = (dateString: string) => {
     const date = new Date(dateString);
     if (isNaN(date.getTime())) {
-        return "Date Invalide"; 
+      return "Date Invalide";
     }
     return date.toLocaleString("fr-FR", {
       day: "2-digit",
@@ -139,9 +139,9 @@ const LogsViewer: React.FC<LogsViewerProps> = ({ lockId, userId }) => {
             // Sinon on prend le user normal
             let displayUser = log.user;
             if (!isSuccess && log.method === "badge" && log.failed_code) {
-                displayUser = log.failed_code;
+              displayUser = log.failed_code;
             }
-            
+
             return (
               <React.Fragment key={index}>
                 {index > 0 && <Divider />}
@@ -175,56 +175,64 @@ const LogsViewer: React.FC<LogsViewerProps> = ({ lockId, userId }) => {
                         }}
                       />
                     </Box>
-                    
-                    {/* Failed Code : Affiché UNIQUEMENT si ce n'est PAS un badge */}
-                    {!isSuccess && log.failed_code && log.failed_code !== "" && log.method !== "badge" && (
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                        <CancelIcon sx={{ color: "#F44336", fontSize: 18 }} />
-                        <Typography variant="body2" color="text.primary">
-                          <strong>Code d'échec:</strong> {log.failed_code}
-                        </Typography>
-                      </Box>
-                    )}
+<<<<<<< HEAD
 
-                    {/* Méthode */}
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                      <VpnKeyIcon sx={{ color: "#555", fontSize: 18 }} />
-                      <Typography variant="body2" color="text.primary">
-                        <strong>Méthode:</strong> {log.method}
-                      </Typography>
-                    </Box>
+  {/* Failed Code : Affiché UNIQUEMENT si ce n'est PAS un badge */ }
+  {
+    !isSuccess && log.failed_code && log.failed_code !== "" && log.method !== "badge" && (
+=======
 
-                    {/* User : Utilise la variable displayUser calculée plus haut */}
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                      <PersonIcon sx={{ color: "#3B5CFF", fontSize: 18 }} />
-                      <Typography variant="body2" color="text.primary">
-                        <strong>Utilisateur:</strong> {displayUser || "Inconnu"}
-                      </Typography>
-                    </Box>
+                    {/* Failed Code */}
+                    {!isSuccess && log.failed_code && log.failed_code !== "" && (
+>>>>>>> 01ddd10 (LARES #25 Implement NGINX as a web server and tweak code to use the actual backend url (the one i set up 3 months ago that no one used, remember ?))
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        <CancelIcon sx={{ color: "#F44336", fontSize: 18 }} />
+        <Typography variant="body2" color="text.primary">
+          <strong>Code d'échec:</strong> {log.failed_code}
+        </Typography>
+      </Box>
+    )
+  }
 
-                    {/* Lock */}
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                      <LockIcon sx={{ color: "#666", fontSize: 18 }} />
-                      <Typography variant="body2" color="text.primary">
-                        <strong>Serrure:</strong> {log.lock_name || `ID: ${log.lock_id}`}
-                      </Typography>
-                    </Box>
+  {/* Méthode */ }
+  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+    <VpnKeyIcon sx={{ color: "#555", fontSize: 18 }} />
+    <Typography variant="body2" color="text.primary">
+      <strong>Méthode:</strong> {log.method}
+    </Typography>
+  </Box>
 
-                    {/* Timestamp */}
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                      <AccessTimeIcon sx={{ color: "#999", fontSize: 18 }} />
-                      <Typography variant="body2" color="text.secondary">
-                        {formatDateTime(log.timestamp)}
-                      </Typography>
-                    </Box>
-                  </Stack>
-                </Paper>
-              </React.Fragment>
+  {/* User : Utilise la variable displayUser calculée plus haut */ }
+  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+    <PersonIcon sx={{ color: "#3B5CFF", fontSize: 18 }} />
+    <Typography variant="body2" color="text.primary">
+      <strong>Utilisateur:</strong> {displayUser || "Inconnu"}
+    </Typography>
+  </Box>
+
+  {/* Lock */ }
+  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+    <LockIcon sx={{ color: "#666", fontSize: 18 }} />
+    <Typography variant="body2" color="text.primary">
+      <strong>Serrure:</strong> {log.lock_name || `ID: ${log.lock_id}`}
+    </Typography>
+  </Box>
+
+  {/* Timestamp */ }
+  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+    <AccessTimeIcon sx={{ color: "#999", fontSize: 18 }} />
+    <Typography variant="body2" color="text.secondary">
+      {formatDateTime(log.timestamp)}
+    </Typography>
+  </Box>
+                  </Stack >
+                </Paper >
+              </React.Fragment >
             );
           })}
-        </List>
+        </List >
       )}
-    </Box>
+    </Box >
   );
 };
 

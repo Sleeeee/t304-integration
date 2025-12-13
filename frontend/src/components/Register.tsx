@@ -66,7 +66,7 @@ function Register() {
     const rolePermissions = getRolePermissions(selectedRole);
 
     try {
-      const response = await fetch("http://localhost:8000/users/", {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/users/`, {
         method: "POST",
         headers,
         credentials: "include",
@@ -121,7 +121,7 @@ function Register() {
   return (
     <div className="max-w-2xl mx-auto p-6" role="main">
       <h1 className="sr-only">Create New User</h1> {/* Titre caché pour lecteurs d'écran */}
-      
+
       <form onSubmit={handleSubmit} className="flex flex-col gap-6" noValidate>
         {message.text && message.type !== "" && (
           <Alert
@@ -256,7 +256,7 @@ function Register() {
           className="!py-4 !text-lg !font-bold !rounded-2xl"
           sx={{
             // Ratio de contraste WCAG AA (>4.5:1)
-            backgroundColor: "#2A4AE5", 
+            backgroundColor: "#2A4AE5",
             "&:hover": { backgroundColor: "#1A3AC0" }
           }}
         >

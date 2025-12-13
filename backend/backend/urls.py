@@ -19,11 +19,11 @@ from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('auth/', include("auth.urls")),
-    path('users/', include("users.urls")),
-    path('locks/', include("locks.urls")),
-    path("logs/", include("logs.urls")),
-    path('permissions/', include("permissions.urls")),
+    path('api/auth/', include("auth.urls")),
+    path('api/users/', include("users.urls")),
+    path('api/locks/', include("locks.urls")),
+    path("api/logs/", include("logs.urls")),
+    path('api/permissions/', include("permissions.urls")),
     path('api/schematics/', include("schematics.urls")),
-    path('reservations/', include('reservations.urls')),
+    path('api/reservations/', include('reservations.urls')),
 ]

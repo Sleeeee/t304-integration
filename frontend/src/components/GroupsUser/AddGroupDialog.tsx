@@ -15,7 +15,7 @@ import {
   Checkbox,
 } from "@mui/material";
 import CloseIcon from '@mui/icons-material/Close';
-import getCookie from "../../context/getCookie"; 
+import getCookie from "../../context/getCookie";
 
 // Couleur accessible
 const ACCESSIBLE_BLUE = "#2A4AE5";
@@ -34,7 +34,7 @@ interface Group {
 type AddGroupDialogProps = {
   open: boolean;
   onClose: () => void;
-  onGroupAdded: (newGroup: Group) => void; 
+  onGroupAdded: (newGroup: Group) => void;
 };
 
 const AddGroupDialog: React.FC<AddGroupDialogProps> = ({ open, onClose, onGroupAdded }) => {
@@ -66,7 +66,7 @@ const AddGroupDialog: React.FC<AddGroupDialogProps> = ({ open, onClose, onGroupA
       setError("");
       setUsersError("");
       setLoading(false);
-      setUserSearchQuery(""); 
+      setUserSearchQuery("");
       return;
     }
 
@@ -74,7 +74,7 @@ const AddGroupDialog: React.FC<AddGroupDialogProps> = ({ open, onClose, onGroupA
       setUsersLoading(true);
       setUsersError("");
       try {
-        const response = await fetch("http://localhost:8000/users/", { 
+        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/users/`, {
           method: "GET",
           credentials: "include",
           headers: getHeaders(),
@@ -93,10 +93,10 @@ const AddGroupDialog: React.FC<AddGroupDialogProps> = ({ open, onClose, onGroupA
     };
 
     fetchUsers();
-  }, [open]); 
+  }, [open]);
 
   const handleClose = () => {
-    onClose(); 
+    onClose();
   };
 
   const handleCheckboxChange = (event: ChangeEvent<HTMLInputElement>, userId: number) => {
@@ -113,12 +113,12 @@ const AddGroupDialog: React.FC<AddGroupDialogProps> = ({ open, onClose, onGroupA
       setError("Group name cannot be empty.");
       return;
     }
-    
+
     setLoading(true);
     setError("");
 
     try {
-      const groupResponse = await fetch("http://localhost:8000/users/groups/", {
+      const groupResponse = await fetch(`${process.env.REACT_APP_BACKEND_URL}/users/groups/`, {
         method: "POST",
         credentials: "include",
         headers: getHeaders(true),
@@ -134,20 +134,20 @@ const AddGroupDialog: React.FC<AddGroupDialogProps> = ({ open, onClose, onGroupA
       const newGroup: Group = newGroupData.group;
 
       if (selectedUserIds.length > 0) {
-        const addUserResponse = await fetch(`http://localhost:8000/users/groups/${newGroup.id}/add_user/`, {
+        const addUserResponse = await fetch(`${process.env.REACT_APP_BACKEND_URL}/users/groups/${newGroup.id}/add_user/`, {
           method: "POST",
           credentials: "include",
           headers: getHeaders(true),
-          body: JSON.stringify({ user_ids: selectedUserIds }), 
+          body: JSON.stringify({ user_ids: selectedUserIds }),
         });
 
         if (!addUserResponse.ok) {
           throw new Error("Group created, but failed to add users.");
         }
       }
-      
-      onGroupAdded(newGroup); 
-      handleClose(); 
+
+      onGroupAdded(newGroup);
+      handleClose();
 
     } catch (err: any) {
       setError(err.message || "An error occurred.");
@@ -156,7 +156,7 @@ const AddGroupDialog: React.FC<AddGroupDialogProps> = ({ open, onClose, onGroupA
     }
   };
 
-  const filteredUsers = allUsers.filter(user => 
+  const filteredUsers = allUsers.filter(user =>
     user.username.toLowerCase().includes(userSearchQuery.toLowerCase()) ||
     user.email.toLowerCase().includes(userSearchQuery.toLowerCase())
   );
@@ -166,11 +166,11 @@ const AddGroupDialog: React.FC<AddGroupDialogProps> = ({ open, onClose, onGroupA
       open={open}
       onClose={handleClose}
       fullWidth={true}
-      maxWidth="sm" 
+      maxWidth="sm"
       // ACCESSIBILITÉ
       aria-labelledby="add-group-title"
     >
-      <DialogTitle 
+      <DialogTitle
         id="add-group-title"
         sx={{ fontWeight: 600, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
       >
@@ -179,12 +179,12 @@ const AddGroupDialog: React.FC<AddGroupDialogProps> = ({ open, onClose, onGroupA
           <CloseIcon />
         </IconButton>
       </DialogTitle>
-      
+
       <form onSubmit={handleSubmit}>
         <DialogContent>
           <TextField
             id="group-name"
-            autoFocus 
+            autoFocus
             label="Group Name"
             name="groupName"
             value={groupName}
@@ -196,9 +196,9 @@ const AddGroupDialog: React.FC<AddGroupDialogProps> = ({ open, onClose, onGroupA
             // ACCESSIBILITÉ
             inputProps={{ "aria-required": "true" }}
           />
-          
-          <Typography 
-            variant="h6" 
+
+          <Typography
+            variant="h6"
             component="h2" // Structure
             sx={{ mt: 3, mb: 1, fontWeight: 600 }}
           >
@@ -216,7 +216,7 @@ const AddGroupDialog: React.FC<AddGroupDialogProps> = ({ open, onClose, onGroupA
             fullWidth
             sx={{ mb: 1, backgroundColor: '#FAFAFA' }}
           />
-          
+
           {usersLoading ? (
             <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}>
               <CircularProgress aria-label="Loading users..." />
@@ -226,11 +226,11 @@ const AddGroupDialog: React.FC<AddGroupDialogProps> = ({ open, onClose, onGroupA
               {usersError}
             </Typography>
           ) : (
-            <Box 
-              sx={{ 
-                maxHeight: 300, 
-                overflow: 'auto', 
-                border: '1px solid #E0E0E0', 
+            <Box
+              sx={{
+                maxHeight: 300,
+                overflow: 'auto',
+                border: '1px solid #E0E0E0',
                 borderRadius: 1,
                 p: 1
               }}
@@ -265,14 +265,14 @@ const AddGroupDialog: React.FC<AddGroupDialogProps> = ({ open, onClose, onGroupA
               </FormGroup>
             </Box>
           )}
-          
+
           {error && (
             <Typography color="error" sx={{ mt: 2, textAlign: 'center', fontWeight: 500 }} role="alert">
               {error}
             </Typography>
           )}
         </DialogContent>
-        
+
         <DialogActions sx={{ p: '16px 24px' }}>
           <Button onClick={handleClose} color="inherit">
             Cancel
@@ -280,10 +280,10 @@ const AddGroupDialog: React.FC<AddGroupDialogProps> = ({ open, onClose, onGroupA
           <Button
             type="submit"
             variant="contained"
-            disabled={loading} 
-            sx={{ 
+            disabled={loading}
+            sx={{
               backgroundColor: ACCESSIBLE_BLUE,
-              '&:hover': { backgroundColor: "#1A3AC0" } 
+              '&:hover': { backgroundColor: "#1A3AC0" }
             }}
           >
             {loading ? <CircularProgress size={24} color="inherit" aria-label="Creating group..." /> : "Create"}
