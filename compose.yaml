@@ -37,6 +37,34 @@ services:
     depends_on:
       - backend
 
+  netdata:
+    container_name: "integration-netdata-prod"
+    image: netdata/netdata
+    hostname: pi5
+    pid: host
+    network_mode: host
+    restart: unless-stopped
+    cap_add:
+      - SYS_PTRACE
+      - SYS_ADMIN
+    security_opt:
+      - apparmor:unconfined
+    volumes:
+      - netdata_config:/etc/netdata
+      - netdata_lib:/var/lib/netdata
+      - netdata_cache:/var/cache/netdata
+      - /etc/passwd:/host/etc/passwd:ro
+      - /etc/group:/host/etc/group:ro
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      - NETDATA_CLAIM_TOKEN= # Empty = local
+      - DOCKER_USR=root
+
 volumes:
   postgres_data:
     name: "postgres_data"
+  netdata_config:
+  netdata_lib:
+  netdata_cache:
