@@ -1129,6 +1129,41 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
                 {selectedObjectDetails.rotation !== undefined && `, ${Math.round(selectedObjectDetails.rotation)}°`}
               </div>
             </div>
+
+            {'type' in selectedObjectDetails && selectedObjectDetails.type === 'lock' && selectedObjectDetails.lock_id && (
+              <div style={{ marginTop: '12px', paddingTop: '8px', borderTop: '1px solid #eee' }}>
+                <button
+                  onClick={() => {
+                    if (selectedObjectDetails.lock_id) {
+                      console.log('Opening door for lock ID:', selectedObjectDetails.lock_id);
+                      // TODO: Implement the API call to open the door
+                      alert(`Opening door for lock ID: ${selectedObjectDetails.lock_id}`);
+                    }
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    backgroundColor: '#4CAF50',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '13px',
+                    fontWeight: '600',
+                    transition: 'background-color 0.2s ease',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#45a049';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = '#4CAF50';
+                  }}
+                >
+                   Open Door
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>
