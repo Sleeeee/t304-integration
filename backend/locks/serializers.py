@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Lock, Lock_Group
+from .models import Lock, Lock_Group, LockBatteryLog
 
 
 class LockSerializer(serializers.ModelSerializer):
@@ -31,3 +31,9 @@ class AddLocksToGroupSerializer(serializers.Serializer):
         child=serializers.IntegerField(),
         allow_empty=False
     )
+
+
+class LockBatteryLogSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LockBatteryLog
+        fields = ['lock', 'voltage', 'current', 'timestamp']

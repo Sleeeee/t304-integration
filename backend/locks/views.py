@@ -3,8 +3,8 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
-from .models import Lock, Lock_Group
-from .serializers import LockSerializer, LockGroupSerializer, AddLocksToGroupSerializer
+from .models import Lock, Lock_Group, LockBatteryLog
+from .serializers import LockSerializer, LockGroupSerializer, AddLocksToGroupSerializer, LockBatteryLogSerializer
 
 
 class LocksView(APIView):
@@ -202,11 +202,22 @@ class ReservableLocksView(APIView):
     qui sont marquées comme 'réservables'.
     Destinée au formulaire de réservation de l'utilisateur.
     """
-    permission_classes = [IsAuthenticated] 
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
         reservable_locks = Lock.objects.filter(is_reservable=True)
-        
+
         serializer = LockSerializer(reservable_locks, many=True)
-        
+
         return Response({"locks": serializer.data}, status=status.HTTP_200_OK)
+
+
+class LockBatteryLogView(APIView):
+    def post(self, request):
+        serializer = LockBatteryLogSerializer(data=request.data)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

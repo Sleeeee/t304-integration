@@ -43,3 +43,13 @@ class Lock_Group(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class LockBatteryLog(models.Model):
+    timestamp = models.DateTimeField(auto_now_add=True)
+    lock = models.ForeignKey(Lock, on_delete=models.CASCADE)
+    voltage = models.FloatField()
+    current = models.FloatField()
+
+    def __str__(self):
+        return f"{self.timestamp} - {self.lock} : {self.voltage} V, {self.current} A"

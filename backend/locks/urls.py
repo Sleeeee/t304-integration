@@ -6,7 +6,8 @@ from .views import (
     GroupLocksView,
     RemoveLockFromGroupView,
     DeleteLockGroupView,
-    ReservableLocksView 
+    ReservableLocksView,
+    LockBatteryLogView
 )
 
 urlpatterns = [
@@ -21,4 +22,5 @@ urlpatterns = [
          RemoveLockFromGroupView.as_view(), name='remove_locks_from_group'),
     path('groups/<int:group_id>/delete/',
          DeleteLockGroupView.as_view(), name='delete-lock-group'),
+    path('battery/', LockBatteryLogView.as_view(), name='lock_battery_log')
 ]
