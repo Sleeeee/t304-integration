@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
+from django.db.models import Prefetch
 from .models import Lock, Lock_Group, LockBatteryLog
 from .serializers import LockSerializer, LockGroupSerializer, AddLocksToGroupSerializer, LockBatteryLogSerializer
 
@@ -14,7 +15,15 @@ class LocksView(APIView):
         user = request.user
         if not user.is_staff:
             return Response({"error": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
-        locks = Lock.objects.all()
+
+        latest_log_prefetch = Prefetch(
+            'lockbatterylog_set',
+            queryset=LockBatteryLog.objects.order_by('-id'),
+            to_attr='latest_log'
+        )
+
+        locks = Lock.objects.all().prefetch_related(latest_log_prefetch)
+
         return Response({"locks": LockSerializer(locks, many=True).data}, status=status.HTTP_200_OK)
 
     def post(self, request):
