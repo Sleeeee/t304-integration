@@ -37,12 +37,14 @@ interface LockData {
 
 type ComponentData = LineData | LockData;
 
+// --- MODIFICATION 1 : Ajout de remote_address dans l'interface Lock ---
 interface Lock {
   id_lock: number;
   name: string;
   description: string | null;
   status: 'connected' | 'disconnected' | 'error' | string;
   last_connexion: string | null;
+  remote_address?: string | null; // Champ ajouté
 }
 
 interface Building {
@@ -274,6 +276,10 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
 
   const [selectedObjectDetails, setSelectedObjectDetails] = React.useState<ComponentData | null>(null);
 
+  // --- MODIFICATION 2 : Nouveaux states pour l'action du bouton ---
+  const [openingLockId, setOpeningLockId] = React.useState<number | null>(null);
+  const [lockMessage, setLockMessage] = React.useState<{text: string, type: 'success' | 'error'} | null>(null);
+
   const stageRef = React.useRef<KonvaStage>(null);
   const canvasContainerRef = React.useRef<HTMLDivElement>(null);
 
@@ -399,6 +405,39 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
       setIsSaving(false);
     }
   }, [selectedSchematicId, components, fetchGlobalPlacedLockIds]);
+
+  // --- MODIFICATION 3 : Fonction pour ouvrir la porte ---
+  const handleRemoteOpen = async (lock: Lock) => {
+    if (!lock.remote_address) return;
+    
+    setOpeningLockId(lock.id_lock);
+    setLockMessage(null); // Reset message
+
+    const csrfToken = getCookie("csrftoken");
+    
+    try {
+        const response = await fetch(`http://localhost:8000/locks/${lock.id_lock}/remote-open/`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": csrfToken || "",
+            },
+        });
+
+        if (response.ok) {
+            setLockMessage({ text: `Signal sent to ${lock.name}`, type: 'success' });
+        } else {
+            const data = await response.json();
+            setLockMessage({ text: `Error: ${data.error || "Failed"}`, type: 'error' });
+        }
+    } catch (err) {
+        setLockMessage({ text: "Connection error", type: 'error' });
+    } finally {
+        setOpeningLockId(null);
+        // Effacer le message après 4 secondes
+        setTimeout(() => setLockMessage(null), 4000);
+    }
+  };
 
   const createBuilding = React.useCallback(async (name: string, description: string, floor: number) => {
     try {
@@ -534,6 +573,7 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
     if (clickedOnEmpty) {
       setSelectedId(null);
       setSelectedObjectDetails(null);
+      setLockMessage(null); // Clear message on deselect
     }
   };
 
@@ -986,6 +1026,7 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
                         onSelect={() => {
                           setSelectedId(component.id);
                           setSelectedObjectDetails(component);
+                          setLockMessage(null); // Reset msg quand on change de selection
                         }}
                         onChange={(newAttrs) => {
                           const comps = components.slice();
@@ -1006,6 +1047,7 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
                         onSelect={() => {
                           setSelectedId(component.id);
                           setSelectedObjectDetails(component);
+                          setLockMessage(null); // Reset msg quand on change de selection
                         }}
                         onChange={(newAttrs) => {
                           const comps = components.slice();
@@ -1026,7 +1068,7 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
           </div>
         </div>
 
-        {/* Carré d'infos */}
+        {/* Carré d'infos (Détails) */}
         {selectedObjectDetails && (
           <div style={{
             position: 'absolute',
@@ -1048,6 +1090,7 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
                 onClick={() => {
                   setSelectedId(null);
                   setSelectedObjectDetails(null);
+                  setLockMessage(null);
                 }}
                 aria-label="Close details"
                 style={{
@@ -1132,36 +1175,57 @@ const KonvaCanva: React.FC<KonvaCanvaProps> = ({ onNavigate, schematicId }) => {
 
             {'type' in selectedObjectDetails && selectedObjectDetails.type === 'lock' && selectedObjectDetails.lock_id && (
               <div style={{ marginTop: '12px', paddingTop: '8px', borderTop: '1px solid #eee' }}>
-                <button
-                  onClick={() => {
-                    if (selectedObjectDetails.lock_id) {
-                      console.log('Opening door for lock ID:', selectedObjectDetails.lock_id);
-                      // TODO: Implement the API call to open the door
-                      alert(`Opening door for lock ID: ${selectedObjectDetails.lock_id}`);
-                    }
-                  }}
-                  style={{
-                    width: '100%',
-                    padding: '10px',
-                    backgroundColor: '#4CAF50',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    fontSize: '13px',
-                    fontWeight: '600',
-                    transition: 'background-color 0.2s ease',
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = '#45a049';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = '#4CAF50';
-                  }}
-                >
-                   Open Door
-                </button>
+                {/* --- MODIFICATION 4 : Message de feedback au dessus du bouton --- */}
+                {lockMessage && (
+                  <div style={{
+                    marginBottom: '8px',
+                    padding: '6px',
+                    borderRadius: '4px',
+                    fontSize: '11px',
+                    backgroundColor: lockMessage.type === 'success' ? '#e8f5e9' : '#ffebee',
+                    color: lockMessage.type === 'success' ? '#2e7d32' : '#c62828',
+                    border: `1px solid ${lockMessage.type === 'success' ? '#a5d6a7' : '#ef9a9a'}`,
+                    textAlign: 'center'
+                  }}>
+                    {lockMessage.text}
+                  </div>
+                )}
+                
+                {/* --- MODIFICATION 5 : Le bouton Open Door complet --- */}
+                {(() => {
+                  const currentLock = availableLocks.find(l => l.id_lock === selectedObjectDetails.lock_id);
+                  const hasIP = !!currentLock?.remote_address;
+                  const isOpening = openingLockId === currentLock?.id_lock;
+                  const isDisabled = !hasIP || isOpening;
+
+                  return (
+                    <button
+                      onClick={() => currentLock && handleRemoteOpen(currentLock)}
+                      disabled={isDisabled}
+                      style={{
+                        width: '100%',
+                        padding: '10px',
+                        backgroundColor: isDisabled ? '#ccc' : '#4CAF50',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '6px',
+                        cursor: isDisabled ? 'not-allowed' : 'pointer',
+                        fontSize: '13px',
+                        fontWeight: '600',
+                        transition: 'background-color 0.2s ease',
+                        boxShadow: isDisabled ? 'none' : '0 2px 4px rgba(0,0,0,0.1)'
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!isDisabled) e.currentTarget.style.backgroundColor = '#45a049';
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!isDisabled) e.currentTarget.style.backgroundColor = '#4CAF50';
+                      }}
+                    >
+                      {isOpening ? 'Opening...' : (hasIP ? 'Open Door' : 'No IP Address')}
+                    </button>
+                  );
+                })()}
               </div>
             )}
           </div>

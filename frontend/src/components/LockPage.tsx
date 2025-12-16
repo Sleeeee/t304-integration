@@ -27,12 +27,15 @@ import {
   ListItemText,
   Checkbox, 
   SelectChangeEvent,
+  // Plus besoin de Snackbar ni Alert ici, c'est géré par CustomSnackbar
 } from "@mui/material";
+import KeyIcon from '@mui/icons-material/Key'; 
 
-// --- Imports externes déplacés en haut ---
+// --- Imports internes ---
 import getCookie from "../context/getCookie";
 import LockGroupManager from "./GroupsLock/LockGroupManager"; 
 import LogsDrawer from "./LogsDrawer";
+import CustomSnackbar from "./CustomSnackbar"; // <--- Import de ton composant custom
 
 // --- 1. Lock Type (Global) ---
 interface Lock {
@@ -43,6 +46,7 @@ interface Lock {
   is_reservable: boolean;
   last_connexion: string | null;
   auth_methods?: string[]; 
+  remote_address?: string | null;
 }
 
 // --- 2. ManageLock Component (Inline) ---
@@ -292,7 +296,12 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
   const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
   const [isLogsDrawerOpen, setIsLogsDrawerOpen] = useState<boolean>(false);
   const [selectedLockForLogs, setSelectedLockForLogs] = useState<Lock | null>(null);
+  
+  const [openingLockId, setOpeningLockId] = useState<number | null>(null);
 
+  // --- ÉTATS POUR CUSTOM SNACKBAR ---
+  const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [isSnackbarError, setIsSnackbarError] = useState(false);
 
   const getLockStatusText = (status: string): string => {
     switch (status) {
@@ -346,6 +355,40 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
       setLoading(false);
     }
   }, []);
+
+  const handleCloseSnackbar = () => {
+    setSnackbarMessage(""); // Ceci fermera le CustomSnackbar car open={text !== ""}
+  };
+
+  const handleRemoteOpen = async (lock: Lock) => {
+    if (!lock.remote_address) return;
+    setOpeningLockId(lock.id_lock);
+    const csrfToken = getCookie("csrftoken");
+    
+    try {
+        const response = await fetch(`http://localhost:8000/locks/${lock.id_lock}/remote-open/`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": csrfToken || "",
+            },
+        });
+
+        if (response.ok) {
+            setSnackbarMessage(`Signal sent to lock ${lock.name} (${lock.remote_address})`);
+            setIsSnackbarError(false);
+        } else {
+            const data = await response.json();
+            setSnackbarMessage(`Error: ${data.error || "Failed to open"}`);
+            setIsSnackbarError(true);
+        }
+    } catch (err) {
+        setSnackbarMessage("Connection error");
+        setIsSnackbarError(true);
+    } finally {
+        setOpeningLockId(null);
+    }
+  };
 
   useEffect(() => {
     fetchLocks();
@@ -446,6 +489,7 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
                 <Table>
                   <TableHead>
                     <TableRow>
+                      <TableCell scope="col" sx={{ fontWeight: 600, color: "#444" }}>ID</TableCell>
                       <TableCell scope="col" sx={{ fontWeight: 600, color: "#444" }}>Name</TableCell>
                       <TableCell scope="col" sx={{ fontWeight: 600, color: "#444" }}>Description</TableCell>
                       <TableCell scope="col" sx={{ fontWeight: 600, color: "#444" }}>Status</TableCell>
@@ -453,13 +497,14 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
                       <TableCell scope="col" sx={{ fontWeight: 600, color: "#444" }}>Auth Methods</TableCell>
                       <TableCell scope="col" sx={{ fontWeight: 600, color: "#444" }}>Last Connection</TableCell>
                       <TableCell scope="col" sx={{ fontWeight: 600, color: "#444" }}>History</TableCell>
+                      <TableCell scope="col" sx={{ fontWeight: 600, color: "#444" }}>Remote</TableCell>
                       <TableCell scope="col" aria-label="Actions"></TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
                     {filteredLocks.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={8} sx={{ textAlign: "center", py: 4 }}>
+                        <TableCell colSpan={10} sx={{ textAlign: "center", py: 4 }}>
                           No locks found
                         </TableCell>
                       </TableRow>
@@ -472,6 +517,12 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
                             "&:hover": { backgroundColor: "#F0F0F0" },
                           }}
                         >
+                          <TableCell>
+                              <Typography variant="body2" color="textSecondary">
+                                  #{lock.id_lock}
+                              </Typography>
+                          </TableCell>
+
                           <TableCell component="th" scope="row">{lock.name}</TableCell>
                           <TableCell>{lock.description || 'N/A'}</TableCell>
                           <TableCell>
@@ -492,7 +543,6 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
                             />
                           </TableCell>
 
-                          {/* --- Auth Methods Data --- */}
                           <TableCell>
                             {lock.auth_methods && lock.auth_methods.length > 0 ? (
                               <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
@@ -520,7 +570,6 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
                           <TableCell>
                             <Button
                               size="small"
-                              // Suppression du onClick dupliqué et correction du passage de l'objet lock
                               onClick={() => handleViewLogs(lock)} 
                               aria-label={`View history for ${lock.name}`}
                               sx={actionButtonStyle}
@@ -528,6 +577,25 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
                               View
                             </Button>
                           </TableCell>
+
+                          <TableCell>
+                            <Button
+                                variant="outlined"
+                                color="warning"
+                                size="small"
+                                disabled={!lock.remote_address || openingLockId === lock.id_lock}
+                                onClick={() => handleRemoteOpen(lock)}
+                                startIcon={openingLockId === lock.id_lock ? <CircularProgress size={16} /> : <KeyIcon />}
+                                sx={{ 
+                                    minWidth: '40px', 
+                                    padding: '4px 10px',
+                                    textTransform: 'none'
+                                }}
+                            >
+                                {lock.remote_address ? "Open" : "No IP"}
+                            </Button>
+                          </TableCell>
+
                           <TableCell>
                             <Button
                               size="small"
@@ -569,6 +637,14 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
         lockId={selectedLockForLogs?.id_lock}
         lockName={selectedLockForLogs?.name}
       />
+
+      {/* --- NOTRE CUSTOM SNACKBAR --- */}
+      <CustomSnackbar 
+        isError={isSnackbarError}
+        text={snackbarMessage}
+        onClose={handleCloseSnackbar}
+      />
+
     </Box>
   );
 };

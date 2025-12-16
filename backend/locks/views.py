@@ -6,6 +6,7 @@ from django.shortcuts import get_object_or_404
 from django.db.models import Prefetch
 from .models import Lock, Lock_Group, LockBatteryLog
 from .serializers import LockSerializer, LockGroupSerializer, AddLocksToGroupSerializer, LockBatteryLogSerializer
+import requests # N'oublie pas d'importer requests en haut du fichier
 
 
 class LocksView(APIView):
@@ -230,3 +231,26 @@ class LockBatteryLogView(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+class RemoteOpenLockView(APIView):
+    def post(self, request, lock_id):
+        # Seuls les admins/staff peuvent ouvrir à distance
+        lock = get_object_or_404(Lock, id_lock=lock_id)
+
+        if not lock.remote_address:
+            return Response({"error": "No IP address configured for this lock"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # On tente d'appeler l'IP de la serrure (Exemple: http://192.168.1.50/open)
+        # Adapte l'URL "/open" selon le code de ton ESP32
+        try:
+            esp_url = f"http://{lock.remote_address}/open" 
+            # Timeout court (2s) pour ne pas bloquer le serveur si la serrure est éteinte
+            response = requests.get(esp_url, timeout=2) 
+            
+            if response.status_code == 200:
+                return Response({"message": f"Signal sent to {lock.remote_address}"}, status=status.HTTP_200_OK)
+            else:
+                return Response({"error": "Lock refused connection"}, status=status.HTTP_502_BAD_GATEWAY)
+                
+        except requests.exceptions.RequestException as e:
+            return Response({"error": f"Failed to reach lock: {str(e)}"}, status=status.HTTP_504_GATEWAY_TIMEOUT)
