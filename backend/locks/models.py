@@ -20,6 +20,7 @@ class Lock(models.Model):
     status = models.CharField(
         max_length=20, choices=STATUS_CHOICES, default='disconnected')
     last_connexion = models.DateTimeField(blank=True, null=True)
+    remote_address = models.CharField(max_length=32, blank=True, null=True)
 
     is_reservable = models.BooleanField(
         default=False,
