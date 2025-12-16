@@ -464,7 +464,7 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
     const csrfToken = getCookie("csrftoken");
 
     try {
-      const response = await fetch(`http://localhost:8000/locks/${lock.id_lock}/remote-open/`, {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/locks/${lock.id_lock}/remote-open/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -630,6 +630,7 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
                           <TableCell component="th" scope="row">{lock.name}</TableCell>
                           <TableCell>{lock.description || 'N/A'}</TableCell>
 
+                          {/* --- AFFICHAGE BATTERIE --- */}
                           <TableCell>
                             {renderBatteryStatus(lock)}
                           </TableCell>
