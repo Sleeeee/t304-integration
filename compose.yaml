@@ -22,6 +22,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    volumes:
+      - static_files:/static
 
   frontend:
     container_name: "integration-frontend-prod"
@@ -31,7 +33,8 @@ services:
         REACT_APP_BACKEND_URL: http://localhost/api
     env_file:
       - .env.frontend.prod
-    
+    volumes:
+      - static_files:/static:ro
     ports:
       - "80:80"
     depends_on:
@@ -68,3 +71,4 @@ volumes:
   netdata_config:
   netdata_lib:
   netdata_cache:
+  static_files:
