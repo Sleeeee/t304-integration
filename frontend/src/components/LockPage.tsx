@@ -622,14 +622,14 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
                           }}
                         >
                           <TableCell>
-                              <Typography variant="body2" color="textSecondary">
-                                  #{lock.id_lock}
-                              </Typography>
+                            <Typography variant="body2" color="textSecondary">
+                              #{lock.id_lock}
+                            </Typography>
                           </TableCell>
 
                           <TableCell component="th" scope="row">{lock.name}</TableCell>
                           <TableCell>{lock.description || 'N/A'}</TableCell>
-                          
+
                           <TableCell>
                             {renderBatteryStatus(lock)}
                           </TableCell>
@@ -668,26 +668,26 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
                           </TableCell>
 
                           <TableCell>
-                             <Tooltip 
-                                title={
-                                  lock.battery_level?.timestamp 
-                                    ? new Date(lock.battery_level.timestamp).toLocaleString() 
-                                    : (lock.last_connexion ? new Date(lock.last_connexion).toLocaleString() : "No data")
-                                }
+                            <Tooltip
+                              title={
+                                lock.battery_level?.timestamp
+                                  ? new Date(lock.battery_level.timestamp).toLocaleString()
+                                  : (lock.last_connexion ? new Date(lock.last_connexion).toLocaleString() : "No data")
+                              }
+                            >
+                              <Typography
+                                variant="body2"
+                                color={!lock.battery_level?.timestamp ? "text.disabled" : "text.primary"}
                               >
-                                <Typography 
-                                  variant="body2" 
-                                  color={!lock.battery_level?.timestamp ? "text.disabled" : "text.primary"}
-                                >
-                                  {getRelativeTime(lock.battery_level?.timestamp || lock.last_connexion)}
-                                </Typography>
-                              </Tooltip>
+                                {getRelativeTime(lock.battery_level?.timestamp || lock.last_connexion)}
+                              </Typography>
+                            </Tooltip>
                           </TableCell>
 
                           <TableCell>
                             <Button
-                              size="small
-                              onClick={() => handleViewLogs(lock)} 
+                              size="small"
+                              onClick={() => handleViewLogs(lock)}
                               aria-label={`View history for ${lock.name}`}
                               sx={actionButtonStyle}
                             >
@@ -697,19 +697,19 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
 
                           <TableCell>
                             <Button
-                                variant="outlined"
-                                color="warning"
-                                size="small"
-                                disabled={!lock.remote_address || openingLockId === lock.id_lock}
-                                onClick={() => handleRemoteOpen(lock)}
-                                startIcon={openingLockId === lock.id_lock ? <CircularProgress size={16} /> : <KeyIcon />}
-                                sx={{ 
-                                    minWidth: '40px', 
-                                    padding: '4px 10px',
-                                    textTransform: 'none'
-                                }}
+                              variant="outlined"
+                              color="warning"
+                              size="small"
+                              disabled={!lock.remote_address || openingLockId === lock.id_lock}
+                              onClick={() => handleRemoteOpen(lock)}
+                              startIcon={openingLockId === lock.id_lock ? <CircularProgress size={16} /> : <KeyIcon />}
+                              sx={{
+                                minWidth: '40px',
+                                padding: '4px 10px',
+                                textTransform: 'none'
+                              }}
                             >
-                                {lock.remote_address ? "Open" : "No IP"}
+                              {lock.remote_address ? "Open" : "No IP"}
                             </Button>
                           </TableCell>
 
@@ -755,7 +755,7 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
         lockName={selectedLockForLogs?.name}
       />
 
-      <CustomSnackbar 
+      <CustomSnackbar
         isError={isSnackbarError}
         text={snackbarMessage}
         onClose={handleCloseSnackbar}
