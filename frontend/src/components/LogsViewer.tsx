@@ -175,56 +175,50 @@ const LogsViewer: React.FC<LogsViewerProps> = ({ lockId, userId }) => {
                         }}
                       />
                     </Box>
-<<<<<<< HEAD
 
-  {/* Failed Code : Affiché UNIQUEMENT si ce n'est PAS un badge */ }
-  {
-    !isSuccess && log.failed_code && log.failed_code !== "" && log.method !== "badge" && (
-=======
+                    {/* Failed Code : Affiché UNIQUEMENT si ce n'est PAS un badge */}
+                    {
+                      !isSuccess && log.failed_code && log.failed_code !== "" && log.method !== "badge" && (
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                          <CancelIcon sx={{ color: "#F44336", fontSize: 18 }} />
+                          <Typography variant="body2" color="text.primary">
+                            <strong>Code d'échec:</strong> {log.failed_code}
+                          </Typography>
+                        </Box>
+                      )
+                    }
 
-                    {/* Failed Code */}
-                    {!isSuccess && log.failed_code && log.failed_code !== "" && (
->>>>>>> 01ddd10 (LARES #25 Implement NGINX as a web server and tweak code to use the actual backend url (the one i set up 3 months ago that no one used, remember ?))
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-        <CancelIcon sx={{ color: "#F44336", fontSize: 18 }} />
-        <Typography variant="body2" color="text.primary">
-          <strong>Code d'échec:</strong> {log.failed_code}
-        </Typography>
-      </Box>
-    )
-  }
+                    {/* Méthode */}
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <VpnKeyIcon sx={{ color: "#555", fontSize: 18 }} />
+                      <Typography variant="body2" color="text.primary">
+                        <strong>Méthode:</strong> {log.method}
+                      </Typography>
+                    </Box>
 
-  {/* Méthode */ }
-  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-    <VpnKeyIcon sx={{ color: "#555", fontSize: 18 }} />
-    <Typography variant="body2" color="text.primary">
-      <strong>Méthode:</strong> {log.method}
-    </Typography>
-  </Box>
+                    {/* User : Utilise la variable displayUser calculée plus haut */}
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <PersonIcon sx={{ color: "#3B5CFF", fontSize: 18 }} />
+                      <Typography variant="body2" color="text.primary">
+                        <strong>Utilisateur:</strong> {displayUser || "Inconnu"}
+                      </Typography>
+                    </Box>
 
-  {/* User : Utilise la variable displayUser calculée plus haut */ }
-  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-    <PersonIcon sx={{ color: "#3B5CFF", fontSize: 18 }} />
-    <Typography variant="body2" color="text.primary">
-      <strong>Utilisateur:</strong> {displayUser || "Inconnu"}
-    </Typography>
-  </Box>
+                    {/* Lock */}
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <LockIcon sx={{ color: "#666", fontSize: 18 }} />
+                      <Typography variant="body2" color="text.primary">
+                        <strong>Serrure:</strong> {log.lock_name || `ID: ${log.lock_id}`}
+                      </Typography>
+                    </Box>
 
-  {/* Lock */ }
-  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-    <LockIcon sx={{ color: "#666", fontSize: 18 }} />
-    <Typography variant="body2" color="text.primary">
-      <strong>Serrure:</strong> {log.lock_name || `ID: ${log.lock_id}`}
-    </Typography>
-  </Box>
-
-  {/* Timestamp */ }
-  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-    <AccessTimeIcon sx={{ color: "#999", fontSize: 18 }} />
-    <Typography variant="body2" color="text.secondary">
-      {formatDateTime(log.timestamp)}
-    </Typography>
-  </Box>
+                    {/* Timestamp */}
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <AccessTimeIcon sx={{ color: "#999", fontSize: 18 }} />
+                      <Typography variant="body2" color="text.secondary">
+                        {formatDateTime(log.timestamp)}
+                      </Typography>
+                    </Box>
                   </Stack >
                 </Paper >
               </React.Fragment >
