@@ -69,6 +69,7 @@ class WebLogoutView(APIView):
 
 class KeypadCodeLoginView(APIView):
     permission_classes = [AllowAny]
+    authentication_classes = []
 
     def post(self, request):
         request_code = request.data.get("code")
@@ -115,11 +116,10 @@ class KeypadCodeLoginView(APIView):
         return Response({"error": "Access denied"}, status=401)
 
 
-
-
 class BadgeCodeLoginView(APIView):
     # Allow requests from the hardware (which is not authenticated)
     permission_classes = [AllowAny]
+    authentication_classes = []
 
     def post(self, request):
         request_code = request.data.get("code")
