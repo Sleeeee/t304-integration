@@ -374,7 +374,7 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
     const now = new Date();
     const diffInSeconds = (now.getTime() - lastUpdate.getTime()) / 1000;
     
-    if (diffInSeconds > 60) {
+    if (diffInSeconds > 1800) {
       return (
         <Tooltip title={`Connection lost! Last update: ${lastUpdate.toLocaleTimeString()} (${percent_approx}%)`}>
           <Chip
