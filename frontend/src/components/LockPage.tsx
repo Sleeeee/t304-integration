@@ -27,17 +27,33 @@ import {
   ListItemText,
   Checkbox, 
   SelectChangeEvent,
-  // Plus besoin de Snackbar ni Alert ici, c'est géré par CustomSnackbar
+  Tooltip // Ajout de Tooltip pour voir le voltage au survol
 } from "@mui/material";
 import KeyIcon from '@mui/icons-material/Key'; 
+
+// --- Imports Icones Batterie ---
+import BatteryFullIcon from '@mui/icons-material/BatteryFull';
+import Battery80Icon from '@mui/icons-material/Battery80';
+import Battery50Icon from '@mui/icons-material/Battery50';
+import Battery20Icon from '@mui/icons-material/Battery20';
+import BatteryAlertIcon from '@mui/icons-material/BatteryAlert';
+import BatteryUnknownIcon from '@mui/icons-material/BatteryUnknown';
 
 // --- Imports internes ---
 import getCookie from "../context/getCookie";
 import LockGroupManager from "./GroupsLock/LockGroupManager"; 
 import LogsDrawer from "./LogsDrawer";
-import CustomSnackbar from "./CustomSnackbar"; // <--- Import de ton composant custom
+import CustomSnackbar from "./CustomSnackbar"; 
 
-// --- 1. Lock Type (Global) ---
+// --- 1. Lock Type (Mise à jour) ---
+interface BatteryLevel {
+  voltage: number;
+  current: number;
+  timestamp: string;
+  bars: number;          // 0 à 4
+  percent_approx: number; // 0 à 100
+}
+
 interface Lock {
   id_lock: number;
   name: string;
@@ -47,6 +63,7 @@ interface Lock {
   last_connexion: string | null;
   auth_methods?: string[]; 
   remote_address?: string | null;
+  battery_level?: BatteryLevel | null; // <--- AJOUT ICI
 }
 
 // --- 2. ManageLock Component (Inline) ---
@@ -303,23 +320,6 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [isSnackbarError, setIsSnackbarError] = useState(false);
 
-  const getLockStatusText = (status: string): string => {
-    switch (status) {
-      case "connected": return "Connected";
-      case "disconnected": return "Disconnected";
-      case "error": return "Error";
-      default: return status;
-    }
-  };
-
-  const getStatusColor = (status: string): "success" | "default" | "error" => {
-    switch (status) {
-      case "connected": return "success";
-      case "error": return "error";
-      case "disconnected": default: return "default";
-    }
-  };
-
   const formatDateTime = (isoString: string | null): string => {
     if (!isoString) return 'Never';
     try {
@@ -330,6 +330,64 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
     } catch (e) {
       return 'Invalid date';
     }
+  };
+
+  // --- FONCTION D'AFFICHAGE BATTERIE ---
+  const renderBatteryStatus = (lock: Lock) => {
+    if (!lock.battery_level) {
+      return (
+        <Tooltip title="No battery data">
+          <Chip
+            icon={<BatteryUnknownIcon />}
+            label="Unknown"
+            size="small"
+            variant="outlined"
+            color="default"
+          />
+        </Tooltip>
+      );
+    }
+
+    const { bars, voltage, percent_approx } = lock.battery_level;
+    let Icon = BatteryUnknownIcon;
+    let color: "success" | "warning" | "error" | "default" = "default";
+
+    switch (bars) {
+      case 4:
+        Icon = BatteryFullIcon;
+        color = "success";
+        break;
+      case 3:
+        Icon = Battery80Icon;
+        color = "success";
+        break;
+      case 2:
+        Icon = Battery50Icon;
+        color = "warning";
+        break;
+      case 1:
+        Icon = Battery20Icon;
+        color = "error";
+        break;
+      case 0:
+        Icon = BatteryAlertIcon;
+        color = "error";
+        break;
+      default:
+        Icon = BatteryUnknownIcon;
+    }
+
+    return (
+      <Tooltip title={`Voltage: ${voltage}V (~${percent_approx}%)`}>
+        <Chip
+          icon={<Icon />}
+          label={`${percent_approx}%`}
+          size="small"
+          color={color}
+          sx={{ fontWeight: 600 }}
+        />
+      </Tooltip>
+    );
   };
 
   const fetchLocks = useCallback(async () => {
@@ -357,7 +415,7 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
   }, []);
 
   const handleCloseSnackbar = () => {
-    setSnackbarMessage(""); // Ceci fermera le CustomSnackbar car open={text !== ""}
+    setSnackbarMessage(""); 
   };
 
   const handleRemoteOpen = async (lock: Lock) => {
@@ -492,7 +550,8 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
                       <TableCell scope="col" sx={{ fontWeight: 600, color: "#444" }}>ID</TableCell>
                       <TableCell scope="col" sx={{ fontWeight: 600, color: "#444" }}>Name</TableCell>
                       <TableCell scope="col" sx={{ fontWeight: 600, color: "#444" }}>Description</TableCell>
-                      <TableCell scope="col" sx={{ fontWeight: 600, color: "#444" }}>Status</TableCell>
+                      {/* --- COLONNE STATUS REMPLACEE PAR BATTERY --- */}
+                      <TableCell scope="col" sx={{ fontWeight: 600, color: "#444" }}>Battery</TableCell>
                       <TableCell scope="col" sx={{ fontWeight: 600, color: "#444" }}>Reservable</TableCell>
                       <TableCell scope="col" sx={{ fontWeight: 600, color: "#444" }}>Auth Methods</TableCell>
                       <TableCell scope="col" sx={{ fontWeight: 600, color: "#444" }}>Last Connection</TableCell>
@@ -525,14 +584,12 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
 
                           <TableCell component="th" scope="row">{lock.name}</TableCell>
                           <TableCell>{lock.description || 'N/A'}</TableCell>
+                          
+                          {/* --- AFFICHAGE BATTERIE --- */}
                           <TableCell>
-                            <Chip
-                              label={getLockStatusText(lock.status)}
-                              color={getStatusColor(lock.status)}
-                              size="small"
-                              sx={{ fontWeight: 600 }}
-                            />
+                            {renderBatteryStatus(lock)}
                           </TableCell>
+
                           <TableCell>
                             <Chip
                               label={lock.is_reservable ? "Yes" : "No"}

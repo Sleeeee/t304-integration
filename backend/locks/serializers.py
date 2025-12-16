@@ -20,22 +20,37 @@ class LockSerializer(serializers.ModelSerializer):
         return list(set(value))
 
     def get_battery_level(self, obj):
+        # On récupère le dernier log
         if hasattr(obj, 'latest_log') and obj.latest_log:
-            # If we prefetched it in the view (Optimized)
             log = obj.latest_log[0]
-            return {
-                "voltage": log.voltage,
-                "current": log.current,
-                "timestamp": log.timestamp
-            }
+        else:
+            log = obj.lockbatterylog_set.order_by('-id').first()
 
-        # Fallback
-        log = obj.lockbatterylog_set.order_by('-id').first()
         if log:
+            # --- LOGIQUE DE CALCUL (Voltage Mapping) ---
+            # Basé sur une cellule Li-Ion (Max 4.2V, Nominale 3.7V, Min 3.0V)
+            
+            voltage = log.voltage
+            bars = 0
+            
+            # Seuils ajustés pour la "courbe plate"
+            if voltage >= 4.00:      # 100% - 85% (Chargée à bloc)
+                bars = 4
+            elif voltage >= 3.75:    # 85% - 50% (Début du plateau)
+                bars = 3
+            elif voltage >= 3.55:    # 50% - 20% (Fin du plateau)
+                bars = 2
+            elif voltage >= 3.30:    # 20% - 5% (Chute finale)
+                bars = 1
+            else:                    # < 5% (Danger)
+                bars = 0
+
             return {
-                "voltage": log.voltage,
+                "voltage": voltage,
                 "current": log.current,
-                "timestamp": log.timestamp
+                "timestamp": log.timestamp,
+                "bars": bars,
+                "percent_approx": int((bars / 4) * 100)
             }
         return None
 
