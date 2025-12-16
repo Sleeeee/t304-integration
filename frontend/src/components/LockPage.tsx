@@ -38,7 +38,7 @@ import Battery50Icon from '@mui/icons-material/Battery50';
 import Battery20Icon from '@mui/icons-material/Battery20';
 import BatteryAlertIcon from '@mui/icons-material/BatteryAlert';
 import BatteryUnknownIcon from '@mui/icons-material/BatteryUnknown';
-import SignalWifiOffIcon from '@mui/icons-material/SignalWifiOff'; // Optionnel pour le tooltip
+import SignalWifiOffIcon from '@mui/icons-material/SignalWifiOff'; 
 
 // --- Imports internes ---
 import getCookie from "../context/getCookie";
@@ -46,7 +46,7 @@ import LockGroupManager from "./GroupsLock/LockGroupManager";
 import LogsDrawer from "./LogsDrawer";
 import CustomSnackbar from "./CustomSnackbar"; 
 
-// --- 1. Interfaces ---
+// --- Interfaces ---
 interface BatteryLevel {
   voltage: number;
   current: number;
@@ -67,7 +67,7 @@ interface Lock {
   battery_level?: BatteryLevel | null;
 }
 
-// --- 2. ManageLock Component (Inline) ---
+// --- ManageLock Component (Inline) ---
 
 const AUTH_OPTIONS = [
   { value: 'badge', label: 'Badge' },
@@ -289,7 +289,7 @@ const ManageLock: React.FC<ManageLockProps> = ({ isDialogOpen, onClose, selected
   );
 };
 
-// --- 4. Main LockPage Component ---
+// --- Main LockPage Component ---
 
 interface LockPageProps {
   onNavigate?: (page: string) => void;
@@ -320,7 +320,6 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [isSnackbarError, setIsSnackbarError] = useState(false);
 
-  // --- NOUVELLE FONCTION: Temps relatif (sec/min/h/d) ---
   const getRelativeTime = (isoString: string | undefined | null): string => {
     if (!isoString) return 'Never';
     
@@ -356,7 +355,6 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
 
   // --- FONCTION D'AFFICHAGE BATTERIE AVEC LOGIQUE DE TIMEOUT ---
   const renderBatteryStatus = (lock: Lock) => {
-    // 1. Si aucune info de batterie n'a jamais été reçue
     if (!lock.battery_level) {
       return (
         <Tooltip title="No battery data received">
@@ -372,13 +370,11 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
     }
 
     const { bars, voltage, percent_approx, timestamp } = lock.battery_level;
-    
-    // 2. Vérification du Timeout (2 minutes = 120 secondes)
     const lastUpdate = new Date(timestamp);
     const now = new Date();
     const diffInSeconds = (now.getTime() - lastUpdate.getTime()) / 1000;
     
-    if (diffInSeconds > 120) {
+    if (diffInSeconds > 60) {
       return (
         <Tooltip title={`Connection lost! Last update: ${lastUpdate.toLocaleTimeString()} (${percent_approx}%)`}>
           <Chip
@@ -387,14 +383,12 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
             size="small"
             variant="outlined"
             color="default" 
-            // Tu peux changer 'default' en 'error' si tu veux que ce soit rouge quand c'est déconnecté
             sx={{ borderColor: '#ccc', color: '#666' }}
           />
         </Tooltip>
       );
     }
 
-    // 3. Affichage normal si connexion récente
     let Icon = BatteryUnknownIcon;
     let color: "success" | "warning" | "error" | "default" = "default";
 
@@ -496,11 +490,8 @@ const LockPage: React.FC<LockPageProps> = ({ onNavigate, onEditSchematic }) => {
 
   useEffect(() => {
     fetchLocks();
-    
-    // Optionnel : Ajouter un timer pour rafraichir l'interface toutes les 10s
-    // pour que le statut "Unknown" apparaisse sans recharger la page
+
     const timer = setInterval(() => {
-        // Force re-render en théorie, ou tu peux rappeler fetchLocks()
         setLocks(currentLocks => [...currentLocks]); 
     }, 10000); 
 
